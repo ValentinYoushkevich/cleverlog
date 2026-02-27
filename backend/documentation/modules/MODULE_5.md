@@ -53,7 +53,7 @@ export const CustomFieldRepository = {
 
   findAll: ({ includeDeleted = false } = {}) => {
     const query = db('custom_fields').select('*').orderBy('name');
-    if (!includeDeleted) query.where({ is_deleted: false });
+    if (!includeDeleted) query.whereNull('deleted_at');
     return query;
   },
 
@@ -85,13 +85,21 @@ export const CustomFieldRepository = {
   deprecateOption: (id) =>
     db('custom_field_options').where({ id }).update({ is_deprecated: true, updated_at: db.fn.now() }),
 
+  findOptionById: (id) =>
+    db('custom_field_options').where({ id }).first(),
+
   // Привязка к проектам
   getProjectFields: (projectId) =>
     db('project_custom_fields as pcf')
       .join('custom_fields as cf', 'cf.id', 'pcf.custom_field_id')
       .where('pcf.project_id', projectId)
-      .where('cf.is_deleted', false)
+      .whereNull('cf.deleted_at')
       .select('pcf.*', 'cf.name', 'cf.type'),
+
+  findProjectField: (projectId, customFieldId) =>
+    db('project_custom_fields')
+      .where({ project_id: projectId, custom_field_id: customFieldId })
+      .first(),
 
   attachToProject: (data) =>
     db('project_custom_fields').insert(data).returning('*').then(r => r[0]),
@@ -155,7 +163,7 @@ export const CustomFieldService = {
   async update({ id, actorId, actorRole, ip, ...data }) {
     const field = await CustomFieldRepository.findById(id);
     if (!field) throw { status: 404, code: 'NOT_FOUND', message: 'Поле не найдено' };
-    if (field.is_deleted) throw { status: 400, code: 'FIELD_DELETED', message: 'Поле удалено' };
+    if (field.deleted_at) throw { status: 400, code: 'FIELD_DELETED', message: 'Поле удалено' };
 
     // Смена типа запрещена если поле используется
     if (data.type && data.type !== field.type) {
@@ -183,7 +191,7 @@ export const CustomFieldService = {
     const field = await CustomFieldRepository.findById(id);
     if (!field) throw { status: 404, code: 'NOT_FOUND', message: 'Поле не найдено' };
 
-    await CustomFieldRepository.updateById(id, { is_deleted: true });
+    await CustomFieldRepository.updateById(id, { deleted_at: new Date() });
 
     await AuditService.log({
       actorId, actorRole,
@@ -199,9 +207,9 @@ export const CustomFieldService = {
   async restore({ id, actorId, actorRole, ip }) {
     const field = await CustomFieldRepository.findById(id);
     if (!field) throw { status: 404, code: 'NOT_FOUND', message: 'Поле не найдено' };
-    if (!field.is_deleted) throw { status: 400, code: 'NOT_DELETED', message: 'Поле не удалено' };
+    if (!field.deleted_at) throw { status: 400, code: 'NOT_DELETED', message: 'Поле не удалено' };
 
-    await CustomFieldRepository.updateById(id, { is_deleted: false });
+    await CustomFieldRepository.updateById(id, { deleted_at: null });
 
     await AuditService.log({
       actorId, actorRole,
@@ -247,6 +255,12 @@ export const CustomFieldService = {
   },
 
   async deprecateOption({ fieldId, optionId, actorId, actorRole, ip }) {
+    const field = await CustomFieldRepository.findById(fieldId);
+    if (!field || field.type !== 'dropdown') throw { status: 400, code: 'NOT_DROPDOWN', message: 'Поле не является Dropdown' };
+
+    const option = await CustomFieldRepository.findOptionById(optionId);
+    if (!option || option.custom_field_id !== fieldId) throw { status: 404, code: 'NOT_FOUND', message: 'Опция не найдена' };
+
     await CustomFieldRepository.deprecateOption(optionId);
 
     await AuditService.log({
@@ -268,8 +282,10 @@ export const CustomFieldService = {
   },
 
   async attachToProject({ projectId, customFieldId, is_required, is_enabled, actorId, actorRole, ip }) {
-    const existing = await CustomFieldRepository.getProjectFields(projectId)
-      .then(fields => fields.find(f => f.custom_field_id === customFieldId));
+    const field = await CustomFieldRepository.findById(customFieldId);
+    if (!field || field.deleted_at) throw { status: 404, code: 'NOT_FOUND', message: 'Поле не найдено' };
+
+    const existing = await CustomFieldRepository.findProjectField(projectId, customFieldId);
 
     if (existing) throw { status: 409, code: 'ALREADY_ATTACHED', message: 'Поле уже привязано к проекту' };
 
@@ -293,6 +309,9 @@ export const CustomFieldService = {
   },
 
   async updateProjectField({ projectId, customFieldId, data, actorId, actorRole, ip }) {
+    const existing = await CustomFieldRepository.findProjectField(projectId, customFieldId);
+    if (!existing) throw { status: 404, code: 'NOT_FOUND', message: 'Привязка не найдена' };
+
     const result = await CustomFieldRepository.updateProjectField(projectId, customFieldId, data);
 
     await AuditService.log({
@@ -308,6 +327,9 @@ export const CustomFieldService = {
   },
 
   async detachFromProject({ projectId, customFieldId, actorId, actorRole, ip }) {
+    const existing = await CustomFieldRepository.findProjectField(projectId, customFieldId);
+    if (!existing) throw { status: 404, code: 'NOT_FOUND', message: 'Привязка не найдена' };
+
     await CustomFieldRepository.detachFromProject(projectId, customFieldId);
 
     await AuditService.log({
@@ -496,18 +518,18 @@ app.use('/api/projects/:projectId/custom-fields', projectCustomFieldRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Создание поля Text | `POST /api/custom-fields` `{ "name": "Branch", "type": "text" }` → `201` |
-| 2 | Создание Dropdown с опциями | `{ "type": "dropdown", "options": ["A", "B"] }` → `201`, опции в `custom_field_options` |
-| 3 | Переименование поля | `PATCH /api/custom-fields/:id` `{ "name": "New Name" }` → `200` |
-| 4 | Смена типа неиспользованного | `PATCH` с `{ "type": "number" }` без логов → `200` |
-| 5 | Смена типа использованного | Создать Work Log с полем → `PATCH` с новым типом → `409 TYPE_CHANGE_FORBIDDEN` |
-| 6 | Soft delete | `DELETE /api/custom-fields/:id` → `200`; `GET` без `include_deleted` — поле не видно |
-| 7 | Восстановление | `POST /api/custom-fields/:id/restore` → `200`; поле снова в списке |
-| 8 | Добавление опции Dropdown | `POST /api/custom-fields/:id/options` `{ "label": "C" }` → `201` |
-| 9 | Устаревание опции | `DELETE /api/custom-fields/:id/options/:optionId` → `200`; `is_deprecated = true` в БД |
-| 10 | Привязка к проекту | `POST /api/projects/:id/custom-fields` → `201` |
-| 11 | Включение/выключение per-project | `PATCH /api/projects/:id/custom-fields/:fieldId` `{ "is_enabled": false }` → `200` |
-| 12 | Отвязка от проекта | `DELETE /api/projects/:id/custom-fields/:fieldId` → `200`; запись удалена из `project_custom_fields` |
-| 13 | Audit log пишется | После каждой операции → `SELECT * FROM audit_logs WHERE entity_type='custom_field';` |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Создание поля Text | `POST /api/custom-fields` `{ "name": "Branch", "type": "text" }` → `201` | ✅ Пройдено |
+| 2 | Создание Dropdown с опциями | `{ "type": "dropdown", "options": ["A", "B"] }` → `201`, опции в `custom_field_options` | ✅ Пройдено |
+| 3 | Переименование поля | `PATCH /api/custom-fields/:id` `{ "name": "New Name" }` → `200` | ✅ Пройдено |
+| 4 | Смена типа неиспользованного | `PATCH` с `{ "type": "number" }` без логов → `200` | ✅ Пройдено |
+| 5 | Смена типа использованного | Создать Work Log с полем → `PATCH` с новым типом → `409 TYPE_CHANGE_FORBIDDEN` | ✅ Пройдено |
+| 6 | Soft delete | `DELETE /api/custom-fields/:id` → `200`; `GET` без `include_deleted` — поле не видно | ✅ Пройдено |
+| 7 | Восстановление | `POST /api/custom-fields/:id/restore` → `200`; поле снова в списке | ✅ Пройдено |
+| 8 | Добавление опции Dropdown | `POST /api/custom-fields/:id/options` `{ "label": "C" }` → `201` | ✅ Пройдено |
+| 9 | Устаревание опции | `DELETE /api/custom-fields/:id/options/:optionId` → `200`; `is_deprecated = true` в БД | ✅ Пройдено |
+| 10 | Привязка к проекту | `POST /api/projects/:id/custom-fields` → `201` | ✅ Пройдено |
+| 11 | Включение/выключение per-project | `PATCH /api/projects/:id/custom-fields/:fieldId` `{ "is_enabled": false }` → `200` | ✅ Пройдено |
+| 12 | Отвязка от проекта | `DELETE /api/projects/:id/custom-fields/:fieldId` → `200`; запись удалена из `project_custom_fields` | ✅ Пройдено |
+| 13 | Audit log пишется | После каждой операции → `SELECT * FROM audit_logs WHERE entity_type='custom_field';` | ✅ Пройдено |
