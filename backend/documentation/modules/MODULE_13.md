@@ -382,14 +382,14 @@ app.use('/api/notifications', notificationRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Cron регистрируется при старте | `npm run dev` → в логах `Notification cron job scheduled: 09:00 daily` |
-| 2 | Ручной запуск отправки | `POST /api/notifications/trigger` (dev) → `200`; в логах `sent=N, skipped=M` |
-| 3 | Письмо отправляется нужным | Создать user с незаполненными днями → trigger → письмо в Mailtrap/SMTP |
-| 4 | Пользователь с полным фактом не получает | Заполнить все дни с нормой → trigger → письмо не отправляется (skipped++) |
-| 5 | Глобальное отключение | `PATCH /api/notifications/settings` `{ "enabled": false }` → trigger → `skipping globally` в логах |
-| 6 | Per-user отключение | `PATCH /api/notifications/users/:id` `{ "enabled": false }` → trigger → этот user skipped |
-| 7 | Получение настроек | `GET /api/notifications/settings` → `{ global_enabled: true/false }` |
-| 8 | Только Admin | С User-cookie → `403 FORBIDDEN` |
-| 9 | Trigger недоступен в prod | Установить `NODE_ENV=production` → `POST /trigger` → `403` |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Cron регистрируется при старте | `npm run dev` → в логах `Notification cron job scheduled: 09:00 daily` | ✅ Пройдено |
+| 2 | Ручной запуск отправки | `POST /api/notifications/trigger` (dev) → `200`; в логах `sent=N, skipped=M` | ✅ Пройдено |
+| 3 | Письмо отправляется нужным | Создать user с незаполненными днями → trigger → письмо в Mailtrap/SMTP | ❌ Не пройдено (SMTP недоступен: `ECONNREFUSED 127.0.0.1:587`) |
+| 4 | Пользователь с полным фактом не получает | Заполнить все дни с нормой → trigger → письмо не отправляется (skipped++) | ✅ Пройдено |
+| 5 | Глобальное отключение | `PATCH /api/notifications/settings` `{ "enabled": false }` → trigger → `skipping globally` в логах | ✅ Пройдено |
+| 6 | Per-user отключение | `PATCH /api/notifications/users/:id` `{ "enabled": false }` → trigger → этот user skipped | ✅ Пройдено |
+| 7 | Получение настроек | `GET /api/notifications/settings` → `{ global_enabled: true/false }` | ✅ Пройдено |
+| 8 | Только Admin | С User-cookie → `403 FORBIDDEN` | ✅ Пройдено |
+| 9 | Trigger недоступен в prod | Установить `NODE_ENV=production` → `POST /trigger` → `403` | ✅ Пройдено |

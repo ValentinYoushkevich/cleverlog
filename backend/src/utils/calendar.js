@@ -26,6 +26,22 @@ export function getWorkingDays(year, month, overrides = []) {
   return days;
 }
 
+/**
+ * Возвращает последний рабочий день месяца с учетом calendar_days overrides.
+ */
+export async function getLastWorkingDay(year, month, dbInstance) {
+  const start = dayjs(`${year}-${String(month).padStart(2, '0')}-01`).format('YYYY-MM-DD');
+  const end = dayjs(start).endOf('month').format('YYYY-MM-DD');
+
+  const overrides = await dbInstance('calendar_days')
+    .whereBetween('date', [start, end])
+    .select('date', 'day_type');
+
+  const days = getWorkingDays(year, month, overrides);
+  const workingDays = days.filter((day) => day.day_type === 'working');
+  return workingDays.length ? workingDays.at(-1).date : null;
+}
+
 export async function isWorkingDay(date, db) {
   const override = await db('calendar_days').where({ date }).first();
   if (override) {
