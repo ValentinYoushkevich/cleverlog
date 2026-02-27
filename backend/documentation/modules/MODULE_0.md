@@ -71,7 +71,7 @@ bashdocker compose up -d
 Шаг 4. Переменные окружения
 .env:
 envNODE_ENV=development
-PORT=3000
+PORT=3100
 
 DB_HOST=localhost
 DB_PORT=5432
@@ -190,7 +190,7 @@ import app from './app.js';
 import db from '@/config/knex.js';
 import logger from '@/config/logger.js';
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3100;
 
 async function start() {
   try {
@@ -247,4 +247,23 @@ logs/
 dist/
 
 Критерии приёмки
-#ПроверкаКак проверить1PostgreSQL запущен в Dockerdocker ps → контейнер cleverlog_db со статусом Up2Сервер стартует без ошибокnpm run dev → в консоли Server running on http://localhost:30003БД подключена при стартеВ консоли нет ошибок подключения; logger.info('PostgreSQL connected') отработал4Health-check отвечаетGET http://localhost:3000/api/health → { "status": "ok", "db": "connected" }5Алиас @ работаетИмпорты вида @/config/knex.js резолвятся без ошибок6Логгер пишет файлыПосле старта появляются logs/error.log и logs/combined.log7Структура папок соответствует схемеВсе директории из Шага 1 присутствуют
+1. PostgreSQL запущен в Docker  
+   Как проверить: `docker ps` → контейнер `cleverlog_db` со статусом `Up`.
+
+2. Сервер стартует без ошибок  
+   Как проверить: `npm run dev` → в консоли `Server running on http://localhost:3100`.
+
+3. БД подключена при старте  
+   Как проверить: в консоли нет ошибок подключения; `logger.info('PostgreSQL connected')` отработал.
+
+4. Health-check отвечает  
+   Как проверить: `GET http://localhost:3100/api/health` → `{ "status": "ok", "db": "connected" }`.
+
+5. Алиас `@` работает  
+   Как проверить: импорты вида `@/config/knex.js` резолвятся без ошибок.
+
+6. Логгер пишет файлы  
+   Как проверить: после старта появляются `logs/error.log` и `logs/combined.log`.
+
+7. Структура папок соответствует схеме  
+   Как проверить: все директории из Шага 1 присутствуют.
