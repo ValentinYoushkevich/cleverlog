@@ -240,17 +240,17 @@ app.use('/api/dashboard', dashboardRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Только Admin | `GET /api/dashboard` с User-cookie → `403 FORBIDDEN` |
-| 2 | Сводка за месяц | `GET /api/dashboard?year=2025&month=6` → `charts`, `cards` с корректными счётчиками |
-| 3 | Часы по проектам | `charts.hours_by_project` — массив `{ name, hours }` только для проектов с логами |
-| 4 | Распределение сотрудников | `charts.users_by_project` — массив `{ name, user_count }` |
-| 5 | Карточка недоработки | Создать пользователя с факт < нормы → `cards.undertime_count > 0` |
-| 6 | Карточка переработки | Факт > нормы → `cards.overtime_count > 0` |
-| 7 | Карточка незаполненных | Пользователь без логов → `cards.unlogged_count > 0` |
-| 8 | Детализация undertime | `GET /api/dashboard/users?type=undertime&year=2025&month=6` → список с `deviation < 0` |
-| 9 | Детализация overtime | `?type=overtime` → список с `deviation > 0` |
-| 10 | Детализация unlogged | `?type=unlogged` → список с `unlogged_count > 0` и датами |
-| 11 | TOP-2 проектов в детализации | Каждый user в списке содержит `top2_projects` (макс 2 элемента) |
-| 12 | Невалидный type | `?type=wrong` → `400 INVALID_TYPE` |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Только Admin | `GET /api/dashboard` с User-cookie → `403 FORBIDDEN` | ✅ Пройдено |
+| 2 | Сводка за месяц | `GET /api/dashboard?year=2025&month=6` → `charts`, `cards` с корректными счётчиками | ✅ Пройдено |
+| 3 | Часы по проектам | `charts.hours_by_project` — массив `{ name, hours }` только для проектов с логами | ✅ Пройдено |
+| 4 | Распределение сотрудников | `charts.users_by_project` — массив `{ name, user_count }` | ✅ Пройдено |
+| 5 | Карточка недоработки | Создать пользователя с факт < нормы → `cards.undertime_count > 0` | ✅ Пройдено |
+| 6 | Карточка переработки | Факт > нормы → `cards.overtime_count > 0` | ✅ Пройдено |
+| 7 | Карточка незаполненных | Пользователь без логов → `cards.unlogged_count > 0` | ✅ Пройдено |
+| 8 | Детализация undertime | `GET /api/dashboard/users?type=undertime&year=2025&month=6` → список с `deviation < 0` | ✅ Пройдено |
+| 9 | Детализация overtime | `?type=overtime` → список с `deviation > 0` | ✅ Пройдено |
+| 10 | Детализация unlogged | `?type=unlogged` → список с `unlogged_count > 0` и датами | ✅ Пройдено |
+| 11 | TOP-2 проектов в детализации | Каждый user в списке содержит `top2_projects` (макс 2 элемента) | ✅ Пройдено |
+| 12 | Невалидный type | `?type=wrong` → `400 INVALID_TYPE` | ✅ Пройдено |
