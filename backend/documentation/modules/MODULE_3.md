@@ -362,15 +362,15 @@ app.use('/api/users', userRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | `GET /api/users` только для Admin | Запрос с User-токеном → `403 FORBIDDEN` |
-| 2 | Список пользователей возвращается | `GET /api/users` с Admin-cookie → массив пользователей |
-| 3 | Фильтр по статусу работает | `GET /api/users?status=inactive` → только неактивные |
-| 4 | Создание пользователя | `POST /api/users` с данными → `201`, в БД новый user с `invite_token` |
-| 5 | Дублирующий email отклоняется | `POST /api/users` с существующим email → `409 EMAIL_EXISTS` |
-| 6 | Инвайт-письмо отправляется | После создания в логах nodemailer виден вызов `sendMail` (или письмо в Mailtrap) |
-| 7 | Редактирование пользователя | `PATCH /api/users/:id` с `{ "position": "Lead" }` → `200`, поле обновлено |
-| 8 | Деактивация инвалидирует сессию | Деактивировать user → его cookie → `GET /api/auth/me` → `401` |
-| 9 | Повторный инвайт | `POST /api/users/:id/resend-invite` → `200`, новый токен в БД |
-| 10 | Audit log пишется | После создания/обновления → `SELECT * FROM audit_logs WHERE entity_type='user';` → записи есть |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | `GET /api/users` только для Admin | Запрос с User-токеном → `403 FORBIDDEN` | ✅ Проходит |
+| 2 | Список пользователей возвращается | `GET /api/users` с Admin-cookie → массив пользователей | ✅ Проходит |
+| 3 | Фильтр по статусу работает | `GET /api/users?status=inactive` → только неактивные | ✅ Проходит |
+| 4 | Создание пользователя | `POST /api/users` с данными → `201`, в БД новый user с `invite_token_hash` | ❌TODO Не проходит (SMTP не настроен, `EMAIL_SEND_FAILED`) |
+| 5 | Дублирующий email отклоняется | `POST /api/users` с существующим email → `409 EMAIL_EXISTS` | ✅ Проходит |
+| 6 | Инвайт-письмо отправляется | После создания в логах nodemailer виден вызов `sendMail` (или письмо в Mailtrap) | ❌TODO Не проходит (SMTP не настроен) |
+| 7 | Редактирование пользователя | `PATCH /api/users/:id` с `{ "position": "Lead" }` → `200`, поле обновлено | ✅ Проходит |
+| 8 | Деактивация инвалидирует сессию | Деактивировать user → его cookie → `GET /api/auth/me` → `401` | ✅ Проходит |
+| 9 | Повторный инвайт | `POST /api/users/:id/resend-invite` → `200`, новый токен в БД | ❌TODO Не проходит (SMTP не настроен, `EMAIL_SEND_FAILED`) |
+| 10 | Audit log пишется | После создания/обновления → `SELECT * FROM audit_logs WHERE entity_type='user';` → записи есть | ✅ Проходит |
