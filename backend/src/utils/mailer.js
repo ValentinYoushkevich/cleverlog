@@ -18,6 +18,11 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendInviteEmail({ to, inviteToken, firstName }) {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    logger.warn('SMTP is not configured; invite email skipped', { to });
+    return;
+  }
+
   const link = `${process.env.CLIENT_URL}/register/${inviteToken}`;
 
   try {

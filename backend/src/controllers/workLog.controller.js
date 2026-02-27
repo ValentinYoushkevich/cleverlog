@@ -23,10 +23,11 @@ export const WorkLogController = {
 
   async create(req, res, next) {
     try {
-      const { custom_fields, ...data } = createWorkLogSchema.parse(req.body);
+      const { custom_fields, user_id, ...data } = createWorkLogSchema.parse(req.body);
       const result = await WorkLogService.create({
         ...data,
         custom_fields,
+        targetUserId: user_id,
         userId: req.user.id,
         isAdmin: req.user.role === 'admin',
         ip: req.ip,

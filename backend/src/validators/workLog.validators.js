@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const createWorkLogSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Формат даты: YYYY-MM-DD'),
   project_id: z.uuid(),
+  user_id: z.uuid().optional(),
   duration: z.string().min(1, 'Длительность обязательна'),
   comment: z.string().min(1, 'Комментарий обязателен'),
   task_number: z.string().min(1, 'Task Number обязателен'),

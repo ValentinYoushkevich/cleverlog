@@ -33,24 +33,26 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
-// Роуты
+// Публичные роуты
 app.use('/api', healthRouter);
 app.use('/api', jsErrorRouter);
 app.use('/api', authRouter);
+
+// Защищённые роуты
+app.use('/api/users', userRouter);
+app.use('/api/projects', projectRouter);
+app.use('/api/custom-fields', customFieldRouter);
+app.use('/api/projects/:projectId/custom-fields', projectCustomFieldRouter);
+app.use('/api/calendar', calendarRouter);
 app.use('/api/absences', absenceRouter);
 app.use('/api/audit-logs', auditLogRouter);
-app.use('/api/calendar', calendarRouter);
-app.use('/api/custom-fields', customFieldRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/month-closures', monthClosureRouter);
 app.use('/api/notifications', notificationRouter);
-app.use('/api/projects', projectRouter);
-app.use('/api/projects/:projectId/custom-fields', projectCustomFieldRouter);
 app.use('/api/reports', reportRouter);
-app.use('/api/users', userRouter);
 app.use('/api/work-logs', workLogRouter);
 
-// Глобальный error handler — подключить последним после всех роутов
+// Глобальный error handler — ПОСЛЕДНИМ
 app.use(errorHandler);
 
 export default app;

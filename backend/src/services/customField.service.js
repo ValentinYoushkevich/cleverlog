@@ -237,7 +237,30 @@ export const CustomFieldService = {
   async updateProjectField({ projectId, customFieldId, data, actorId, actorRole, ip }) {
     const existing = await CustomFieldRepository.findProjectField(projectId, customFieldId);
     if (!existing) {
-      throw appError(404, 'NOT_FOUND', 'Привязка не найдена');
+      const field = await CustomFieldRepository.findById(customFieldId);
+      if (!field || field.deleted_at) {
+        throw appError(404, 'NOT_FOUND', 'Поле не найдено');
+      }
+
+      const created = await CustomFieldRepository.attachToProject({
+        project_id: projectId,
+        custom_field_id: customFieldId,
+        is_required: data.is_required ?? false,
+        is_enabled: data.is_enabled ?? true,
+      });
+
+      await AuditService.log({
+        actorId,
+        actorRole,
+        eventType: 'CUSTOM_FIELD_ATTACHED',
+        entityType: 'project',
+        entityId: projectId,
+        after: { custom_field_id: customFieldId, ...data },
+        ip,
+        result: 'success',
+      });
+
+      return created;
     }
 
     const result = await CustomFieldRepository.updateProjectField(projectId, customFieldId, data);

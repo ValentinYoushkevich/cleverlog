@@ -48,7 +48,9 @@ export const WorkLogService = {
     };
   },
 
-  async create({ userId, custom_fields, ...data }) {
+  async create({ userId, isAdmin, targetUserId, custom_fields, ...data }) {
+    const effectiveUserId = isAdmin && targetUserId ? targetUserId : userId;
+
     if (dayjs(data.date).isAfter(dayjs(), 'day')) {
       throw appError(400, 'FUTURE_DATE', 'Нельзя логировать будущие даты');
     }
@@ -62,7 +64,7 @@ export const WorkLogService = {
     }
 
     const hasAbsence = await db('absences')
-      .where({ user_id: userId, date: data.date })
+      .where({ user_id: effectiveUserId, date: data.date })
       .first();
     if (hasAbsence) {
       throw appError(400, 'ABSENCE_CONFLICT', 'В этот день уже есть запись об отсутствии');
@@ -70,7 +72,7 @@ export const WorkLogService = {
 
     const duration_days = parseDurationToDays(data.duration);
 
-    const existingDays = await WorkLogRepository.sumDayDuration(userId, data.date);
+    const existingDays = await WorkLogRepository.sumDayDuration(effectiveUserId, data.date);
     const totalDays = existingDays + duration_days;
     const warning = daysToHours(totalDays) > MAX_HOURS_PER_DAY
       ? `Суммарное время за день превышает ${MAX_HOURS_PER_DAY}ч`
@@ -79,7 +81,7 @@ export const WorkLogService = {
     await validateCustomFields(data.project_id, custom_fields);
 
     const log = await WorkLogRepository.create({
-      user_id: userId,
+      user_id: effectiveUserId,
       project_id: data.project_id,
       date: data.date,
       duration_days,
@@ -96,7 +98,7 @@ export const WorkLogService = {
       eventType: 'WORK_LOG_CREATED',
       entityType: 'work_log',
       entityId: log.id,
-      after: { date: log.date, duration_days, project_id: log.project_id },
+      after: { user_id: log.user_id, date: log.date, duration_days, project_id: log.project_id },
       ip: data.ip,
       result: 'success',
     });
