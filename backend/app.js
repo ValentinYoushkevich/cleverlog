@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import { errorHandler } from './src/middlewares/errorHandler.js';
 import authRouter from './src/routes/authRouter.js';
 import healthRouter from './src/routes/healthRouter.js';
+import projectRouter from './src/routes/projectRouter.js';
 import userRouter from './src/routes/userRouter.js';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 // Роуты
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
+app.use('/api/projects', projectRouter);
 app.use('/api/users', userRouter);
 
 // Глобальный error handler — подключить последним после всех роутов

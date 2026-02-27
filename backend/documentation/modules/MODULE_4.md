@@ -212,15 +212,15 @@ app.use('/api/projects', projectRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | `GET /api/projects` для любого авторизованного | Запрос с User-cookie → `200`, список проектов |
-| 2 | `GET /api/projects?status=active` | Только активные проекты в ответе |
-| 3 | `GET /api/projects/:id` несуществующий | → `404 NOT_FOUND` |
-| 4 | `POST /api/projects` только Admin | С User-cookie → `403 FORBIDDEN` |
-| 5 | Создание проекта | `POST /api/projects` с `{ "name": "Test Project" }` → `201`, проект в БД со статусом `active` |
-| 6 | Переименование | `PATCH /api/projects/:id` с `{ "name": "New Name" }` → `200`, обновлено |
-| 7 | Смена статуса Active → Closed | `PATCH /api/projects/:id` с `{ "status": "closed" }` → `200` |
-| 8 | Смена статуса Closed → Active | То же с `{ "status": "active" }` → `200` (обратный переход разрешён) |
-| 9 | Невалидный статус | `PATCH` с `{ "status": "archived" }` → `400` (Zod) |
-| 10 | Audit log пишется | После create/update → `SELECT * FROM audit_logs WHERE entity_type='project';` → записи есть |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | `GET /api/projects` для любого авторизованного | Запрос с User-cookie → `200`, список проектов | ✅ Пройдено |
+| 2 | `GET /api/projects?status=active` | Только активные проекты в ответе | ✅ Пройдено |
+| 3 | `GET /api/projects/:id` несуществующий | → `404 NOT_FOUND` | ✅ Пройдено |
+| 4 | `POST /api/projects` только Admin | С User-cookie → `403 FORBIDDEN` | ✅ Пройдено |
+| 5 | Создание проекта | `POST /api/projects` с `{ "name": "Test Project" }` → `201`, проект в БД со статусом `active` | ✅ Пройдено |
+| 6 | Переименование | `PATCH /api/projects/:id` с `{ "name": "New Name" }` → `200`, обновлено | ✅ Пройдено |
+| 7 | Смена статуса Active → Closed | `PATCH /api/projects/:id` с `{ "status": "closed" }` → `200` | ✅ Пройдено |
+| 8 | Смена статуса Closed → Active | То же с `{ "status": "active" }` → `200` (обратный переход разрешён) | ✅ Пройдено |
+| 9 | Невалидный статус | `PATCH` с `{ "status": "archived" }` → `400` (Zod) | ✅ Пройдено |
+| 10 | Audit log пишется | После create/update → `SELECT * FROM audit_logs WHERE entity_type='project';` → записи есть | ✅ Пройдено |
