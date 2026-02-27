@@ -62,7 +62,7 @@ export const UserRepository = {
     db('users').where({ email }).first(),
 
   findByInviteToken: (token) =>
-    db('users').where({ invite_token: token }).first(),
+    db('users').where({ invite_token_hash: token }).first(),
 
   findById: (id) =>
     db('users').where({ id }).first(),
@@ -98,7 +98,7 @@ export const AuthService = {
 
     await UserRepository.updateById(user.id, {
       password_hash,
-      invite_token: null,
+      invite_token_hash: null,
       invite_expires_at: null,
     });
 
@@ -126,13 +126,13 @@ export const AuthService = {
     const valid = await argon2.verify(user.password_hash, password);
 
     if (!valid) {
-      const attempts = (user.failed_login_attempts || 0) + 1;
+      const attempts = (user.failed_attempts || 0) + 1;
       const lockedUntil = attempts >= MAX_LOGIN_ATTEMPTS
         ? new Date(Date.now() + LOCK_DURATION_MS)
         : null;
 
       await UserRepository.updateById(user.id, {
-        failed_login_attempts: attempts,
+        failed_attempts: attempts,
         locked_until: lockedUntil,
       });
 
@@ -143,7 +143,7 @@ export const AuthService = {
 
     // Сброс счётчика
     await UserRepository.updateById(user.id, {
-      failed_login_attempts: 0,
+      failed_attempts: 0,
       locked_until: null,
     });
 
@@ -356,7 +356,7 @@ authorize middleware создаётся в MODULE_3 — в MODULE_4 и MODULE_5 
 
 | # | Проверка | Как проверить |
 |---|----------|---------------|
-| 1 | Регистрация по инвайту работает | Создать пользователя через seed с `invite_token`, `POST /api/auth/register` с токеном и паролем → `200` |
+| 1 | Регистрация по инвайту работает | Создать пользователя через seed с `invite_token_hash`, `POST /api/auth/register` с токеном и паролем → `200` |
 | 2 | Невалидный инвайт отклоняется | `POST /api/auth/register` с несуществующим токеном → `400 INVALID_TOKEN` |
 | 3 | Логин возвращает cookie | `POST /api/auth/login` → `200`, в заголовке `Set-Cookie: token=...HttpOnly` |
 | 4 | `GET /api/auth/me` работает с cookie | С правильной cookie → `200` с данными пользователя |

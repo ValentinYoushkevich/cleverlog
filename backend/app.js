@@ -5,6 +5,8 @@ import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 
+import { errorHandler } from './src/middlewares/errorHandler.js';
+import authRouter from './src/routes/authRouter.js';
 import healthRouter from './src/routes/healthRouter.js';
 
 const app = express();
@@ -20,9 +22,9 @@ app.use(cookieParser());
 
 // Роуты
 app.use('/api', healthRouter);
+app.use('/api', authRouter);
 
 // Глобальный error handler — подключить последним после всех роутов
-// import errorHandler from './src/middlewares/errorHandler.js'; Подключим в модуле 2
-// app.use(errorHandler);
+app.use(errorHandler);
 
 export default app;
