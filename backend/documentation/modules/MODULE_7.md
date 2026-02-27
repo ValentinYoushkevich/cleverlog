@@ -488,22 +488,22 @@ app.use('/api/work-logs', workLogRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Создание лога с `"1h 30m"` | `POST /api/work-logs` → `201`; `duration_days = 0.1875` в БД; `duration_hours = 1.5` в ответе |
-| 2 | Создание с `"2d"` | `duration_days = 2`, `duration_hours = 16` |
-| 3 | Запрет в будущее | Дата завтра → `400 FUTURE_DATE` |
-| 4 | Запрет в On Hold / Closed проект | → `400 PROJECT_NOT_ACTIVE` |
-| 5 | Запрет смешивания с Absence | Создать Absence на дату → `POST /api/work-logs` с той же датой → `400 ABSENCE_CONFLICT` |
-| 6 | Предупреждение >12h | Создать логи суммарно >12h → в ответе `warning: "..."`, статус `201` |
-| 7 | User видит только свои логи | `GET /api/work-logs` с User-cookie → только его записи |
-| 8 | Admin видит все | `GET /api/work-logs?user_id=<uuid>` с Admin-cookie → логи любого пользователя |
-| 9 | Фильтрация по проекту | `GET /api/work-logs?project_id=<uuid>` → только логи этого проекта |
-| 10 | Фильтрация по Task Number | `?task_number=TASK-1` → только совпадающие записи |
-| 11 | Редактирование своего лога | `PATCH /api/work-logs/:id` → `200` |
-| 12 | User не может редактировать чужой | → `403 FORBIDDEN` |
-| 13 | Удаление | `DELETE /api/work-logs/:id` → `200`; запись исчезает из БД |
-| 14 | Закрытый месяц блокирует User | Закрыть месяц → User пытается создать/изменить → `403 MONTH_CLOSED` |
-| 15 | Admin работает в закрытом | Те же действия с Admin-cookie → `201` / `200` |
-| 16 | Обязательное кастомное поле | Создать лог без обязательного поля → `400 REQUIRED_FIELD_MISSING` |
-| 17 | Audit log пишется | После CRUD → `SELECT * FROM audit_logs WHERE entity_type='work_log';` |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Создание лога с `"1h 30m"` | `POST /api/work-logs` → `201`; `duration_days = 0.1875` в БД; `duration_hours = 1.5` в ответе | ✅ Пройдено |
+| 2 | Создание с `"2d"` | `duration_days = 2`, `duration_hours = 16` | ✅ Пройдено |
+| 3 | Запрет в будущее | Дата завтра → `400 FUTURE_DATE` | ✅ Пройдено |
+| 4 | Запрет в On Hold / Closed проект | → `400 PROJECT_NOT_ACTIVE` | ✅ Пройдено |
+| 5 | Запрет смешивания с Absence | Создать Absence на дату → `POST /api/work-logs` с той же датой → `400 ABSENCE_CONFLICT` | ✅ Пройдено |
+| 6 | Предупреждение >12h | Создать логи суммарно >12h → в ответе `warning: "..."`, статус `201` | ✅ Пройдено |
+| 7 | User видит только свои логи | `GET /api/work-logs` с User-cookie → только его записи | ✅ Пройдено |
+| 8 | Admin видит все | `GET /api/work-logs?user_id=<uuid>` с Admin-cookie → логи любого пользователя | ✅ Пройдено |
+| 9 | Фильтрация по проекту | `GET /api/work-logs?project_id=<uuid>` → только логи этого проекта | ✅ Пройдено |
+| 10 | Фильтрация по Task Number | `?task_number=TASK-1` → только совпадающие записи | ✅ Пройдено |
+| 11 | Редактирование своего лога | `PATCH /api/work-logs/:id` → `200` | ✅ Пройдено |
+| 12 | User не может редактировать чужой | → `403 FORBIDDEN` | ✅ Пройдено |
+| 13 | Удаление | `DELETE /api/work-logs/:id` → `200`; запись исчезает из БД | ✅ Пройдено |
+| 14 | Закрытый месяц блокирует User | Закрыть месяц → User пытается создать/изменить → `403 MONTH_CLOSED` | ✅ Пройдено |
+| 15 | Admin работает в закрытом | Те же действия с Admin-cookie → `201` / `200` | ✅ Пройдено |
+| 16 | Обязательное кастомное поле | Создать лог без обязательного поля → `400 REQUIRED_FIELD_MISSING` | ✅ Пройдено |
+| 17 | Audit log пишется | После CRUD → `SELECT * FROM audit_logs WHERE entity_type='work_log';` | ✅ Пройдено |

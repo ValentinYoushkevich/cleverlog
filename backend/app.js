@@ -13,6 +13,7 @@ import healthRouter from './src/routes/healthRouter.js';
 import projectCustomFieldRouter from './src/routes/projectCustomFieldRouter.js';
 import projectRouter from './src/routes/projectRouter.js';
 import userRouter from './src/routes/userRouter.js';
+import workLogRouter from './src/routes/workLogRouter.js';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/custom-fields', customFieldRouter);
 app.use('/api/projects', projectRouter);
 app.use('/api/projects/:projectId/custom-fields', projectCustomFieldRouter);
 app.use('/api/users', userRouter);
+app.use('/api/work-logs', workLogRouter);
 
 // Глобальный error handler — подключить последним после всех роутов
 app.use(errorHandler);
