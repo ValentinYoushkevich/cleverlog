@@ -5,7 +5,8 @@
     "start": "node server.js",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
-    "seed": "knex seed:run"
+    "seed": "knex seed:run",
+    "postgres_web_client": "docker run --name cleverlog_adminer --rm -p 8080:8080 adminer"
   },
   "name": "backend",
   "version": "1.0.0",
