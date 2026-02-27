@@ -17,6 +17,7 @@ import jsErrorRouter from './src/routes/jsErrorRouter.js';
 import monthClosureRouter from './src/routes/monthClosureRouter.js';
 import projectCustomFieldRouter from './src/routes/projectCustomFieldRouter.js';
 import projectRouter from './src/routes/projectRouter.js';
+import reportRouter from './src/routes/reportRouter.js';
 import userRouter from './src/routes/userRouter.js';
 import workLogRouter from './src/routes/workLogRouter.js';
 
@@ -43,6 +44,7 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/month-closures', monthClosureRouter);
 app.use('/api/projects', projectRouter);
 app.use('/api/projects/:projectId/custom-fields', projectCustomFieldRouter);
+app.use('/api/reports', reportRouter);
 app.use('/api/users', userRouter);
 app.use('/api/work-logs', workLogRouter);
 

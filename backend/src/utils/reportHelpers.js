@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { getDefaultDayType } from './calendar.js';
+import { getWorkingDays } from './calendar.js';
 import { daysToHours } from './duration.js';
 
 function toDateKey(value) {
@@ -13,23 +13,10 @@ export function calcFact(workLogs = [], absences = []) {
 }
 
 export function calcUnloggedDays(year, month, loggedDates = new Set(), overrides = []) {
-  const start = dayjs(`${year}-${String(month).padStart(2, '0')}-01`);
-  const daysInMonth = start.daysInMonth();
-  const overrideMap = Object.fromEntries(
-    overrides.map((item) => [toDateKey(item.date), item.day_type]),
-  );
+  const days = getWorkingDays(year, month, overrides);
+  const today = dayjs().format('YYYY-MM-DD');
 
-  const result = [];
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    const date = start.date(day).format('YYYY-MM-DD');
-    const dayType = overrideMap[date] ?? getDefaultDayType(date);
-    if (dayType !== 'working') {
-      continue;
-    }
-    if (!loggedDates.has(date)) {
-      result.push({ date });
-    }
-  }
-
-  return result;
+  return days.filter((day) => day.day_type === 'working'
+    && day.date <= today
+    && !loggedDates.has(toDateKey(day.date)));
 }
