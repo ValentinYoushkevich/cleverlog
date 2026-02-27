@@ -237,15 +237,15 @@ const closed = await MonthClosureService.isClosed(2025, 6);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Закрытие месяца | `POST /api/month-closures` `{ year: 2025, month: 6 }` Admin-cookie → `201`; запись в `month_closures` |
-| 2 | Повторное закрытие → ошибка | Тот же запрос → `409 ALREADY_CLOSED` |
-| 3 | Статус месяца | `GET /api/month-closures/status/2025/6` → `{ closed: true }` |
-| 4 | Список всех закрытий | `GET /api/month-closures` → массив с данными кто и когда закрыл |
-| 5 | User заблокирован в закрытом | `POST /api/work-logs` с датой из закрытого месяца User-cookie → `403 MONTH_CLOSED` |
-| 6 | Admin работает в закрытом | Те же действия Admin-cookie → `201` |
-| 7 | Открытие месяца | `DELETE /api/month-closures/2025/6` Admin → `200`; запись удалена; User снова может логировать |
-| 8 | Открытие незакрытого | `DELETE /api/month-closures/2025/7` (не закрыт) → `404 NOT_CLOSED` |
-| 9 | Только Admin закрывает/открывает | С User-cookie → `403 FORBIDDEN` |
-| 10 | Audit log пишется | `SELECT * FROM audit_logs WHERE entity_type='month_closure';` → записи о закрытии и открытии |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Закрытие месяца | `POST /api/month-closures` `{ year: 2025, month: 6 }` Admin-cookie → `201`; запись в `month_closures` | ✅ Пройдено |
+| 2 | Повторное закрытие → ошибка | Тот же запрос → `409 ALREADY_CLOSED` | ✅ Пройдено |
+| 3 | Статус месяца | `GET /api/month-closures/status/2025/6` → `{ closed: true }` | ✅ Пройдено |
+| 4 | Список всех закрытий | `GET /api/month-closures` → массив с данными кто и когда закрыл | ✅ Пройдено |
+| 5 | User заблокирован в закрытом | `POST /api/work-logs` с датой из закрытого месяца User-cookie → `403 MONTH_CLOSED` | ✅ Пройдено |
+| 6 | Admin работает в закрытом | Те же действия Admin-cookie → `201` | ✅ Пройдено |
+| 7 | Открытие месяца | `DELETE /api/month-closures/2025/6` Admin → `200`; запись удалена; User снова может логировать | ✅ Пройдено |
+| 8 | Открытие незакрытого | `DELETE /api/month-closures/2025/7` (не закрыт) → `404 NOT_CLOSED` | ✅ Пройдено |
+| 9 | Только Admin закрывает/открывает | С User-cookie → `403 FORBIDDEN` | ✅ Пройдено |
+| 10 | Audit log пишется | `SELECT * FROM audit_logs WHERE entity_type='month_closure';` → записи о закрытии и открытии | ✅ Пройдено |
