@@ -7,6 +7,7 @@ import morgan from 'morgan';
 
 import { errorHandler } from './src/middlewares/errorHandler.js';
 import authRouter from './src/routes/authRouter.js';
+import calendarRouter from './src/routes/calendarRouter.js';
 import customFieldRouter from './src/routes/customFieldRouter.js';
 import healthRouter from './src/routes/healthRouter.js';
 import projectCustomFieldRouter from './src/routes/projectCustomFieldRouter.js';
@@ -27,6 +28,7 @@ app.use(cookieParser());
 // Роуты
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
+app.use('/api/calendar', calendarRouter);
 app.use('/api/custom-fields', customFieldRouter);
 app.use('/api/projects', projectRouter);
 app.use('/api/projects/:projectId/custom-fields', projectCustomFieldRouter);

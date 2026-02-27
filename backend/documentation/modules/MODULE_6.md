@@ -306,14 +306,14 @@ npm install dayjs
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | `GET /api/calendar/2025/6` возвращает данные | Ответ содержит `year`, `month`, `norm_hours`, `days` (массив дней с типами) |
-| 2 | Выходные по умолчанию | В массиве `days` суббота и воскресенье имеют `day_type: "weekend"` |
-| 3 | Смена статуса дня | `PATCH /api/calendar/days/2025-06-02` `{ "day_type": "holiday" }` → `200`; повторный `GET` — день с типом `holiday` |
-| 4 | Данные не удаляются при смене | Work Logs за этот день сохраняются в БД — `SELECT * FROM work_logs WHERE date = '2025-06-02'` |
-| 5 | Выходной → рабочий | Смена обратно на `working` → день снова рабочий в ответе |
-| 6 | Получение нормы | `GET /api/calendar/norm/2025/6` → `{ norm_hours: 168 }` (дефолт если не задана) |
-| 7 | Обновление нормы | `PUT /api/calendar/norm/2025/6` `{ "norm_hours": 160 }` → `200`; повторный GET → `160` |
-| 8 | Только Admin может менять | С User-cookie → `PATCH /api/calendar/days/:date` → `403 FORBIDDEN` |
-| 9 | Audit log пишется | После смены дня и нормы → `SELECT * FROM audit_logs WHERE entity_type='calendar';` |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | `GET /api/calendar/2025/6` возвращает данные | Ответ содержит `year`, `month`, `norm_hours`, `days` (массив дней с типами) | ✅ Пройдено |
+| 2 | Выходные по умолчанию | В массиве `days` суббота и воскресенье имеют `day_type: "weekend"` | ✅ Пройдено |
+| 3 | Смена статуса дня | `PATCH /api/calendar/days/2025-06-02` `{ "day_type": "holiday" }` → `200`; повторный `GET` — день с типом `holiday` | ✅ Пройдено |
+| 4 | Данные не удаляются при смене | Work Logs за этот день сохраняются в БД — `SELECT * FROM work_logs WHERE date = '2025-06-02'` | ✅ Пройдено |
+| 5 | Выходной → рабочий | Смена обратно на `working` → день снова рабочий в ответе | ✅ Пройдено |
+| 6 | Получение нормы | `GET /api/calendar/norm/2025/6` → `{ norm_hours: 168 }` (дефолт если не задана) | ✅ Пройдено |
+| 7 | Обновление нормы | `PUT /api/calendar/norm/2025/6` `{ "norm_hours": 160 }` → `200`; повторный GET → `160` | ✅ Пройдено |
+| 8 | Только Admin может менять | С User-cookie → `PATCH /api/calendar/days/:date` → `403 FORBIDDEN` | ✅ Пройдено |
+| 9 | Audit log пишется | После смены дня и нормы → `SELECT * FROM audit_logs WHERE entity_type='calendar';` | ✅ Пройдено |
