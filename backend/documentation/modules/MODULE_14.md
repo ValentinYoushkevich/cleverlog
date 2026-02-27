@@ -98,10 +98,10 @@ app.use('/api', jsErrorRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Эндпоинт доступен без авторизации | `POST /api/log-js-error` без cookie → `200 { received: true }` |
-| 2 | Корректная ошибка логируется | Отправить `{ message: "TypeError", stack: "..." }` → в `logs/error.log` появляется запись с `Frontend JS error` |
-| 3 | Невалидное тело не роняет сервер | `POST /api/log-js-error` с пустым телом `{}` → `200 { received: false }`; в `logs/combined.log` — `warn` |
-| 4 | IP фиксируется | В записи лога присутствует поле `ip` |
-| 5 | Все поля пишутся | `{ message, source, lineno, colno, stack, url, userAgent }` → все поля в записи лога |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Эндпоинт доступен без авторизации | `POST /api/log-js-error` без cookie → `200 { received: true }` | ✅ Пройдено |
+| 2 | Корректная ошибка логируется | Отправить `{ message: "TypeError", stack: "..." }` → в `logs/error.log` появляется запись с `Frontend JS error` | ✅ Пройдено |
+| 3 | Невалидное тело не роняет сервер | `POST /api/log-js-error` с пустым телом `{}` → `200 { received: false }`; в `logs/combined.log` — `warn` | ✅ Пройдено |
+| 4 | IP фиксируется | В записи лога присутствует поле `ip` | ✅ Пройдено |
+| 5 | Все поля пишутся | `{ message, source, lineno, colno, stack, url, userAgent }` → все поля в записи лога | ✅ Пройдено |

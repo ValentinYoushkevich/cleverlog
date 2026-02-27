@@ -13,6 +13,7 @@ import calendarRouter from './src/routes/calendarRouter.js';
 import customFieldRouter from './src/routes/customFieldRouter.js';
 import dashboardRouter from './src/routes/dashboardRouter.js';
 import healthRouter from './src/routes/healthRouter.js';
+import jsErrorRouter from './src/routes/jsErrorRouter.js';
 import monthClosureRouter from './src/routes/monthClosureRouter.js';
 import projectCustomFieldRouter from './src/routes/projectCustomFieldRouter.js';
 import projectRouter from './src/routes/projectRouter.js';
@@ -32,6 +33,7 @@ app.use(cookieParser());
 
 // Роуты
 app.use('/api', healthRouter);
+app.use('/api', jsErrorRouter);
 app.use('/api', authRouter);
 app.use('/api/absences', absenceRouter);
 app.use('/api/audit-logs', auditLogRouter);
