@@ -7,6 +7,7 @@ import morgan from 'morgan';
 
 import { errorHandler } from './src/middlewares/errorHandler.js';
 import absenceRouter from './src/routes/absenceRouter.js';
+import auditLogRouter from './src/routes/auditLogRouter.js';
 import authRouter from './src/routes/authRouter.js';
 import calendarRouter from './src/routes/calendarRouter.js';
 import customFieldRouter from './src/routes/customFieldRouter.js';
@@ -33,6 +34,7 @@ app.use(cookieParser());
 app.use('/api', healthRouter);
 app.use('/api', authRouter);
 app.use('/api/absences', absenceRouter);
+app.use('/api/audit-logs', auditLogRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/custom-fields', customFieldRouter);
 app.use('/api/dashboard', dashboardRouter);

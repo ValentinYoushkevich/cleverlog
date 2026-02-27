@@ -251,17 +251,17 @@ app.use('/api/audit-logs', auditLogRouter);
 
 ## Критерии приёмки
 
-| # | Проверка | Как проверить |
-|---|----------|---------------|
-| 1 | Только Admin | `GET /api/audit-logs` с User-cookie → `403 FORBIDDEN` |
-| 2 | Список с пагинацией | `GET /api/audit-logs?page=1&limit=10` → `{ data: [...], pagination: { ... } }` |
-| 3 | Фильтр по event_type | `?event_type=LOGIN` → только события логина |
-| 4 | Фильтр по entity_type | `?entity_type=user` → только события с пользователями |
-| 5 | Фильтр по result | `?result=failure` → только неуспешные попытки |
-| 6 | Фильтр по периоду | `?date_from=2025-06-01&date_to=2025-06-30` → только за июнь |
-| 7 | Поиск по search | `?search=WORK_LOG` → записи где event_type или entity_type содержит строку |
-| 8 | before/after в записи | После логина → запись содержит `after` с данными (или null в зависимости от события) |
-| 9 | Подсказки фильтров | `GET /api/audit-logs/filter-options` → `{ event_types: [...], entity_types: [...] }` |
-| 10 | Экспорт | `GET /api/audit-logs/export` → скачивается `audit_log.xlsx` с корректными колонками |
-| 11 | Экспорт с фильтрами | `?event_type=LOGIN` → в Excel только записи логина |
-| 12 | Записи от всех модулей присутствуют | После работы с системой → в журнале есть записи по `user`, `project`, `work_log`, `absence`, `calendar` |
+| # | Проверка | Как проверить | Статус |
+|---|----------|---------------|--------|
+| 1 | Только Admin | `GET /api/audit-logs` с User-cookie → `403 FORBIDDEN` | ✅ Пройдено |
+| 2 | Список с пагинацией | `GET /api/audit-logs?page=1&limit=10` → `{ data: [...], pagination: { ... } }` | ✅ Пройдено |
+| 3 | Фильтр по event_type | `?event_type=LOGIN` → только события логина | ✅ Пройдено |
+| 4 | Фильтр по entity_type | `?entity_type=user` → только события с пользователями | ✅ Пройдено |
+| 5 | Фильтр по result | `?result=failure` → только неуспешные попытки | ✅ Пройдено |
+| 6 | Фильтр по периоду | `?date_from=2025-06-01&date_to=2025-06-30` → только за июнь | ✅ Пройдено |
+| 7 | Поиск по search | `?search=WORK_LOG` → записи где event_type или entity_type содержит строку | ✅ Пройдено |
+| 8 | before/after в записи | После логина → запись содержит `after` с данными (или null в зависимости от события) | ✅ Пройдено |
+| 9 | Подсказки фильтров | `GET /api/audit-logs/filter-options` → `{ event_types: [...], entity_types: [...] }` | ✅ Пройдено |
+| 10 | Экспорт | `GET /api/audit-logs/export` → скачивается `audit_log.xlsx` с корректными колонками | ✅ Пройдено |
+| 11 | Экспорт с фильтрами | `?event_type=LOGIN` → в Excel только записи логина | ✅ Пройдено |
+| 12 | Записи от всех модулей присутствуют | После работы с системой → в журнале есть записи по `user`, `project`, `work_log`, `absence`, `calendar` | ✅ Пройдено |
