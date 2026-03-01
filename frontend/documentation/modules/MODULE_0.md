@@ -7,7 +7,7 @@ bashnpm create vue@latest cleverlog-frontend
 ✅ Vue Router — Yes
 ✅ Pinia — Yes
 ✅ ESLint — Yes
-✅ Prettier — Yes
+✅ Prettier — No
 Остальное — No
 
 bashcd cleverlog-frontend
@@ -221,4 +221,14 @@ json{
 }
 
 Критерии приёмки
-#ПроверкаКак проверить1Проект стартуетnpm run dev → нет ошибок в консоли2Редирект на /login работаетОткрыть http://localhost:5173 → редирект на /login3LoginPage рендеритсяhttp://localhost:5173/login → текст «Login page», нет ошибок4PrimeVue подключёнДобавить <Button label="Test" /> на любую страницу → рендерится styled кнопка Aura5Tailwind работаетДобавить class="text-red-500" → текст красный6Алиас @/ работаетИмпорт через @/api/http.js → нет ошибок резолвинга7axios withCredentialsВ DevTools → Network → запрос к API → заголовок withCredentials: true8401-interceptor работаетИмитировать 401-ответ от сервера → редирект на /login9Структура папок соответствует схемеВсе директории из Шага 2 присутствуют в src/
+| # | Проверка | Как проверить | Статус |
+|---|---|---|---|
+| 1 | Проект стартует | `npm run dev` → нет ошибок в консоли | Прошло ✅ |
+| 2 | Редирект на `/login` работает | Открыть `http://localhost:5173` → редирект на `/login` | Прошло ✅ |
+| 3 | `LoginPage` рендерится | `http://localhost:5173/login` → текст `Login page`, нет ошибок | Прошло ✅ |
+| 4 | PrimeVue подключён | Добавить `<Button label="Test" />` на любую страницу → рендерится styled-кнопка Aura | Прошло ✅ |
+| 5 | Tailwind работает | Добавить `class="text-red-500"` → текст красный | Прошло ✅ |
+| 6 | Алиас `@/` работает | Импорт через `@/api/http.js` → нет ошибок резолвинга | Прошло ✅ |
+| 7 | axios `withCredentials` | В DevTools → Network → запрос к API → `withCredentials: true` | Прошло ✅ |
+| 8 | `401`-interceptor работает | Имитировать `401`-ответ от сервера → редирект на `/login` | Прошло ✅ |
+| 9 | Структура папок соответствует схеме | Все директории из Шага 2 присутствуют в `src/` | Прошло ✅ |
