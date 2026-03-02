@@ -13,13 +13,6 @@ export default defineConfig({
       '@vee-validate/zod',
       'vee-validate',
       'zod',
-      'primevue/button',
-      'primevue/card',
-      'primevue/inputtext',
-      'primevue/message',
-      'primevue/password',
-      'primevue/progressbar',
-      'primevue/tag',
     ],
   },
   resolve: {
