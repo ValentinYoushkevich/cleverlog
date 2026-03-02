@@ -83,6 +83,9 @@
 </template>
 
 <script setup>
+import { useAuthStore } from '@/stores/auth.js';
+import { useCalendarStore } from '@/stores/calendar.js';
+import { useUiStore } from '@/stores/ui.js';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
@@ -90,13 +93,16 @@ import { computed } from 'vue';
 
 defineOptions({ name: 'AppLayout' });
 
-// Заглушки — заменить на сторы в MODULE_2
-const isAdmin = computed(() => false);
-const userName = computed(() => 'Пользователь');
-const userRole = computed(() => 'user');
-const userInitials = computed(() => 'П');
-const isClosed = computed(() => false);
-const pageTitle = computed(() => 'CleverLog');
+const authStore = useAuthStore();
+const calendarStore = useCalendarStore();
+const uiStore = useUiStore();
+
+const isAdmin = computed(() => authStore.isAdmin);
+const userName = computed(() => authStore.userName);
+const userRole = computed(() => authStore.user?.role ?? '');
+const userInitials = computed(() => authStore.userInitials);
+const isClosed = computed(() => calendarStore.isClosed);
+const pageTitle = computed(() => uiStore.pageTitle);
 
 const navItems = [
   { name: 'calendar', label: 'Календарь', icon: 'pi pi-calendar' },
@@ -118,8 +124,8 @@ const adminNavItems = [
   { name: 'admin-audit-logs', label: 'Журнал аудита', icon: 'pi pi-list' },
 ];
 
-function handleLogout() {
-  // реализация в MODULE_3
+async function handleLogout() {
+  await authStore.logout();
 }
 
 function handleMonthToggle() {
