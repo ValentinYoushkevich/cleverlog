@@ -1,3 +1,4 @@
+import { useAuthStore } from '@/stores/auth.js';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -118,13 +119,30 @@ const router = createRouter({
   ],
 });
 
-// Guard — финальная логика в MODULE_20, здесь заглушка
-router.beforeEach((to) => {
-  const isAuthenticated = !!localStorage.getItem('_auth_check'); // заменить в MODULE_20
-  if (to.meta.requiresAuth && !isAuthenticated) {
+let authChecked = false;
+
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore();
+
+  if (!authChecked) {
+    await authStore.fetchMe();
+    authChecked = true;
+  }
+
+  // Регистрация по инвайту должна быть доступна без авторизации.
+  if (to.name === 'register') {
+    return true;
+  }
+
+  if (to.path === '/') {
+    return authStore.isAuthenticated ? { name: 'calendar' } : { name: 'login' };
+  }
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' };
   }
-  if (to.meta.public && isAuthenticated) {
+
+  if (to.meta.public && authStore.isAuthenticated) {
     return { name: 'calendar' };
   }
 });

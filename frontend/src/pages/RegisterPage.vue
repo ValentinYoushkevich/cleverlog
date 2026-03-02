@@ -1,10 +1,129 @@
 <template>
-  <div class="p-4">
-    <h2 class="text-xl font-semibold">RegisterPage</h2>
-    <p class="mt-1 text-surface-400">Модуль в разработке</p>
+  <div class="rounded-2xl bg-surface-0 p-8 shadow-lg">
+    <h2 class="mb-2 text-2xl font-semibold text-surface-800">Создание пароля</h2>
+    <p class="mb-6 text-sm text-surface-500">Установите пароль для вашего аккаунта</p>
+
+    <form class="space-y-4" @submit.prevent="onSubmit">
+      <div>
+        <label for="register-password" class="mb-1 block text-sm font-medium text-surface-700">
+          Пароль
+        </label>
+        <Password
+          inputId="register-password"
+          v-model="password"
+          placeholder="Придумайте пароль"
+          class="w-full"
+          :class="{ 'p-invalid': errors.password }"
+          :feedback="false"
+          toggleMask
+          inputClass="w-full"
+          :inputProps="{ name: 'password', autocomplete: 'new-password' }"
+        />
+        <small v-if="errors.password" class="p-error">{{ errors.password }}</small>
+      </div>
+
+      <div v-if="password" class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-surface-500">Надежность пароля</span>
+          <Tag :value="strengthLabel.text" :severity="strengthLabel.severity" />
+        </div>
+        <ProgressBar :value="(strength / 5) * 100" :showValue="false" class="h-1.5" />
+        <ul class="mt-2 space-y-1">
+          <li
+            v-for="criterion in criteria"
+            :key="criterion.label"
+            class="flex items-center gap-2 text-xs"
+            :class="criterion.met ? 'text-green-600' : 'text-surface-400'"
+          >
+            <i :class="criterion.met ? 'pi pi-check-circle' : 'pi pi-circle'" class="text-xs" />
+            {{ criterion.label }}
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <label
+          for="register-confirm-password"
+          class="mb-1 block text-sm font-medium text-surface-700"
+        >
+          Подтвердите пароль
+        </label>
+        <Password
+          inputId="register-confirm-password"
+          v-model="confirmPassword"
+          placeholder="Повторите пароль"
+          class="w-full"
+          :class="{ 'p-invalid': errors.confirmPassword }"
+          :feedback="false"
+          toggleMask
+          inputClass="w-full"
+          :inputProps="{ name: 'confirmPassword', autocomplete: 'new-password' }"
+        />
+        <small v-if="errors.confirmPassword" class="p-error">{{ errors.confirmPassword }}</small>
+      </div>
+
+      <Message v-if="serverError" severity="error" :closable="false">
+        {{ serverError }}
+      </Message>
+
+      <Button
+        type="submit"
+        label="Создать аккаунт"
+        class="w-full"
+        :loading="loading"
+        :disabled="!isStrong"
+      />
+    </form>
   </div>
 </template>
 
 <script setup>
+import { toTypedSchema } from '@vee-validate/zod';
+import Button from 'primevue/button';
+import Message from 'primevue/message';
+import Password from 'primevue/password';
+import ProgressBar from 'primevue/progressbar';
+import Tag from 'primevue/tag';
+import { useForm } from 'vee-validate';
+import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+import http from '@/api/http.js';
+import { usePasswordStrength } from '@/composables/usePasswordStrength.js';
+import { registerSchema } from '@/validators/auth.js';
+
 defineOptions({ name: 'RegisterPage' });
+
+const registerRequest = (data) => http.post('/auth/register', data);
+
+const route = useRoute();
+const router = useRouter();
+const serverError = ref('');
+const loading = ref(false);
+
+const { defineField, handleSubmit, errors } = useForm({
+  validationSchema: toTypedSchema(registerSchema),
+});
+
+const [password] = defineField('password');
+const [confirmPassword] = defineField('confirmPassword');
+
+const { criteria, strength, isStrong, strengthLabel } = usePasswordStrength(password);
+
+const onSubmit = handleSubmit(async (values) => {
+  serverError.value = '';
+  loading.value = true;
+  try {
+    await registerRequest({ token: route.params.token, password: values.password });
+    await router.push({ name: 'login' });
+  } catch (err) {
+    const code = err.response?.data?.code;
+    if (code === 'INVALID_TOKEN') serverError.value = 'Ссылка недействительна или устарела.';
+    else if (code === 'TOKEN_EXPIRED')
+      serverError.value = 'Ссылка истекла. Запросите новую у администратора.';
+    else serverError.value = 'Произошла ошибка. Попробуйте позже.';
+  } finally {
+    loading.value = false;
+  }
+});
 </script>

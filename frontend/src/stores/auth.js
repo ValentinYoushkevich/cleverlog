@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 
 const loginRequest = (data) => http.post('/auth/login', data);
 const logoutRequest = () => http.post('/auth/logout');
-const meRequest = () => http.get('/auth/me');
+const meRequest = () => http.get('/auth/me', { skipAuthRedirect: true });
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -27,8 +27,10 @@ export const useAuthStore = defineStore('auth', {
       try {
         const res = await meRequest();
         this.user = res.data;
+        return true;
       } catch {
         this.user = null;
+        return false;
       }
     },
 

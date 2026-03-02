@@ -8,6 +8,18 @@ export default defineConfig({
     vue(),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    include: [
+      '@vee-validate/zod',
+      'vee-validate',
+      'zod',
+      'primevue/button',
+      'primevue/message',
+      'primevue/password',
+      'primevue/progressbar',
+      'primevue/tag',
+    ],
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
