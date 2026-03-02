@@ -2,10 +2,6 @@ import http from '@/api/http.js';
 import router from '@/router/index.js';
 import { defineStore } from 'pinia';
 
-const loginRequest = (data) => http.post('/auth/login', data);
-const logoutRequest = () => http.post('/auth/logout');
-const meRequest = () => http.get('/auth/me', { skipAuthRedirect: true });
-
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
@@ -25,7 +21,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async fetchMe() {
       try {
-        const res = await meRequest();
+        const res = await http.get('/auth/me', { skipAuthRedirect: true });
         this.user = res.data;
         return true;
       } catch {
@@ -37,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
     async login(credentials) {
       this.loading = true;
       try {
-        const res = await loginRequest(credentials);
+        const res = await http.post('/auth/login', credentials);
         this.user = res.data.user;
         await router.push({ name: 'calendar' });
       } finally {
@@ -47,11 +43,21 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       try {
-        await logoutRequest();
+        await http.post('/auth/logout');
       } finally {
         this.user = null;
         await router.push({ name: 'login' });
       }
+    },
+
+    async updateProfile(data) {
+      const res = await http.patch('/auth/profile', data);
+      return res.data;
+    },
+
+    async changePassword(data) {
+      const res = await http.post('/auth/change-password', data);
+      return res.data;
     },
   },
 });

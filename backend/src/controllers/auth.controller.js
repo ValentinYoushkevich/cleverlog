@@ -5,6 +5,7 @@ import {
     changePasswordSchema,
     loginSchema,
     registerSchema,
+    updateProfileSchema,
 } from '../validators/auth.validators.js';
 
 const COOKIE_OPTIONS = {
@@ -60,6 +61,20 @@ export const AuthController = {
     try {
       const data = changePasswordSchema.parse(req.body);
       const result = await AuthService.changePassword({
+        ...data,
+        userId: req.user.id,
+        ip: req.ip,
+      });
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async updateProfile(req, res, next) {
+    try {
+      const data = updateProfileSchema.parse(req.body);
+      const result = await AuthService.updateProfile({
         ...data,
         userId: req.user.id,
         ip: req.ip,

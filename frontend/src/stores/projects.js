@@ -1,8 +1,6 @@
 import http from '@/api/http.js';
 import { defineStore } from 'pinia';
 
-const listProjectsRequest = (params) => http.get('/projects', { params });
-
 export const useProjectsStore = defineStore('projects', {
   state: () => ({
     projects: [],
@@ -17,7 +15,7 @@ export const useProjectsStore = defineStore('projects', {
     async fetchProjects(params) {
       this.loading = true;
       try {
-        const res = await listProjectsRequest(params);
+        const res = await http.get('/projects', { params });
         this.projects = res.data;
       } finally {
         this.loading = false;

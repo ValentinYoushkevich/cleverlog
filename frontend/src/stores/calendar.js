@@ -2,11 +2,6 @@ import http from '@/api/http.js';
 import dayjs from 'dayjs';
 import { defineStore } from 'pinia';
 
-const getMonthRequest = (year, month) => http.get(`/calendar/${year}/${month}`);
-const getMonthStatusRequest = (year, month) => http.get(`/month-closures/status/${year}/${month}`);
-const closeMonthRequest = (year, month) => http.post('/month-closures', { year, month });
-const openMonthRequest = (year, month) => http.delete(`/month-closures/${year}/${month}`);
-
 export const useCalendarStore = defineStore('calendar', {
   state: () => ({
     currentYear: dayjs().year(),
@@ -26,8 +21,8 @@ export const useCalendarStore = defineStore('calendar', {
       this.loading = true;
       try {
         const [calRes, statusRes] = await Promise.all([
-          getMonthRequest(year, month),
-          getMonthStatusRequest(year, month),
+          http.get(`/calendar/${year}/${month}`),
+          http.get(`/month-closures/status/${year}/${month}`),
         ]);
 
         this.currentYear = year;
@@ -51,11 +46,11 @@ export const useCalendarStore = defineStore('calendar', {
     },
 
     async closeMonth(year, month) {
-      await closeMonthRequest(year, month);
+      await http.post('/month-closures', { year, month });
     },
 
     async openMonth(year, month) {
-      await openMonthRequest(year, month);
+      await http.delete(`/month-closures/${year}/${month}`);
     },
   },
 });

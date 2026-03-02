@@ -166,4 +166,47 @@ export const AuthService = {
 
     return { message: 'Пароль изменён' };
   },
+
+  async updateProfile({ userId, first_name: firstName, last_name: lastName, position, ip }) {
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+      throw appError(404, 'NOT_FOUND', 'Пользователь не найден');
+    }
+
+    const updatedUser = await UserRepository.updateById(userId, {
+      first_name: firstName,
+      last_name: lastName,
+      position: position ?? null,
+    });
+
+    await AuditService.log({
+      actorId: user.id,
+      actorRole: user.role,
+      eventType: 'PROFILE_UPDATED',
+      entityType: 'user',
+      entityId: user.id,
+      before: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        position: user.position,
+      },
+      after: {
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        position: updatedUser.position,
+      },
+      ip,
+      result: 'success',
+    });
+
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      first_name: updatedUser.first_name,
+      last_name: updatedUser.last_name,
+      position: updatedUser.position,
+      status: updatedUser.status,
+    };
+  },
 };
