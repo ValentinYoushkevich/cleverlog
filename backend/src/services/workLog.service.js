@@ -51,7 +51,8 @@ export const WorkLogService = {
   async create({ userId, isAdmin, targetUserId, custom_fields, ...data }) {
     const effectiveUserId = isAdmin && targetUserId ? targetUserId : userId;
 
-    if (dayjs(data.date).isAfter(dayjs(), 'day')) {
+    const todayStr = dayjs().format('YYYY-MM-DD');
+    if (data.date > todayStr) {
       throw appError(400, 'FUTURE_DATE', 'Нельзя логировать будущие даты');
     }
 
