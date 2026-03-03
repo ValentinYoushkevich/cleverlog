@@ -7,11 +7,15 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth.js';
 import { useProjectsStore } from '@/stores/projects.js';
+import { setToast } from '@/utils/toast.js';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 import { onMounted } from 'vue';
 
 defineOptions({ name: 'App' });
+
+setToast(useToast());
 
 const authStore = useAuthStore();
 const projectsStore = useProjectsStore();

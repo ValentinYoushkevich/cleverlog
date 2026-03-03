@@ -1,4 +1,5 @@
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
 import { defineStore } from 'pinia';
 
 export const useProjectsStore = defineStore('projects', {
@@ -17,6 +18,9 @@ export const useProjectsStore = defineStore('projects', {
       try {
         const res = await http.get('/projects', { params });
         this.projects = res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
       } finally {
         this.loading = false;
       }

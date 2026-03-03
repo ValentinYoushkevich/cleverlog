@@ -1,5 +1,6 @@
 import http from '@/api/http.js';
 import router from '@/router/index.js';
+import { showError } from '@/utils/toast.js';
 import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore('auth', {
@@ -36,6 +37,9 @@ export const useAuthStore = defineStore('auth', {
         const res = await http.post('/auth/login', credentials);
         this.user = res.data.user;
         await router.push({ name: 'calendar' });
+      } catch (err) {
+        showError(err);
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -44,6 +48,9 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       try {
         await http.post('/auth/logout');
+      } catch (err) {
+        showError(err);
+        // Выход выполняем в любом случае
       } finally {
         this.user = null;
         await router.push({ name: 'login' });
@@ -51,13 +58,23 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async updateProfile(data) {
-      const res = await http.patch('/auth/profile', data);
-      return res.data;
+      try {
+        const res = await http.patch('/auth/profile', data);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
     },
 
     async changePassword(data) {
-      const res = await http.post('/auth/change-password', data);
-      return res.data;
+      try {
+        const res = await http.post('/auth/change-password', data);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
     },
   },
 });

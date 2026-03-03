@@ -1,4 +1,5 @@
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
 import dayjs from 'dayjs';
 import { defineStore } from 'pinia';
 
@@ -56,6 +57,9 @@ export const useCalendarStore = defineStore('calendar', {
         this.normHours = calRes.data.norm_hours;
         this.days = calRes.data.days;
         this.isClosed = statusRes.data.closed;
+      } catch (err) {
+        showError(err);
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -76,6 +80,9 @@ export const useCalendarStore = defineStore('calendar', {
         ]);
         this.workLogs = wlRes.data?.data ?? wlRes.data ?? [];
         this.absences = absRes.data?.data ?? absRes.data ?? [];
+      } catch (err) {
+        showError(err);
+        throw err;
       } finally {
         this.dataLoading = false;
       }
@@ -92,11 +99,21 @@ export const useCalendarStore = defineStore('calendar', {
     },
 
     async closeMonth(year, month) {
-      await http.post('/month-closures', { year, month });
+      try {
+        await http.post('/month-closures', { year, month });
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
     },
 
     async openMonth(year, month) {
-      await http.delete(`/month-closures/${year}/${month}`);
+      try {
+        await http.delete(`/month-closures/${year}/${month}`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
     },
   },
 });
