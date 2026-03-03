@@ -17,6 +17,7 @@ export const ExportService = {
     const worksheet = workbook.addWorksheet('Отчёт по пользователю');
 
     worksheet.columns = [
+      { header: 'Сотрудник', key: 'user_name', width: 24 },
       { header: 'Дата', key: 'date', width: 14 },
       { header: 'Тип записи', key: 'type', width: 16 },
       { header: 'Проект', key: 'project_name', width: 24 },

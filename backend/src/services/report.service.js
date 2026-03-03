@@ -59,7 +59,8 @@ export const ReportService = {
     taskNumber,
     comment,
   }) {
-    const effectiveUserId = isAdmin ? (targetUserId || userId) : userId;
+    // Для админа без фильтра по пользователю показываем отчёт по всем пользователям.
+    const effectiveUserId = isAdmin ? targetUserId || null : userId;
     const workLogs = await ReportRepository.getWorkLogs({
       userId: effectiveUserId,
       projectId,
@@ -92,6 +93,7 @@ export const ReportService = {
 
     const rows = [
       ...finalWork.map((log) => ({
+        user_name: `${log.last_name} ${log.first_name}`,
         type: 'work',
         date: toDateKey(log.date),
         project_name: log.project_name,
@@ -101,6 +103,7 @@ export const ReportService = {
         custom_fields: customByLog[log.id] || [],
       })),
       ...filteredAbsences.map((absence) => ({
+        user_name: `${absence.last_name} ${absence.first_name}`,
         type: absence.type,
         date: toDateKey(absence.date),
         duration_hours: daysToHours(absence.duration_days),
