@@ -3,6 +3,7 @@ import { z } from 'zod';
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const createAbsenceSchema = z.object({
+  user_id: z.string().uuid().optional(),
   type: z.enum(['vacation', 'sick_leave', 'day_off']),
   date_from: z.string().regex(DATE_REGEX, 'Формат: YYYY-MM-DD'),
   date_to: z.string().regex(DATE_REGEX, 'Формат: YYYY-MM-DD'),

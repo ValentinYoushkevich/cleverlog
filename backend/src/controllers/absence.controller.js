@@ -24,10 +24,12 @@ export const AbsenceController = {
   async create(req, res, next) {
     try {
       const data = createAbsenceSchema.parse(req.body);
+      const isAdmin = req.user.role === 'admin';
+      const targetUserId = isAdmin && data.user_id ? data.user_id : req.user.id;
       const result = await AbsenceService.create({
         ...data,
-        userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        userId: targetUserId,
+        actorId: req.user.id,
         ip: req.ip,
       });
 

@@ -56,7 +56,7 @@ export const AbsenceService = {
     };
   },
 
-  async create({ userId, type, date_from, date_to, comment, ip }) {
+  async create({ userId, actorId, type, date_from, date_to, comment, ip }) {
     const allDates = generateDateRange(date_from, date_to);
     const overrides = await AbsenceRepository.findCalendarOverrides(allDates);
     const overrideMap = Object.fromEntries(overrides.map((item) => [item.date, item.day_type]));
@@ -101,7 +101,7 @@ export const AbsenceService = {
     const created = await AbsenceRepository.createMany(records);
 
     await AuditService.log({
-      actorId: userId,
+      actorId: actorId ?? userId,
       eventType: 'ABSENCE_CREATED',
       entityType: 'absence',
       entityId: null,
