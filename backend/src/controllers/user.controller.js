@@ -73,4 +73,34 @@ export const UserController = {
       return next(err);
     }
   },
+
+  async regenerateInviteLink(req, res, next) {
+    try {
+      const result = await UserService.regenerateInviteLink({
+        id: req.params.id,
+        actorId: req.user.id,
+        actorRole: req.user.role,
+        ip: req.ip,
+      });
+
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
+
+  async regenerateEmailInvite(req, res, next) {
+    try {
+      const result = await UserService.regenerateEmailInvite({
+        id: req.params.id,
+        actorId: req.user.id,
+        actorRole: req.user.role,
+        ip: req.ip,
+      });
+
+      return res.json(result);
+    } catch (err) {
+      return next(err);
+    }
+  },
 };

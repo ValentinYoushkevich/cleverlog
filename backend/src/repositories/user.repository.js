@@ -16,10 +16,12 @@ export const UserRepository = {
         'email',
         'role',
         'position',
+        'department',
         'status',
         'hire_date',
         'dismissal_date',
         'tags',
+        'invite_mode',
         'created_at',
       )
       .whereNull('deleted_at');

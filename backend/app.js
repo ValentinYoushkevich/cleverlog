@@ -12,6 +12,7 @@ import authRouter from './src/routes/authRouter.js';
 import calendarRouter from './src/routes/calendarRouter.js';
 import customFieldRouter from './src/routes/customFieldRouter.js';
 import dashboardRouter from './src/routes/dashboardRouter.js';
+import directoryRouter from './src/routes/directoryRouter.js';
 import healthRouter from './src/routes/healthRouter.js';
 import jsErrorRouter from './src/routes/jsErrorRouter.js';
 import monthClosureRouter from './src/routes/monthClosureRouter.js';
@@ -62,6 +63,7 @@ app.use('/api/month-closures', monthClosureRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/work-logs', workLogRouter);
+app.use('/api/directories', directoryRouter);
 
 // Глобальный error handler — ПОСЛЕДНИМ
 app.use(errorHandler);

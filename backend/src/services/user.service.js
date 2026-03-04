@@ -3,7 +3,7 @@ import { sendInviteEmail } from '../utils/mailer.js';
 import { generateInviteToken } from '../utils/token.js';
 import { AuditService } from './audit.service.js';
 
-const INVITE_TTL_MS = 72 * 60 * 60 * 1000;
+const INVITE_TTL_MS = 48 * 60 * 60 * 1000;
 
 function appError(status, code, message) {
   const error = new Error(message);
@@ -23,13 +23,35 @@ export const UserService = {
       throw appError(404, 'NOT_FOUND', 'Пользователь не найден');
     }
 
-    return user;
+    const { invite_token_hash, password_hash, ...rest } = user;
+    const result = { ...rest };
+
+    if (
+      rest.invite_mode === 'link' &&
+      invite_token_hash &&
+      !rest.password_hash &&
+      rest.invite_expires_at &&
+      new Date(rest.invite_expires_at) > new Date()
+    ) {
+      result.invite_link = `${process.env.CLIENT_URL}/register/${invite_token_hash}`;
+    }
+
+    return result;
   },
 
-  async create({ actorId, actorRole, ip, ...data }) {
-    const existing = await UserRepository.findByEmail(data.email);
-    if (existing) {
-      throw appError(409, 'EMAIL_EXISTS', 'Email уже занят');
+  async create({ actorId, actorRole, ip, invite_mode = 'email', ...data }) {
+    const mode = invite_mode === 'link' ? 'link' : 'email';
+
+    // Нормализуем email: пустые строки превращаем в null
+    const rawEmail = data.email ?? null;
+    const normalizedEmail =
+      typeof rawEmail === 'string' && rawEmail.trim().length > 0 ? rawEmail.trim() : null;
+
+    if (mode === 'email' && normalizedEmail) {
+      const existing = await UserRepository.findByEmail(normalizedEmail);
+      if (existing) {
+        throw appError(409, 'EMAIL_EXISTS', 'Email уже занят');
+      }
     }
 
     const inviteToken = generateInviteToken();
@@ -37,16 +59,26 @@ export const UserService = {
 
     const user = await UserRepository.create({
       ...data,
+      email: normalizedEmail,
+      invite_mode: mode,
       invite_token_hash: inviteToken,
       invite_expires_at: inviteExpiresAt,
       status: data.status || 'active',
     });
 
-    await sendInviteEmail({
-      to: user.email,
-      inviteToken,
-      firstName: user.first_name,
-    });
+    const inviteLink = `${process.env.CLIENT_URL}/register/${inviteToken}`;
+
+    if (invite_mode === 'email') {
+      if (!user.email) {
+        throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для отправки инвайта');
+      }
+
+      await sendInviteEmail({
+        to: user.email,
+        inviteToken,
+        firstName: user.first_name,
+      });
+    }
 
     await AuditService.log({
       actorId,
@@ -58,6 +90,10 @@ export const UserService = {
       ip,
       result: 'success',
     });
+
+    if (invite_mode === 'link') {
+      return { user, invite_link: inviteLink };
+    }
 
     return user;
   },
@@ -109,17 +145,14 @@ export const UserService = {
       throw appError(400, 'ALREADY_REGISTERED', 'Пользователь уже зарегистрирован');
     }
 
-    const inviteToken = generateInviteToken();
-    const inviteExpiresAt = new Date(Date.now() + INVITE_TTL_MS);
-
-    await UserRepository.updateById(id, {
-      invite_token_hash: inviteToken,
-      invite_expires_at: inviteExpiresAt,
-    });
+    const now = new Date();
+    if (!user.invite_token_hash || !user.invite_expires_at || new Date(user.invite_expires_at) <= now) {
+      throw appError(400, 'INVITE_EXPIRED', 'Инвайт истёк. Сначала перегенерируйте токен.');
+    }
 
     await sendInviteEmail({
       to: user.email,
-      inviteToken,
+      inviteToken: user.invite_token_hash,
       firstName: user.first_name,
     });
 
@@ -134,5 +167,91 @@ export const UserService = {
     });
 
     return { message: 'Инвайт отправлен повторно' };
+  },
+
+  async regenerateInviteLink({ id, actorId, actorRole, ip }) {
+    const user = await UserRepository.findById(id);
+    if (!user) {
+      throw appError(404, 'NOT_FOUND', 'Пользователь не найден');
+    }
+
+    if (user.password_hash) {
+      throw appError(400, 'ALREADY_REGISTERED', 'Пользователь уже зарегистрирован');
+    }
+
+    if (user.invite_mode !== 'link') {
+      throw appError(400, 'WRONG_INVITE_MODE', 'Для этого пользователя используется приглашение по email');
+    }
+
+    const now = new Date();
+    if (user.invite_token_hash && user.invite_expires_at && new Date(user.invite_expires_at) > now) {
+      throw appError(400, 'INVITE_ACTIVE', 'У пользователя уже есть активная ссылка для регистрации');
+    }
+
+    const inviteToken = generateInviteToken();
+    const inviteExpiresAt = new Date(now.getTime() + INVITE_TTL_MS);
+
+    await UserRepository.updateById(id, {
+      invite_token_hash: inviteToken,
+      invite_expires_at: inviteExpiresAt,
+    });
+
+    const inviteLink = `${process.env.CLIENT_URL}/register/${inviteToken}`;
+
+    await AuditService.log({
+      actorId,
+      actorRole,
+      eventType: 'INVITE_LINK_REGENERATED',
+      entityType: 'user',
+      entityId: id,
+      ip,
+      result: 'success',
+    });
+
+    return { invite_link: inviteLink };
+  },
+
+  async regenerateEmailInvite({ id, actorId, actorRole, ip }) {
+    const user = await UserRepository.findById(id);
+    if (!user) {
+      throw appError(404, 'NOT_FOUND', 'Пользователь не найден');
+    }
+
+    if (user.password_hash) {
+      throw appError(400, 'ALREADY_REGISTERED', 'Пользователь уже зарегистрирован');
+    }
+
+    if (user.invite_mode !== 'email') {
+      throw appError(400, 'WRONG_INVITE_MODE', 'Для этого пользователя используется приглашение по ссылке в чат');
+    }
+
+    if (!user.email) {
+      throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для перегенерации инвайта');
+    }
+
+    const now = new Date();
+    if (user.invite_token_hash && user.invite_expires_at && new Date(user.invite_expires_at) > now) {
+      throw appError(400, 'INVITE_ACTIVE', 'У пользователя уже есть активный инвайт');
+    }
+
+    const inviteToken = generateInviteToken();
+    const inviteExpiresAt = new Date(now.getTime() + INVITE_TTL_MS);
+
+    await UserRepository.updateById(id, {
+      invite_token_hash: inviteToken,
+      invite_expires_at: inviteExpiresAt,
+    });
+
+    await AuditService.log({
+      actorId,
+      actorRole,
+      eventType: 'INVITE_EMAIL_REGENERATED',
+      entityType: 'user',
+      entityId: id,
+      ip,
+      result: 'success',
+    });
+
+    return { message: 'Инвайт перегенерирован' };
   },
 };

@@ -12,5 +12,7 @@ router.get('/:id', UserController.getById);
 router.post('/', UserController.create);
 router.patch('/:id', UserController.update);
 router.post('/:id/resend-invite', UserController.resendInvite);
+router.post('/:id/regenerate-link', UserController.regenerateInviteLink);
+router.post('/:id/regenerate-email-invite', UserController.regenerateEmailInvite);
 
 export default router;

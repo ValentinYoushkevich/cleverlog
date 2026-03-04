@@ -5,6 +5,21 @@
 
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div>
+        <label for="register-email" class="mb-1 block text-sm font-medium text-surface-700">
+          Email
+        </label>
+        <InputText
+          id="register-email"
+          v-model="email"
+          type="email"
+          placeholder="Введите email"
+          class="w-full"
+          :class="{ 'p-invalid': errors.email }"
+        />
+        <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
+      </div>
+
+      <div>
         <label for="register-password" class="mb-1 block text-sm font-medium text-surface-700">
           Пароль
         </label>
@@ -80,6 +95,7 @@
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Password from 'primevue/password';
 import ProgressBar from 'primevue/progressbar';
@@ -105,6 +121,7 @@ const { defineField, handleSubmit, errors } = useForm({
   validationSchema: toTypedSchema(registerSchema),
 });
 
+const [email] = defineField('email');
 const [password] = defineField('password');
 const [confirmPassword] = defineField('confirmPassword');
 
@@ -114,7 +131,7 @@ const onSubmit = handleSubmit(async (values) => {
   serverError.value = '';
   loading.value = true;
   try {
-    await registerRequest({ token: route.params.token, password: values.password });
+    await registerRequest({ token: route.params.token, email: values.email, password: values.password });
     await router.push({ name: 'login' });
   } catch (err) {
     const code = err.response?.data?.code;

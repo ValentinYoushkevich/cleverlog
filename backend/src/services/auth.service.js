@@ -12,7 +12,7 @@ function appError(status, code, message) {
 }
 
 export const AuthService = {
-  async register({ token, password, ip }) {
+  async register({ token, email, password, ip }) {
     const user = await UserRepository.findByInviteToken(token);
     if (!user) {
       throw appError(400, 'INVALID_TOKEN', 'Инвайт недействителен');
@@ -22,9 +22,25 @@ export const AuthService = {
       throw appError(400, 'TOKEN_EXPIRED', 'Инвайт истёк');
     }
 
+    const normalizedEmail = email?.trim();
+    if (!normalizedEmail) {
+      throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для регистрации');
+    }
+
+    // Если email уже задан администратором, не даём указать другой
+    if (user.email && user.email !== normalizedEmail) {
+      throw appError(400, 'EMAIL_MISMATCH', 'Email не совпадает с указанным администратором');
+    }
+
+    const existing = await UserRepository.findByEmail(normalizedEmail);
+    if (existing && existing.id !== user.id) {
+      throw appError(409, 'EMAIL_EXISTS', 'Пользователь с таким email уже существует');
+    }
+
     const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
 
     await UserRepository.updateById(user.id, {
+      email: user.email ?? normalizedEmail,
       password_hash: passwordHash,
       invite_token_hash: null,
       invite_expires_at: null,

@@ -8,6 +8,7 @@ const passwordSchema = z
 
 export const registerSchema = z.object({
   token: z.string().min(1),
+  email: z.string().email(),
   password: passwordSchema,
 });
 

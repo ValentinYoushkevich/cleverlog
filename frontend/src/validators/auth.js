@@ -15,6 +15,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
+    email: z.string().email('Введите корректный email'),
     password: passwordSchema,
     confirmPassword: z.string(),
   })
