@@ -10,14 +10,48 @@
 
 ---
 
-## Шаг 1. API
+## Шаг 1. Store adminCalendar
 
-`src/api/calendar.js` — дополнить:
+Стор для страницы Административный календарь (`AdminCalendarPage`) — вызовы API в сторе, обёрнуты в try/catch.
+
+`src/stores/adminCalendar.js`:
 
 ```js
-updateDay: (date, day_type) => http.patch(`/calendar/days/${date}`, { day_type }),
-updateNorm: (year, month, norm_hours) => http.put(`/calendar/norm/${year}/${month}`, { norm_hours }),
-getNorm: (year, month) => http.get(`/calendar/norm/${year}/${month}`),
+import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
+
+export const useAdminCalendarStore = defineStore('adminCalendar', {
+  actions: {
+    async updateDay(date, day_type) {
+      try {
+        await http.patch(`/calendar/days/${date}`, { day_type });
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async updateNorm(year, month, norm_hours) {
+      try {
+        await http.put(`/calendar/norm/${year}/${month}`, { norm_hours });
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async getNorm(year, month) {
+      try {
+        const res = await http.get(`/calendar/norm/${year}/${month}`);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+  },
+});
 ```
 
 ---
@@ -133,7 +167,7 @@ import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Popover from 'primevue/popover';
-import { calendarApi } from '@/api/calendar.js';
+import { useAdminCalendarStore } from '@/stores/adminCalendar.js';
 import { useCalendarStore } from '@/stores/calendar.js';
 import { useUiStore } from '@/stores/ui.js';
 
@@ -143,6 +177,7 @@ defineOptions({ name: 'AdminCalendarPage' });
 
 const toast = useToast();
 const calendarStore = useCalendarStore();
+const adminCalendarStore = useAdminCalendarStore();
 const uiStore = useUiStore();
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
@@ -236,7 +271,7 @@ async function setDayType(type) {
   if (!selectedDay.value) return;
   popoverRef.value.hide();
   try {
-    await calendarApi.updateDay(selectedDay.value.date, type);
+    await adminCalendarStore.updateDay(selectedDay.value.date, type);
     await calendarStore.fetchMonth(calendarStore.currentYear, calendarStore.currentMonth);
     toast.add({ severity: 'success', summary: 'Тип дня обновлён', life: 2000 });
   } catch {
@@ -248,7 +283,7 @@ async function setDayType(type) {
 async function saveNorm() {
   savingNorm.value = true;
   try {
-    await calendarApi.updateNorm(calendarStore.currentYear, calendarStore.currentMonth, normValue.value);
+    await adminCalendarStore.updateNorm(calendarStore.currentYear, calendarStore.currentMonth, normValue.value);
     originalNorm.value = normValue.value;
     await calendarStore.fetchMonth(calendarStore.currentYear, calendarStore.currentMonth);
     toast.add({ severity: 'success', summary: 'Норма обновлена', life: 2000 });

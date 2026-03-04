@@ -7,35 +7,99 @@
 > **Зависимости модуля:**
 > - `useCalendarStore` из MODULE_2 — `isClosed`, `fetchMonth` (обновить после закрытия)
 > - `useAuthStore` из MODULE_2 — `isAdmin`
-> - `usersApi` из MODULE_9 — для per-user настроек
+> - `useUsersStore` из MODULE_12 — для списка пользователей на странице уведомлений
 
 ---
 
-## Шаг 1. API
+## Шаг 1. Store monthClosures и Store notifications
 
-`src/api/monthClosures.js`:
+Сторы для логики закрытия месяца (AppLayout) и для страницы NotificationsPage — вызовы API в сторах, обёрнуты в try/catch.
+
+**`src/stores/monthClosures.js`**:
 
 ```js
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
 
-export const monthClosuresApi = {
-  list: () => http.get('/month-closures'),
-  close: (year, month) => http.post('/month-closures', { year, month }),
-  open: (year, month) => http.delete(`/month-closures/${year}/${month}`),
-  status: (year, month) => http.get(`/month-closures/status/${year}/${month}`),
-};
+export const useMonthClosuresStore = defineStore('monthClosures', {
+  actions: {
+    async close(year, month) {
+      try {
+        await http.post('/month-closures', { year, month });
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async open(year, month) {
+      try {
+        await http.delete(`/month-closures/${year}/${month}`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async fetchStatus(year, month) {
+      try {
+        const res = await http.get(`/month-closures/status/${year}/${month}`);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+  },
+});
 ```
 
-`src/api/notifications.js`:
+**`src/stores/notifications.js`** — стор для страницы «Настройки уведомлений»:
 
 ```js
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
 
-export const notificationsApi = {
-  getSettings: () => http.get('/notifications/settings'),
-  updateGlobal: (enabled) => http.patch('/notifications/settings', { enabled }),
-  updateUser: (userId, enabled) => http.patch(`/notifications/users/${userId}`, { enabled }),
-};
+export const useNotificationsStore = defineStore('notifications', {
+  state: () => ({
+    globalEnabled: true,
+    loading: false,
+  }),
+
+  actions: {
+    async fetchSettings() {
+      try {
+        const res = await http.get('/notifications/settings');
+        this.globalEnabled = res.data?.global_enabled ?? true;
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async updateGlobal(enabled) {
+      try {
+        await http.patch('/notifications/settings', { enabled });
+        this.globalEnabled = enabled;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async updateUser(userId, enabled) {
+      try {
+        await http.patch(`/notifications/users/${userId}`, { enabled });
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+  },
+});
 ```
 
 ---
@@ -47,10 +111,11 @@ export const notificationsApi = {
 ```js
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import { monthClosuresApi } from '@/api/monthClosures.js';
+import { useMonthClosuresStore } from '@/stores/monthClosures.js';
 
 const confirm = useConfirm();
 const toast = useToast();
+const monthClosuresStore = useMonthClosuresStore();
 
 async function handleMonthToggle() {
   const year = calendarStore.currentYear;
@@ -66,9 +131,9 @@ async function handleMonthToggle() {
     accept: async () => {
       try {
         if (calendarStore.isClosed) {
-          await monthClosuresApi.open(year, month);
+          await monthClosuresStore.open(year, month);
         } else {
-          await monthClosuresApi.close(year, month);
+          await monthClosuresStore.close(year, month);
         }
         await calendarStore.fetchMonth(year, month);
         toast.add({ severity: 'success', summary: `Месяц ${action === 'закрыть' ? 'закрыт' : 'открыт'}`, life: 3000 });
@@ -150,14 +215,18 @@ import { useToast } from 'primevue/usetoast';
 import Card from 'primevue/card';
 import ToggleSwitch from 'primevue/toggleswitch';
 import ProgressSpinner from 'primevue/progressspinner';
-import { notificationsApi } from '@/api/notifications.js';
-import { usersApi } from '@/api/users.js';
+import { useNotificationsStore } from '@/stores/notifications.js';
+import { useUsersStore } from '@/stores/users.js';
 import { useUiStore } from '@/stores/ui.js';
+import { storeToRefs } from 'pinia';
 
 defineOptions({ name: 'NotificationsPage' });
 
 const toast = useToast();
 const uiStore = useUiStore();
+const notificationsStore = useNotificationsStore();
+const usersStore = useUsersStore();
+const { globalEnabled } = storeToRefs(notificationsStore);
 
 onMounted(() => {
   uiStore.setPageTitle('Уведомления');
@@ -165,22 +234,19 @@ onMounted(() => {
   loadUsers();
 });
 
-const globalEnabled = ref(true);
 const savingGlobal = ref(false);
-
 const users = ref([]);
 const userEnabled = reactive({});
 const loadingUsers = ref(false);
 
 async function loadSettings() {
-  const res = await notificationsApi.getSettings();
-  globalEnabled.value = res.data.global_enabled;
+  await notificationsStore.fetchSettings();
 }
 
 async function saveGlobal() {
   savingGlobal.value = true;
   try {
-    await notificationsApi.updateGlobal(globalEnabled.value);
+    await notificationsStore.updateGlobal(globalEnabled.value);
     toast.add({ severity: 'success', summary: globalEnabled.value ? 'Рассылка включена' : 'Рассылка отключена', life: 3000 });
   } catch {
     toast.add({ severity: 'error', summary: 'Ошибка сохранения', life: 3000 });
@@ -193,20 +259,15 @@ async function saveGlobal() {
 async function loadUsers() {
   loadingUsers.value = true;
   try {
-    const [usersRes, settingsRes] = await Promise.all([
-      usersApi.list({ status: 'active' }),
-      notificationsApi.getSettings(),
+    await Promise.all([
+      usersStore.fetchList({ status: 'active' }),
+      notificationsStore.fetchSettings(),
     ]);
-    users.value = usersRes.data.data ?? usersRes.data;
+    users.value = usersStore.users;
 
-    // По умолчанию у всех включено, если нет явного per-user отключения
     for (const user of users.value) {
       userEnabled[user.id] = true;
     }
-    // Применить per-user настройки — бэк возвращает только явные переопределения
-    // Запрашиваем через список пользователей, у которых есть настройки
-    // Если бэк не возвращает per-user список отдельным эндпоинтом,
-    // то считаем всех включёнными (можно расширить позже)
   } finally {
     loadingUsers.value = false;
   }
@@ -214,7 +275,7 @@ async function loadUsers() {
 
 async function saveUserSetting(userId) {
   try {
-    await notificationsApi.updateUser(userId, userEnabled[userId]);
+    await notificationsStore.updateUser(userId, userEnabled[userId]);
     toast.add({ severity: 'success', summary: 'Настройка сохранена', life: 2000 });
   } catch {
     toast.add({ severity: 'error', summary: 'Ошибка', life: 3000 });

@@ -5,23 +5,58 @@
 Страница `/dashboard` — выбор месяца, три кликабельных Card (недоработка / переработка / незаполненные дни), две круговые диаграммы (часы по проектам, распределение сотрудников), Dialog с детализацией по карточке.
 
 > **Зависимости модуля:**
-> - `reportsApi` из MODULE_8 — нет, дашборд использует отдельный API
 > - `downloadBlob` из MODULE_8 — для экспорта незаполнивших
-> - `usersApi` из MODULE_9 — не нужен, данные берём из дашборд-API
+> - Данные дашборда загружаются через store
 
 ---
 
-## Шаг 1. API
+## Шаг 1. Store dashboard
 
-`src/api/dashboard.js`:
+Стор для страницы Дашборд — вызовы API в сторе, обёрнуты в try/catch. Имя стора соответствует странице: `DashboardPage` → store `dashboard`.
+
+`src/stores/dashboard.js`:
 
 ```js
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
 
-export const dashboardApi = {
-  getSummary: (params) => http.get('/dashboard', { params }),
-  getDetailList: (params) => http.get('/dashboard/users', { params }),
-};
+export const useDashboardStore = defineStore('dashboard', {
+  state: () => ({
+    summary: null,
+    loading: false,
+    detailUsers: [],
+    detailLoading: false,
+  }),
+
+  actions: {
+    async fetchSummary({ year, month }) {
+      this.loading = true;
+      try {
+        const res = await http.get('/dashboard', { params: { year, month } });
+        this.summary = res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchDetailList({ year, month, type }) {
+      this.detailLoading = true;
+      try {
+        const res = await http.get('/dashboard/users', { params: { year, month, type } });
+        this.detailUsers = res.data?.users ?? [];
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.detailLoading = false;
+      }
+    },
+  },
+});
 ```
 
 ---
@@ -197,19 +232,20 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Chart from 'primevue/chart';
 import ProgressSpinner from 'primevue/progressspinner';
-import { dashboardApi } from '@/api/dashboard.js';
+import { useDashboardStore } from '@/stores/dashboard.js';
 import { useUiStore } from '@/stores/ui.js';
+import { storeToRefs } from 'pinia';
 
 dayjs.locale('ru');
 defineOptions({ name: 'DashboardPage' });
 
 const router = useRouter();
 const uiStore = useUiStore();
+const dashboardStore = useDashboardStore();
+const { summary, loading } = storeToRefs(dashboardStore);
 
 const currentYear = ref(dayjs().year());
 const currentMonth = ref(dayjs().month() + 1);
-const summary = ref(null);
-const loading = ref(false);
 
 const monthLabel = computed(() =>
   dayjs(`${currentYear.value}-${currentMonth.value}-01`).format('MMMM YYYY')
@@ -220,14 +256,8 @@ onMounted(() => {
   loadSummary();
 });
 
-async function loadSummary() {
-  loading.value = true;
-  try {
-    const res = await dashboardApi.getSummary({ year: currentYear.value, month: currentMonth.value });
-    summary.value = res.data;
-  } finally {
-    loading.value = false;
-  }
+function loadSummary() {
+  dashboardStore.fetchSummary({ year: currentYear.value, month: currentMonth.value });
 }
 
 function prevMonth() {
@@ -278,9 +308,8 @@ const chartOptions = {
 
 // Детализация
 const detailVisible = ref(false);
-const detailLoading = ref(false);
-const detailUsers = ref([]);
 const detailType = ref('');
+const { detailUsers, detailLoading } = storeToRefs(dashboardStore);
 
 const DETAIL_TITLES = {
   undertime: 'Сотрудники с недоработкой',
@@ -289,16 +318,10 @@ const DETAIL_TITLES = {
 };
 const detailTitle = computed(() => DETAIL_TITLES[detailType.value] ?? '');
 
-async function openDetail(type) {
+function openDetail(type) {
   detailType.value = type;
   detailVisible.value = true;
-  detailLoading.value = true;
-  try {
-    const res = await dashboardApi.getDetailList({ year: currentYear.value, month: currentMonth.value, type });
-    detailUsers.value = res.data.users ?? [];
-  } finally {
-    detailLoading.value = false;
-  }
+  dashboardStore.fetchDetailList({ year: currentYear.value, month: currentMonth.value, type });
 }
 
 function goToCalendar(userId) {

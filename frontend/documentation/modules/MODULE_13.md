@@ -10,44 +10,201 @@
 
 ---
 
-## Шаг 1. API проектов и кастомных полей
+## Шаг 1. Store projects и Store customFields
 
-`src/api/projects.js` — дополнить:
+Сторы для страниц ProjectsPage и CustomFieldsPage — вызовы API в сторах, обёрнуты в try/catch.
+
+**`src/stores/projects.js`** — дополнить (или создать, если только список): помимо `fetchProjects` добавить методы для CRUD и кастомных полей проекта:
 
 ```js
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
 
-export const projectsApi = {
-  list: (params) => http.get('/projects', { params }),
-  create: (data) => http.post('/projects', data),
-  update: (id, data) => http.patch(`/projects/${id}`, data),
+export const useProjectsStore = defineStore('projects', {
+  state: () => ({
+    projects: [],
+    loading: false,
+  }),
 
-  // Кастомные поля проекта
-  getProjectFields: (projectId) => http.get(`/projects/${projectId}/custom-fields`),
-  attachField: (projectId, data) => http.post(`/projects/${projectId}/custom-fields`, data),
-  updateProjectField: (projectId, fieldId, data) => http.patch(`/projects/${projectId}/custom-fields/${fieldId}`, data),
-  detachField: (projectId, fieldId) => http.delete(`/projects/${projectId}/custom-fields/${fieldId}`),
-};
+  getters: {
+    activeProjects: (state) => state.projects.filter((p) => p.status === 'active'),
+  },
+
+  actions: {
+    async fetchProjects(params) {
+      this.loading = true;
+      try {
+        const res = await http.get('/projects', { params });
+        this.projects = res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async create(data) {
+      try {
+        await http.post('/projects', data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async update(id, data) {
+      try {
+        await http.patch(`/projects/${id}`, data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async getProjectFields(projectId) {
+      try {
+        const res = await http.get(`/projects/${projectId}/custom-fields`);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async attachField(projectId, data) {
+      try {
+        await http.post(`/projects/${projectId}/custom-fields`, data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async updateProjectField(projectId, fieldId, data) {
+      try {
+        await http.patch(`/projects/${projectId}/custom-fields/${fieldId}`, data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async detachField(projectId, fieldId) {
+      try {
+        await http.delete(`/projects/${projectId}/custom-fields/${fieldId}`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+  },
+});
 ```
 
-`src/api/customFields.js` — дополнить:
+**`src/stores/customFields.js`** — стор для страницы CustomFieldsPage:
 
 ```js
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
 
-export const customFieldsApi = {
-  list: (params) => http.get('/custom-fields', { params }),
-  create: (data) => http.post('/custom-fields', data),
-  update: (id, data) => http.patch(`/custom-fields/${id}`, data),
-  softDelete: (id) => http.delete(`/custom-fields/${id}`),
-  restore: (id) => http.post(`/custom-fields/${id}/restore`),
-  getProjectFields: (projectId) => http.get(`/projects/${projectId}/custom-fields`),
+export const useCustomFieldsStore = defineStore('customFields', {
+  state: () => ({
+    fields: [],
+    loading: false,
+  }),
 
-  // Опции dropdown
-  getOptions: (id) => http.get(`/custom-fields/${id}/options`),
-  addOption: (id, data) => http.post(`/custom-fields/${id}/options`, data),
-  deprecateOption: (id, optionId) => http.delete(`/custom-fields/${id}/options/${optionId}`),
-};
+  actions: {
+    async fetchList(params = {}) {
+      this.loading = true;
+      try {
+        const res = await http.get('/custom-fields', { params });
+        this.fields = res.data ?? [];
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async create(data) {
+      try {
+        await http.post('/custom-fields', data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async update(id, data) {
+      try {
+        await http.patch(`/custom-fields/${id}`, data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async softDelete(id) {
+      try {
+        await http.delete(`/custom-fields/${id}`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async restore(id) {
+      try {
+        await http.post(`/custom-fields/${id}/restore`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async getProjectFields(projectId) {
+      try {
+        const res = await http.get(`/projects/${projectId}/custom-fields`);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async getOptions(id) {
+      try {
+        const res = await http.get(`/custom-fields/${id}/options`);
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async addOption(id, data) {
+      try {
+        await http.post(`/custom-fields/${id}/options`, data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async deprecateOption(id, optionId) {
+      try {
+        await http.delete(`/custom-fields/${id}/options/${optionId}`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+  },
+});
 ```
 
 ---
@@ -182,9 +339,9 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
-import { projectsApi } from '@/api/projects.js';
 import { useProjectsStore } from '@/stores/projects.js';
 import { useUiStore } from '@/stores/ui.js';
+import { storeToRefs } from 'pinia';
 import { PROJECT_STATUS_OPTIONS, PROJECT_STATUS_LABEL, PROJECT_STATUS_SEVERITY } from '@/constants/projects.js';
 
 defineOptions({ name: 'ProjectsPage' });
@@ -192,23 +349,16 @@ defineOptions({ name: 'ProjectsPage' });
 const toast = useToast();
 const projectsStore = useProjectsStore();
 const uiStore = useUiStore();
+const { projects, loading } = storeToRefs(projectsStore);
 
 onMounted(() => { uiStore.setPageTitle('Проекты'); loadProjects(); });
 
-const projects = ref([]);
-const loading = ref(false);
 const submitting = ref(false);
 const filters = reactive({ status: null });
 
-async function loadProjects() {
-  loading.value = true;
-  try {
-    const params = filters.status ? { status: filters.status } : {};
-    const res = await projectsApi.list(params);
-    projects.value = res.data;
-  } finally {
-    loading.value = false;
-  }
+function loadProjects() {
+  const params = filters.status ? { status: filters.status } : {};
+  projectsStore.fetchProjects(params);
 }
 
 function setStatusFilter(val) {
@@ -232,7 +382,7 @@ async function onSubmitCreate() {
   if (!createForm.name.trim()) { createErrors.name = 'Название обязательно'; return; }
   submitting.value = true;
   try {
-    await projectsApi.create({ name: createForm.name });
+    await projectsStore.create({ name: createForm.name });
     toast.add({ severity: 'success', summary: 'Проект создан', life: 3000 });
     createDialogVisible.value = false;
     await loadProjects();
@@ -258,7 +408,7 @@ function openEditDialog(project) {
 async function onSubmitEdit() {
   submitting.value = true;
   try {
-    await projectsApi.update(editingProject.value.id, editForm);
+    await projectsStore.update(editingProject.value.id, editForm);
     toast.add({ severity: 'success', summary: 'Сохранено', life: 3000 });
     editDialogVisible.value = false;
     await loadProjects();
@@ -394,29 +544,27 @@ import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import Message from 'primevue/message';
-import { customFieldsApi } from '@/api/customFields.js';
+import { useCustomFieldsStore } from '@/stores/customFields.js';
 import { useUiStore } from '@/stores/ui.js';
+import { storeToRefs } from 'pinia';
 import { CUSTOM_FIELD_TYPES } from '@/constants/projects.js';
 
 defineOptions({ name: 'CustomFieldsPage' });
 
 const toast = useToast();
 const uiStore = useUiStore();
+const customFieldsStore = useCustomFieldsStore();
+const { fields, loading } = storeToRefs(customFieldsStore);
+
 const TYPE_LABEL = { text: 'Текст', number: 'Число', dropdown: 'Список', checkbox: 'Флажок' };
 
 onMounted(() => { uiStore.setPageTitle('Кастомные поля'); loadFields(); });
 
-const fields = ref([]);
-const loading = ref(false);
 const submitting = ref(false);
 const showDeleted = ref(false);
 
-async function loadFields() {
-  loading.value = true;
-  try {
-    const res = await customFieldsApi.list(showDeleted.value ? { include_deleted: true } : {});
-    fields.value = res.data;
-  } finally { loading.value = false; }
+function loadFields() {
+  customFieldsStore.fetchList(showDeleted.value ? { include_deleted: true } : {});
 }
 
 function toggleShowDeleted() { showDeleted.value = !showDeleted.value; loadFields(); }
@@ -439,7 +587,7 @@ async function onSubmitCreate() {
   try {
     const payload = { name: createForm.name, type: createForm.type };
     if (createForm.type === 'dropdown') payload.options = createForm.options.filter(o => o.trim());
-    await customFieldsApi.create(payload);
+    await customFieldsStore.create(payload);
     toast.add({ severity: 'success', summary: 'Поле создано', life: 3000 });
     createDialogVisible.value = false;
     await loadFields();
@@ -462,7 +610,7 @@ function openEditDialog(field) {
 async function onSubmitEdit() {
   submitting.value = true;
   try {
-    await customFieldsApi.update(editingField.value.id, { name: editForm.name });
+    await customFieldsStore.update(editingField.value.id, { name: editForm.name });
     toast.add({ severity: 'success', summary: 'Сохранено', life: 3000 });
     editDialogVisible.value = false;
     await loadFields();
@@ -473,7 +621,7 @@ async function onSubmitEdit() {
 
 async function softDelete(field) {
   try {
-    await customFieldsApi.softDelete(field.id);
+    await customFieldsStore.softDelete(field.id);
     toast.add({ severity: 'success', summary: 'Поле скрыто', life: 3000 });
     await loadFields();
   } catch (err) {
@@ -483,7 +631,7 @@ async function softDelete(field) {
 
 async function restore(field) {
   try {
-    await customFieldsApi.restore(field.id);
+    await customFieldsStore.restore(field.id);
     toast.add({ severity: 'success', summary: 'Поле восстановлено', life: 3000 });
     await loadFields();
   } catch {

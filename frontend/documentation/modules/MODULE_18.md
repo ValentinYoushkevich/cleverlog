@@ -5,8 +5,8 @@
 Расширение страницы `/admin/projects` — по клику на проект открывается боковая панель (Drawer) с управлением кастомными полями: список привязанных полей, переключатели is_required / is_enabled, кнопка привязки нового поля из глобального списка, отвязка.
 
 > **Зависимости модуля:**
-> - `projectsApi` (getProjectFields, attachField, updateProjectField, detachField) из MODULE_13
-> - `customFieldsApi` (list) из MODULE_13
+> - `useProjectsStore` (getProjectFields, attachField, updateProjectField, detachField) из MODULE_13
+> - `useCustomFieldsStore` (fetchList) из MODULE_13
 > - Страница `ProjectsPage` из MODULE_13 — добавляем Drawer внутрь
 >
 > **Важно (не потерять при реализации):**
@@ -134,15 +134,16 @@
 </Dialog>
 ```
 
-Добавить в `<script setup>` ProjectsPage:
+Добавить в `<script setup>` ProjectsPage (использовать `useProjectsStore` и `useCustomFieldsStore` из MODULE_13):
 
 ```js
 import { ref, reactive, computed } from 'vue';
 import Drawer from 'primevue/drawer';
 import ToggleSwitch from 'primevue/toggleswitch';
 import ProgressSpinner from 'primevue/progressspinner';
-import { customFieldsApi } from '@/api/customFields.js';
+import { useCustomFieldsStore } from '@/stores/customFields.js';
 
+const customFieldsStore = useCustomFieldsStore();
 const TYPE_LABEL = { text: 'Текст', number: 'Число', dropdown: 'Список', checkbox: 'Флажок' };
 
 // --- Drawer с полями ---
@@ -160,8 +161,8 @@ async function openFieldsDrawer(project) {
 async function loadProjectFields() {
   loadingFields.value = true;
   try {
-    const res = await projectsApi.getProjectFields(drawerProject.value.id);
-    projectFields.value = res.data;
+    const data = await projectsStore.getProjectFields(drawerProject.value.id);
+    projectFields.value = data ?? [];
   } finally {
     loadingFields.value = false;
   }
@@ -169,7 +170,7 @@ async function loadProjectFields() {
 
 async function updateField(field, key) {
   try {
-    await projectsApi.updateProjectField(drawerProject.value.id, field.custom_field_id, {
+    await projectsStore.updateProjectField(drawerProject.value.id, field.custom_field_id, {
       is_required: field.is_required,
       is_enabled: field.is_enabled,
     });
@@ -182,7 +183,7 @@ async function updateField(field, key) {
 
 async function detachField(field) {
   try {
-    await projectsApi.detachField(drawerProject.value.id, field.custom_field_id);
+    await projectsStore.detachField(drawerProject.value.id, field.custom_field_id);
     await loadProjectFields();
     toast.add({ severity: 'success', summary: 'Поле отвязано', life: 2000 });
   } catch {
@@ -201,8 +202,8 @@ const availableFields = computed(() => {
 });
 
 async function openAttachDialog() {
-  const res = await customFieldsApi.list();
-  allFields.value = res.data;
+  await customFieldsStore.fetchList();
+  allFields.value = customFieldsStore.fields ?? [];
   Object.assign(attachForm, { field_id: null, is_required: false, is_enabled: true });
   attachDialogVisible.value = true;
 }
@@ -211,7 +212,7 @@ async function attachField() {
   if (!attachForm.field_id) return;
   submitting.value = true;
   try {
-    await projectsApi.attachField(drawerProject.value.id, {
+    await projectsStore.attachField(drawerProject.value.id, {
       custom_field_id: attachForm.field_id,
       is_required: attachForm.is_required,
       is_enabled: attachForm.is_enabled,

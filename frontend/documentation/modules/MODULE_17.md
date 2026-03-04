@@ -5,7 +5,7 @@
 Два небольших модуля. Страница `/reports/unlogged` — таблица сотрудников с незаполненными рабочими днями, даты списком, экспорт. Глобальный обработчик JS-ошибок на фронтенде — отправляет ошибки на `POST /api/log-js-error`.
 
 > **Зависимости модуля:**
-> - `reportsApi` из MODULE_8 — `unlogged`, `exportUnlogged`
+> - `useReportsStore` — методы `fetchUnlogged`, `exportUnlogged` (вызовы API в сторе, try/catch)
 > - `downloadBlob` из MODULE_8
 >
 > **Важно (не потерять при реализации):**
@@ -15,14 +15,45 @@
 
 ---
 
-## Шаг 1. Страница «Незаполнившие дни»
+## Шаг 1. Store reports — незаполнившие дни и страница
 
-Добавить в `src/api/reports.js` (уже есть из MODULE_8):
+В `src/stores/reports.js` добавить state и actions для страницы «Незаполнившие дни» (имя стора `reports` соответствует группе отчётов; страница `UnloggedPage` использует этот же store):
 
 ```js
-// уже реализованы в MODULE_8:
-unlogged: (params) => http.get('/reports/unlogged', { params }),
-exportUnlogged: (params) => http.get('/reports/unlogged/export', { params, responseType: 'blob' }),
+// В state добавить:
+unloggedUsers: [],
+unloggedLoading: false,
+unloggedExporting: false,
+
+// В actions добавить:
+async fetchUnlogged({ year, month }) {
+  this.unloggedLoading = true;
+  try {
+    const res = await http.get('/reports/unlogged', { params: { year, month } });
+    this.unloggedUsers = res.data?.users ?? [];
+  } catch (err) {
+    showError(err);
+    throw err;
+  } finally {
+    this.unloggedLoading = false;
+  }
+},
+
+async exportUnlogged({ year, month }) {
+  this.unloggedExporting = true;
+  try {
+    const res = await http.get('/reports/unlogged/export', {
+      params: { year, month },
+      responseType: 'blob',
+    });
+    return res.data;
+  } catch (err) {
+    showError(err);
+    throw err;
+  } finally {
+    this.unloggedExporting = false;
+  }
+},
 ```
 
 `src/pages/reports/UnloggedPage.vue`:
@@ -133,19 +164,20 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
-import { reportsApi } from '@/api/reports.js';
+import { useReportsStore } from '@/stores/reports.js';
 import { useUiStore } from '@/stores/ui.js';
 import { downloadBlob } from '@/utils/download.js';
+import { storeToRefs } from 'pinia';
 
 dayjs.locale('ru');
 defineOptions({ name: 'UnloggedPage' });
 
 const uiStore = useUiStore();
+const reportsStore = useReportsStore();
+const { unloggedUsers: users, unloggedLoading: loading, unloggedExporting: exporting } = storeToRefs(reportsStore);
+
 const currentYear = ref(dayjs().year());
 const currentMonth = ref(dayjs().month() + 1);
-const users = ref([]);
-const loading = ref(false);
-const exporting = ref(false);
 const expandedRows = ref([]);
 
 const monthLabel = computed(() =>
@@ -154,12 +186,8 @@ const monthLabel = computed(() =>
 
 onMounted(() => { uiStore.setPageTitle('Незаполнившие дни'); loadReport(); });
 
-async function loadReport() {
-  loading.value = true;
-  try {
-    const res = await reportsApi.unlogged({ year: currentYear.value, month: currentMonth.value });
-    users.value = res.data.users ?? [];
-  } finally { loading.value = false; }
+function loadReport() {
+  reportsStore.fetchUnlogged({ year: currentYear.value, month: currentMonth.value });
 }
 
 function prevMonth() {
@@ -175,11 +203,8 @@ function nextMonth() {
 }
 
 async function doExport() {
-  exporting.value = true;
-  try {
-    const res = await reportsApi.exportUnlogged({ year: currentYear.value, month: currentMonth.value });
-    downloadBlob(res.data, `unlogged_${currentYear.value}_${currentMonth.value}.xlsx`);
-  } finally { exporting.value = false; }
+  const blob = await reportsStore.exportUnlogged({ year: currentYear.value, month: currentMonth.value });
+  if (blob) downloadBlob(blob, `unlogged_${currentYear.value}_${currentMonth.value}.xlsx`);
 }
 </script>
 ```

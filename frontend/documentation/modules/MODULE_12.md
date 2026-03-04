@@ -5,11 +5,74 @@
 Страница `/admin/users` — таблица пользователей с фильтрами по статусу/роли/тегам, создание через Dialog с инвайтом, редактирование роли/статуса/должности, повторная отправка инвайта. Статусы и роли отображаются как цветные Badge.
 
 > **Зависимости модуля:**
-> - `usersApi` из MODULE_9 — `list`, `create`, `update`, `resendInvite`
+> - Store `users` — вызовы API в сторе (имя стора соответствует странице `UsersPage`)
 
 ---
 
-## Шаг 1. Zod-схема создания пользователя
+## Шаг 1. Store users
+
+Стор для страницы Пользователи — все вызовы API в сторе, обёрнуты в try/catch.
+
+`src/stores/users.js`:
+
+```js
+import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
+
+export const useUsersStore = defineStore('users', {
+  state: () => ({
+    users: [],
+    loading: false,
+  }),
+
+  actions: {
+    async fetchList(params) {
+      this.loading = true;
+      try {
+        const res = await http.get('/users', { params });
+        this.users = res.data?.data ?? res.data ?? [];
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async create(data) {
+      try {
+        await http.post('/users', data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async update(id, data) {
+      try {
+        await http.patch(`/users/${id}`, data);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async resendInvite(id) {
+      try {
+        await http.post(`/users/${id}/resend-invite`);
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+  },
+});
+```
+
+---
+
+## Шаг 2. Zod-схема создания пользователя
 
 `src/validators/user.js`:
 
@@ -35,7 +98,7 @@ export const updateUserSchema = z.object({
 
 ---
 
-## Шаг 2. Константы
+## Шаг 3. Константы
 
 `src/constants/users.js`:
 
@@ -73,7 +136,7 @@ export const ROLE_LABEL = {
 
 ---
 
-## Шаг 3. UsersPage
+## Шаг 4. UsersPage
 
 `src/pages/admin/UsersPage.vue`:
 
@@ -259,8 +322,9 @@ import Select from 'primevue/select';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 import Message from 'primevue/message';
-import { usersApi } from '@/api/users.js';
+import { useUsersStore } from '@/stores/users.js';
 import { useUiStore } from '@/stores/ui.js';
+import { storeToRefs } from 'pinia';
 import {
   USER_STATUS_OPTIONS, USER_ROLE_OPTIONS,
   STATUS_SEVERITY, ROLE_SEVERITY,
@@ -272,11 +336,10 @@ defineOptions({ name: 'UsersPage' });
 
 const toast = useToast();
 const uiStore = useUiStore();
+const usersStore = useUsersStore();
+const { users, loading } = storeToRefs(usersStore);
 
 onMounted(() => { uiStore.setPageTitle('Пользователи'); loadUsers(); });
-
-const users = ref([]);
-const loading = ref(false);
 const submitting = ref(false);
 const filters = reactive({ status: null, role: null, search: '' });
 
@@ -291,17 +354,11 @@ const filteredUsers = computed(() => {
   );
 });
 
-async function loadUsers() {
-  loading.value = true;
-  try {
-    const params = {};
-    if (filters.status) params.status = filters.status;
-    if (filters.role) params.role = filters.role;
-    const res = await usersApi.list(params);
-    users.value = res.data.data ?? res.data;
-  } finally {
-    loading.value = false;
-  }
+function loadUsers() {
+  const params = {};
+  if (filters.status) params.status = filters.status;
+  if (filters.role) params.role = filters.role;
+  usersStore.fetchList(params);
 }
 
 function resetFilters() {
@@ -334,7 +391,7 @@ async function onSubmitCreate() {
   submitting.value = true;
   createError.value = '';
   try {
-    await usersApi.create(createForm);
+    await usersStore.create(createForm);
     toast.add({ severity: 'success', summary: 'Пользователь создан', detail: 'Инвайт отправлен на email', life: 4000 });
     createDialogVisible.value = false;
     await loadUsers();
@@ -372,7 +429,7 @@ async function onSubmitEdit() {
   submitting.value = true;
   editError.value = '';
   try {
-    await usersApi.update(editingUser.value.id, editForm);
+    await usersStore.update(editingUser.value.id, editForm);
     toast.add({ severity: 'success', summary: 'Сохранено', life: 3000 });
     editDialogVisible.value = false;
     await loadUsers();
@@ -386,7 +443,7 @@ async function onSubmitEdit() {
 // --- Повторный инвайт ---
 async function resendInvite(user) {
   try {
-    await usersApi.resendInvite(user.id);
+    await usersStore.resendInvite(user.id);
     toast.add({ severity: 'success', summary: 'Инвайт отправлен', detail: user.email, life: 3000 });
   } catch {
     toast.add({ severity: 'error', summary: 'Ошибка при отправке инвайта', life: 3000 });

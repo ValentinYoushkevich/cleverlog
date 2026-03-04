@@ -10,18 +10,66 @@
 
 ---
 
-## Шаг 1. API
+## Шаг 1. Store auditLogs
 
-`src/api/auditLogs.js`:
+Стор для страницы Журнал аудита (`AuditLogsPage`) — вызовы API в сторе, обёрнуты в try/catch.
+
+`src/stores/auditLogs.js`:
 
 ```js
 import http from '@/api/http.js';
+import { showError } from '@/utils/toast.js';
+import { defineStore } from 'pinia';
 
-export const auditLogsApi = {
-  list: (params) => http.get('/audit-logs', { params }),
-  filterOptions: () => http.get('/audit-logs/filter-options'),
-  export: (params) => http.get('/audit-logs/export', { params, responseType: 'blob' }),
-};
+export const useAuditLogsStore = defineStore('auditLogs', {
+  state: () => ({
+    logs: [],
+    filterOptions: { event_types: [], entity_types: [] },
+    loading: false,
+    exporting: false,
+    totalRecords: 0,
+  }),
+
+  actions: {
+    async fetchFilterOptions() {
+      try {
+        const res = await http.get('/audit-logs/filter-options');
+        this.filterOptions.event_types = res.data?.event_types ?? [];
+        this.filterOptions.entity_types = res.data?.entity_types ?? [];
+      } catch (err) {
+        showError(err);
+        throw err;
+      }
+    },
+
+    async fetchList(params) {
+      this.loading = true;
+      try {
+        const res = await http.get('/audit-logs', { params });
+        this.logs = res.data?.data ?? res.data ?? [];
+        this.totalRecords = res.data?.pagination?.total ?? this.logs.length;
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async exportExcel(params) {
+      this.exporting = true;
+      try {
+        const res = await http.get('/audit-logs/export', { params, responseType: 'blob' });
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.exporting = false;
+      }
+    },
+  },
+});
 ```
 
 ---
@@ -188,13 +236,16 @@ import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
-import { auditLogsApi } from '@/api/auditLogs.js';
+import { useAuditLogsStore } from '@/stores/auditLogs.js';
 import { useUiStore } from '@/stores/ui.js';
 import { downloadBlob } from '@/utils/download.js';
+import { storeToRefs } from 'pinia';
 
 defineOptions({ name: 'AuditLogsPage' });
 
 const uiStore = useUiStore();
+const auditLogsStore = useAuditLogsStore();
+const { logs, loading, exporting, totalRecords, filterOptions } = storeToRefs(auditLogsStore);
 
 onMounted(() => {
   uiStore.setPageTitle('Журнал аудита');
@@ -202,14 +253,8 @@ onMounted(() => {
   loadLogs();
 });
 
-const logs = ref([]);
-const loading = ref(false);
-const exporting = ref(false);
-const totalRecords = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(50);
-
-const filterOptions = reactive({ event_types: [], entity_types: [] });
 const filters = reactive({
   event_type: null, entity_type: null,
   result: null, dateRange: null,
@@ -217,9 +262,7 @@ const filters = reactive({
 });
 
 async function loadFilterOptions() {
-  const res = await auditLogsApi.filterOptions();
-  filterOptions.event_types = res.data.event_types;
-  filterOptions.entity_types = res.data.entity_types;
+  await auditLogsStore.fetchFilterOptions();
 }
 
 function buildParams() {
@@ -234,15 +277,8 @@ function buildParams() {
   return params;
 }
 
-async function loadLogs() {
-  loading.value = true;
-  try {
-    const res = await auditLogsApi.list(buildParams());
-    logs.value = res.data.data ?? res.data;
-    totalRecords.value = res.data.pagination?.total ?? logs.value.length;
-  } finally {
-    loading.value = false;
-  }
+function loadLogs() {
+  auditLogsStore.fetchList(buildParams());
 }
 
 function resetFilters() {
@@ -271,13 +307,8 @@ function openDetail(log) {
 }
 
 async function doExport() {
-  exporting.value = true;
-  try {
-    const res = await auditLogsApi.export(buildParams());
-    downloadBlob(res.data, 'audit_log.xlsx');
-  } finally {
-    exporting.value = false;
-  }
+  const blob = await auditLogsStore.exportExcel(buildParams());
+  if (blob) downloadBlob(blob, 'audit_log.xlsx');
 }
 </script>
 ```
