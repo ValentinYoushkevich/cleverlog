@@ -159,6 +159,7 @@ import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { ABSENCE_LABEL } from '@/constants/absences.js';
 import { useAbsencesStore } from '@/stores/absences.js';
@@ -170,6 +171,7 @@ import { downloadBlob } from '@/utils/download.js';
 
 defineOptions({ name: 'UserReportPage' });
 
+const route = useRoute();
 const projectsStore = useProjectsStore();
 const reportsStore = useReportsStore();
 const authStore = useAuthStore();
@@ -268,6 +270,19 @@ onMounted(async () => {
   }
   if (authStore.isAdmin && !absencesStore.users.length) {
     await absencesStore.fetchUsers();
+  }
+  // Переход с дашборда: подставляем user_id и период (год/месяц) из query
+  const q = route.query;
+  if (q.user_id) {
+    filters.user_id = Number(q.user_id) || q.user_id;
+  }
+  if (q.year && q.month) {
+    const y = Number(q.year);
+    const m = Number(q.month);
+    if (!Number.isNaN(y) && !Number.isNaN(m)) {
+      const start = dayjs(`${y}-${m}-01`);
+      filters.dateRange = [start.toDate(), start.endOf('month').toDate()];
+    }
   }
   await loadReport();
 });
