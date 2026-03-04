@@ -2,16 +2,16 @@ import jwt from 'jsonwebtoken';
 import { JWT_COOKIE_NAME } from '../constants/auth.js';
 import { AuthService } from '../services/auth.service.js';
 import {
-    changePasswordSchema,
-    loginSchema,
-    registerSchema,
-    updateProfileSchema,
+  changePasswordSchema,
+  loginSchema,
+  registerSchema,
+  updateProfileSchema,
 } from '../validators/auth.validators.js';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  sameSite: 'none',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
