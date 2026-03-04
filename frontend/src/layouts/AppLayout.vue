@@ -60,7 +60,6 @@
     <div class="flex flex-1 flex-col overflow-hidden">
       <header class="flex h-16 shrink-0 items-center justify-between border-b border-surface-200 bg-surface-0 px-6">
         <div class="flex items-center gap-3">
-          <span class="text-lg font-semibold text-surface-800">{{ pageTitle }}</span>
           <Tag v-if="isClosed" value="Месяц закрыт" severity="danger" icon="pi pi-lock" />
         </div>
         <div class="flex items-center gap-2">
@@ -85,7 +84,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth.js';
 import { useCalendarStore } from '@/stores/calendar.js';
-import { useUiStore } from '@/stores/ui.js';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
@@ -95,14 +93,12 @@ defineOptions({ name: 'AppLayout' });
 
 const authStore = useAuthStore();
 const calendarStore = useCalendarStore();
-const uiStore = useUiStore();
 
 const isAdmin = computed(() => authStore.isAdmin);
 const userName = computed(() => authStore.userName);
 const userRole = computed(() => authStore.user?.role ?? '');
 const userInitials = computed(() => authStore.userInitials);
 const isClosed = computed(() => calendarStore.isClosed);
-const pageTitle = computed(() => uiStore.pageTitle);
 
 const navItems = [
   { name: 'calendar', label: 'Календарь', icon: 'pi pi-calendar' },
