@@ -39,6 +39,7 @@ export const ReportController = {
         dateTo: req.query.date_to,
       });
       await sendWorkbook(res, workbook, 'report_user');
+      return undefined;
     } catch (err) {
       return next(err);
     }
@@ -69,6 +70,7 @@ export const ReportController = {
         dateTo: req.query.date_to,
       });
       await sendWorkbook(res, workbook, 'report_project');
+      return undefined;
     } catch (err) {
       return next(err);
     }
@@ -94,6 +96,7 @@ export const ReportController = {
         month: Number(req.query.month),
       });
       await sendWorkbook(res, workbook, 'report_monthly_summary');
+      return undefined;
     } catch (err) {
       return next(err);
     }
@@ -119,6 +122,7 @@ export const ReportController = {
         month: Number(req.query.month),
       });
       await sendWorkbook(res, workbook, 'report_unlogged');
+      return undefined;
     } catch (err) {
       return next(err);
     }

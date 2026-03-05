@@ -68,5 +68,5 @@ export const UserRepository = {
     return rows[0] ?? null;
   },
 
-  deleteSessionsByUserId: async (_id) => undefined,
+  deleteSessionsByUserId: (_id) => undefined,
 };

@@ -2,7 +2,7 @@ import logger from '../config/logger.js';
 import { jsErrorSchema } from '../validators/jsError.validators.js';
 
 export const JsErrorController = {
-  async log(req, res, _next) {
+  log(req, res, _next) {
     try {
       const data = jsErrorSchema.parse(req.body);
 

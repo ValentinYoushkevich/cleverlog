@@ -10,7 +10,8 @@ function appError(status, code, message) {
 
 export const ProjectService = {
   async list({ status } = {}) {
-    return ProjectRepository.findAll({ status });
+    const projects = await ProjectRepository.findAll({ status });
+    return projects;
   },
 
   async getById(id) {

@@ -1,8 +1,8 @@
 import { WorkLogService } from '../services/workLog.service.js';
 import {
-    createWorkLogSchema,
-    updateWorkLogSchema,
-    workLogFiltersSchema,
+  createWorkLogSchema,
+  updateWorkLogSchema,
+  workLogFiltersSchema,
 } from '../validators/workLog.validators.js';
 
 export const WorkLogController = {

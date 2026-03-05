@@ -9,4 +9,3 @@ router.use(authenticate);
 router.get('/departments', DirectoryController.listDepartments);
 
 export default router;
-

@@ -71,11 +71,13 @@ export const ReportRepository = {
       return [];
     }
 
-    return db('work_log_custom_values as wcv')
+    const rows = await db('work_log_custom_values as wcv')
       .join('custom_fields as cf', 'cf.id', 'wcv.custom_field_id')
       .whereIn('wcv.work_log_id', workLogIds)
       .whereNull('cf.deleted_at')
       .select('wcv.work_log_id', 'wcv.value', 'cf.name as field_name', 'cf.type');
+
+    return rows;
   },
 
   getAllProjects: () => db('projects')

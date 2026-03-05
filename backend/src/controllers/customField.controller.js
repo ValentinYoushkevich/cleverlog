@@ -1,10 +1,10 @@
 import { CustomFieldService } from '../services/customField.service.js';
 import {
-    addOptionSchema,
-    attachToProjectSchema,
-    createCustomFieldSchema,
-    updateCustomFieldSchema,
-    updateProjectFieldSchema,
+  addOptionSchema,
+  attachToProjectSchema,
+  createCustomFieldSchema,
+  updateCustomFieldSchema,
+  updateProjectFieldSchema,
 } from '../validators/customField.validators.js';
 
 export const CustomFieldController = {

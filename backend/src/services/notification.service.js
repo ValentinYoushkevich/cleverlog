@@ -107,11 +107,13 @@ export const NotificationService = {
   },
 
   async updateGlobalSettings({ enabled }) {
-    return NotificationRepository.upsertGlobal(enabled);
+    const setting = await NotificationRepository.upsertGlobal(enabled);
+    return setting;
   },
 
   async updateUserSettings({ userId, enabled }) {
-    return NotificationRepository.upsertForUser(userId, enabled);
+    const setting = await NotificationRepository.upsertForUser(userId, enabled);
+    return setting;
   },
 };
 

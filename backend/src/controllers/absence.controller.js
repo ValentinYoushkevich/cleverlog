@@ -1,8 +1,8 @@
 import { AbsenceService } from '../services/absence.service.js';
 import {
-    absenceFiltersSchema,
-    createAbsenceSchema,
-    updateAbsenceSchema,
+  absenceFiltersSchema,
+  createAbsenceSchema,
+  updateAbsenceSchema,
 } from '../validators/absence.validators.js';
 
 export const AbsenceController = {

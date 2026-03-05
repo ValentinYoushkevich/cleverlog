@@ -10,7 +10,8 @@ function appError(status, code, message) {
 
 export const CustomFieldService = {
   async list({ includeDeleted = false } = {}) {
-    return CustomFieldRepository.findAll({ includeDeleted });
+    const fields = await CustomFieldRepository.findAll({ includeDeleted });
+    return fields;
   },
 
   async create({ actorId, actorRole, ip, options, ...data }) {
@@ -191,7 +192,8 @@ export const CustomFieldService = {
   },
 
   async getProjectFields(projectId) {
-    return CustomFieldRepository.getProjectFields(projectId);
+    const fields = await CustomFieldRepository.getProjectFields(projectId);
+    return fields;
   },
 
   async attachToProject({

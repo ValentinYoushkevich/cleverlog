@@ -85,7 +85,7 @@ export const AuthController = {
     }
   },
 
-  async me(req, res) {
+  me(req, res) {
     const {
       id,
       email,

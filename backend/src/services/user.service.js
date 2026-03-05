@@ -14,7 +14,8 @@ function appError(status, code, message) {
 
 export const UserService = {
   async list(filters) {
-    return UserRepository.findAll(filters);
+    const users = await UserRepository.findAll(filters);
+    return users;
   },
 
   async getById(id) {
@@ -23,7 +24,7 @@ export const UserService = {
       throw appError(404, 'NOT_FOUND', 'Пользователь не найден');
     }
 
-    const { invite_token_hash, password_hash, ...rest } = user;
+    const { invite_token_hash, ...rest } = user;
     const result = { ...rest };
 
     if (
