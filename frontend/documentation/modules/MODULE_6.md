@@ -252,7 +252,7 @@ export const ABSENCE_SEVERITY = {
         </div>
         <div>
           <label class="block text-sm font-medium text-surface-700 mb-1">Дата</label>
-          <DatePicker v-model="editForm.date" class="w-full" dateFormat="yy-mm-dd" showIcon />
+          <DatePicker v-model="editForm.date" class="w-full" dateFormat="dd.mm.yy" showIcon />
         </div>
         <div>
           <label class="block text-sm font-medium text-surface-700 mb-1">

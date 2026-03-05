@@ -42,7 +42,7 @@
           :maxDate="today"
           class="w-full"
           :class="{ 'p-invalid': formErrors.date }"
-          dateFormat="yy-mm-dd"
+          dateFormat="dd.mm.yy"
         />
         <small v-if="formErrors.date" class="p-error">{{ formErrors.date }}</small>
       </div>

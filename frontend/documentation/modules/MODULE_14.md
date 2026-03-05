@@ -101,7 +101,6 @@ export const useAdminCalendarStore = defineStore('adminCalendar', {
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-surface-100 block" />Рабочий (по умолчанию)</div>
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-gray-200 block" />Выходной</div>
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-red-100 block" />Праздник</div>
-        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded ring-2 ring-primary block" />Переопределён Admin</div>
       </div>
     </div>
 
@@ -149,7 +148,7 @@ export const useAdminCalendarStore = defineStore('adminCalendar', {
             :class="selectedDay.day_type === opt.value ? 'bg-primary-50 text-primary font-medium' : 'text-surface-700'"
             @click="setDayType(opt.value)"
           >
-            <span class="w-3 h-3 rounded block flex-shrink-0" :class="opt.colorClass" />
+            <span class="w-3 h-3 rounded block shrink-0" :class="opt.colorClass" />
             {{ opt.label }}
           </button>
         </div>

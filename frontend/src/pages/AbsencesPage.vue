@@ -219,7 +219,7 @@
             id="absence-edit-date"
             v-model="editForm.date"
             class="w-full"
-            dateFormat="yy-mm-dd"
+            dateFormat="dd.mm.yy"
             showIcon
           />
         </div>
