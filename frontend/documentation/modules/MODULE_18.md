@@ -212,7 +212,7 @@ async function attachField() {
   if (!attachForm.field_id) return;
   submitting.value = true;
   try {
-    await projectsStore.attachField(drawerProject.value.id, {
+    await projectsStore.attachFieldToProject(drawerProject.value.id, {
       custom_field_id: attachForm.field_id,
       is_required: attachForm.is_required,
       is_enabled: attachForm.is_enabled,

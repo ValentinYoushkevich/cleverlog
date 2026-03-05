@@ -45,7 +45,7 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-    async create(data) {
+    async createProject(data) {
       try {
         await http.post('/projects', data);
       } catch (err) {
@@ -54,7 +54,7 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-    async update(id, data) {
+    async updateProject(id, data) {
       try {
         await http.patch(`/projects/${id}`, data);
       } catch (err) {
@@ -73,7 +73,7 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-    async attachField(projectId, data) {
+    async attachFieldToProject(projectId, data) {
       try {
         await http.post(`/projects/${projectId}/custom-fields`, data);
       } catch (err) {
@@ -382,7 +382,7 @@ async function onSubmitCreate() {
   if (!createForm.name.trim()) { createErrors.name = 'Название обязательно'; return; }
   submitting.value = true;
   try {
-    await projectsStore.create({ name: createForm.name });
+    await projectsStore.createProject({ name: createForm.name });
     toast.add({ severity: 'success', summary: 'Проект создан', life: 3000 });
     createDialogVisible.value = false;
     await loadProjects();
@@ -408,7 +408,7 @@ function openEditDialog(project) {
 async function onSubmitEdit() {
   submitting.value = true;
   try {
-    await projectsStore.update(editingProject.value.id, editForm);
+    await projectsStore.updateProject(editingProject.value.id, editForm);
     toast.add({ severity: 'success', summary: 'Сохранено', life: 3000 });
     editDialogVisible.value = false;
     await loadProjects();
@@ -522,7 +522,7 @@ async function onSubmitEdit() {
           <InputText v-model="editForm.name" class="w-full" />
         </div>
         <Message severity="info" :closable="false" class="text-xs">
-          Тип поля изменить нельзя после создания
+          Тип поля нельзя изменить после создания
         </Message>
         <div class="flex justify-end gap-2">
           <Button label="Отмена" severity="secondary" @click="editDialogVisible = false" />
