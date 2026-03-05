@@ -35,32 +35,32 @@
         <template #body="{ data }">
           <div class="flex gap-1">
             <Button
+              v-tooltip.left="'Редактировать'"
               icon="pi pi-pencil"
               text
               rounded
               size="small"
-              v-tooltip.left="'Редактировать'"
-              @click="openEditDialog(data)"
               :disabled="!!data.deleted_at"
+              @click="openEditDialog(data)"
             />
             <Button
               v-if="!data.deleted_at"
+              v-tooltip.left="'Удалить'"
               icon="pi pi-trash"
               text
               rounded
               size="small"
               severity="danger"
-              v-tooltip.left="'Удалить'"
               @click="softDelete(data)"
             />
             <Button
               v-else
+              v-tooltip.left="'Восстановить'"
               icon="pi pi-refresh"
               text
               rounded
               size="small"
               severity="secondary"
-              v-tooltip.left="'Восстановить'"
               @click="restore(data)"
             />
           </div>
@@ -73,7 +73,7 @@
 
     <!-- Dialog: создание -->
     <Dialog v-model:visible="createDialogVisible" header="Новое поле" modal class="w-full max-w-md">
-      <form @submit.prevent="onSubmitCreate" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmitCreate">
         <div>
           <label for="field-create-name" class="block text-sm font-medium text-surface-700 mb-1">Название *</label>
           <InputText id="field-create-name" v-model="createForm.name" class="w-full" :class="{ 'p-invalid': createErrors.name }" />
@@ -103,7 +103,7 @@
 
     <!-- Dialog: редактирование (название + варианты для списка) -->
     <Dialog v-model:visible="editDialogVisible" header="Редактировать поле" modal class="w-full max-w-md">
-      <form @submit.prevent="onSubmitEdit" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmitEdit">
         <div>
           <label for="field-edit-name" class="block text-sm font-medium text-surface-700 mb-1">Название</label>
           <InputText id="field-edit-name" v-model="editForm.name" class="w-full" />
@@ -208,7 +208,7 @@ async function onSubmitCreate() {
   submitting.value = true;
   try {
     const payload = { name: createForm.name, type: createForm.type };
-    if (createForm.type === 'dropdown') payload.options = createForm.options.filter(o => o.trim());
+    if (createForm.type === 'dropdown') { payload.options = createForm.options.filter(o => o.trim()); }
     await customFieldsStore.create(payload);
     toast.add({ severity: 'success', summary: 'Поле создано', life: 3000 });
     createDialogVisible.value = false;

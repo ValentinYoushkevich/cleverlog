@@ -10,7 +10,7 @@ export const useDirectoriesStore = defineStore('directories', {
 
   actions: {
     async fetchDepartments() {
-      if (this.departments.length) return;
+      if (this.departments.length) { return; }
       this.loadingDepartments = true;
       try {
         const res = await http.get('/directories/departments');
@@ -24,4 +24,3 @@ export const useDirectoriesStore = defineStore('directories', {
     },
   },
 });
-

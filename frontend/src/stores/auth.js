@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.role === 'admin',
     userName: (state) => (state.user ? `${state.user.last_name} ${state.user.first_name}` : ''),
     userInitials: (state) => {
-      if (!state.user) return '';
+      if (!state.user) { return ''; }
       return `${state.user.first_name?.[0] ?? ''}${state.user.last_name?.[0] ?? ''}`.toUpperCase();
     },
   },

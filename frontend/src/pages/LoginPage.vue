@@ -23,8 +23,8 @@
           Пароль
         </label>
         <Password
-          inputId="login-password"
           v-model="password"
+          inputId="login-password"
           placeholder="Введите пароль"
           class="w-full"
           :class="{ 'p-invalid': errors.password }"

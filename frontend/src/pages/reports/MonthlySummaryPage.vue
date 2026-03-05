@@ -7,8 +7,8 @@
         icon="pi pi-download"
         severity="secondary"
         :loading="exporting"
-        @click="doExport"
         :disabled="!rows.length"
+        @click="doExport"
       />
     </div>
 
@@ -130,7 +130,7 @@ function loadReport() {
 
 // Строки таблицы: обычные + TOTAL внизу
 const tableRows = computed(() => {
-  if (!rows.value.length) return [];
+  if (!rows.value.length) { return []; }
 
   const dataRows = rows.value.map(r => {
     const row = {
@@ -166,9 +166,9 @@ const tableRows = computed(() => {
 
 // Цвет строки (без stripedRows, чтобы не перекрывало). row может быть undefined при смене месяца/загрузке.
 function getRowClass(row) {
-  if (row == null) return '';
-  if (row.is_total) return 'font-bold !bg-surface-100';
-  if (row.is_on_norm) return '!bg-green-50';
+  if (row === null) { return ''; }
+  if (row.is_total) { return 'font-bold !bg-surface-100'; }
+  if (row.is_on_norm) { return '!bg-green-50'; }
   return '!bg-yellow-50';
 }
 

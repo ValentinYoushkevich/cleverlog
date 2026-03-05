@@ -80,8 +80,8 @@
               Текущий пароль
             </label>
             <Password
-              inputId="profile-current-password"
               v-model="currentPassword"
+              inputId="profile-current-password"
               class="w-full"
               :class="{ 'p-invalid': passwordErrors.current_password }"
               :feedback="false"
@@ -99,8 +99,8 @@
               Новый пароль
             </label>
             <Password
-              inputId="profile-new-password"
               v-model="newPassword"
+              inputId="profile-new-password"
               class="w-full"
               :class="{ 'p-invalid': passwordErrors.new_password }"
               :feedback="false"
@@ -126,8 +126,8 @@
               Подтвердите новый пароль
             </label>
             <Password
-              inputId="profile-confirm-password"
               v-model="confirmPassword"
+              inputId="profile-confirm-password"
               class="w-full"
               :class="{ 'p-invalid': passwordErrors.confirm_password }"
               :feedback="false"
@@ -205,7 +205,7 @@ const [position] = defineProfileField('position');
 watch(
   () => authStore.user,
   (user) => {
-    if (!user) return;
+    if (!user) { return; }
     setValues({
       first_name: user.first_name,
       last_name: user.last_name,

@@ -46,7 +46,7 @@
 
     <!-- Dialog: создание -->
     <Dialog v-model:visible="createDialogVisible" header="Новый проект" modal class="w-full max-w-sm">
-      <form @submit.prevent="onSubmitCreate" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmitCreate">
         <div>
           <label for="project-create-name" class="block text-sm font-medium text-surface-700 mb-1">Название *</label>
           <InputText id="project-create-name" v-model="createForm.name" class="w-full" :class="{ 'p-invalid': createErrors.name }" />
@@ -61,7 +61,7 @@
 
     <!-- Dialog: редактирование -->
     <Dialog v-model:visible="editDialogVisible" header="Редактировать проект" modal class="w-full max-w-sm">
-      <form @submit.prevent="onSubmitEdit" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmitEdit">
         <div>
           <label for="project-edit-name" class="block text-sm font-medium text-surface-700 mb-1">Название *</label>
           <InputText id="project-edit-name" v-model="editForm.name" class="w-full" />

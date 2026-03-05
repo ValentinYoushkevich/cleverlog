@@ -80,22 +80,22 @@
         <template #body="{ data }">
           <div class="flex justify-end gap-1">
             <Button
+              v-tooltip.left="'Редактировать'"
               icon="pi pi-pencil"
               text
               rounded
               size="small"
-              v-tooltip.left="'Редактировать'"
               @click="openEditDialog(data)"
             />
             <Button
+              v-tooltip.left="'Повторить инвайт'"
               icon="pi pi-send"
               text
               rounded
               size="small"
               severity="secondary"
-              v-tooltip.left="'Повторить инвайт'"
-              @click="resendInvite(data)"
               :disabled="data.status !== 'active'"
+              @click="resendInvite(data)"
             />
           </div>
         </template>
@@ -107,7 +107,7 @@
 
     <!-- Dialog: создание -->
     <Dialog v-model:visible="createDialogVisible" header="Новый пользователь" modal class="w-full max-w-md">
-      <form @submit.prevent="onSubmitCreate" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmitCreate">
         <div class="flex items-center justify-between gap-3 rounded-lg border border-primary-300 bg-primary-50 px-3 py-2">
           <span class="text-sm font-semibold text-primary-800">Способ регистрации</span>
           <div class="flex items-center gap-3">
@@ -171,8 +171,8 @@
         <div>
           <label for="create-department" class="block text-sm font-medium text-surface-700 mb-1">Отдел *</label>
           <Select
-            inputId="create-department"
             v-model="createForm.department"
+            inputId="create-department"
             :options="departments"
             :loading="loadingDepartments"
             class="w-full"
@@ -182,8 +182,8 @@
         <div>
           <label for="create-role" class="block text-sm font-medium text-surface-700 mb-1">Роль *</label>
           <Select
-            inputId="create-role"
             v-model="createForm.role"
+            inputId="create-role"
             :options="USER_ROLE_OPTIONS"
             optionLabel="label"
             optionValue="value"
@@ -215,10 +215,10 @@
         <div class="flex items-center gap-2">
           <InputText v-model="inviteLink" class="w-full" readonly />
           <Button
+            v-tooltip.bottom="'Скопировать в буфер обмена'"
             icon="pi pi-copy"
             severity="secondary"
             @click="copyInviteLink"
-            v-tooltip.bottom="'Скопировать в буфер обмена'"
           />
         </div>
         <div class="flex justify-end">
@@ -233,7 +233,7 @@
 
     <!-- Dialog: редактирование -->
     <Dialog v-model:visible="editDialogVisible" header="Редактировать пользователя" modal class="w-full max-w-md">
-      <form @submit.prevent="onSubmitEdit" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmitEdit">
         <div v-if="editingUser" class="relative rounded-lg border border-surface-200 p-3 bg-surface-50">
           <label class="block text-sm font-medium text-surface-700 mb-1">Способ регистрации</label>
           <p class="text-surface-700">
@@ -246,17 +246,17 @@
               readonly
             />
             <Button
+              v-tooltip.bottom="'Скопировать в буфер обмена'"
               icon="pi pi-copy"
               severity="secondary"
-              @click="copyEditInviteLink"
               :disabled="!editingUser.invite_link"
-              v-tooltip.bottom="'Скопировать в буфер обмена'"
+              @click="copyEditInviteLink"
             />
             <Button
+              v-tooltip.bottom="'Сгенерировать новую ссылку'"
               icon="pi pi-refresh"
               severity="secondary"
               @click="regenerateInviteLink"
-              v-tooltip.bottom="'Сгенерировать новую ссылку'"
             />
           </div>
           <div v-else class="mt-2">
@@ -265,18 +265,18 @@
             </p>
             <div class="absolute top-3 right-3 flex flex-row items-center gap-2">
               <Button
+                v-tooltip.bottom="'Отправить ещё раз'"
                 icon="pi pi-send"
                 size="small"
                 severity="secondary"
                 @click="resendInvite(editingUser)"
-                v-tooltip.bottom="'Отправить ещё раз'"
               />
               <Button
+                v-tooltip.bottom="'Перегенерировать токен'"
                 icon="pi pi-refresh"
                 size="small"
                 severity="secondary"
                 @click="regenerateEmailInvite"
-                v-tooltip.bottom="'Перегенерировать токен'"
               />
             </div>
           </div>
@@ -298,8 +298,8 @@
         <div>
           <label for="edit-role" class="block text-sm font-medium text-surface-700 mb-1">Роль</label>
           <Select
-            inputId="edit-role"
             v-model="editForm.role"
+            inputId="edit-role"
             :options="USER_ROLE_OPTIONS"
             optionLabel="label"
             optionValue="value"
@@ -309,8 +309,8 @@
         <div>
           <label for="edit-status" class="block text-sm font-medium text-surface-700 mb-1">Статус</label>
           <Select
-            inputId="edit-status"
             v-model="editForm.status"
+            inputId="edit-status"
             :options="USER_STATUS_OPTIONS"
             optionLabel="label"
             optionValue="value"
@@ -320,8 +320,8 @@
         <div>
           <label for="edit-department" class="block text-sm font-medium text-surface-700 mb-1">Отдел *</label>
           <Select
-            inputId="edit-department"
             v-model="editForm.department"
+            inputId="edit-department"
             :options="departments"
             :loading="loadingDepartments"
             class="w-full"
@@ -385,7 +385,7 @@ const filters = reactive({ status: null, role: null, search: '' });
 
 // Клиентская фильтрация по поиску
 const filteredUsers = computed(() => {
-  if (!filters.search) return users.value;
+  if (!filters.search) { return users.value; }
   const q = filters.search.toLowerCase();
   return users.value.filter(
     (u) =>
@@ -397,8 +397,8 @@ const filteredUsers = computed(() => {
 
 function loadUsers() {
   const params = {};
-  if (filters.status) params.status = filters.status;
-  if (filters.role) params.role = filters.role;
+  if (filters.status) { params.status = filters.status; }
+  if (filters.role) { params.role = filters.role; }
   usersStore.fetchList(params);
 }
 
@@ -589,13 +589,13 @@ function handleInviteLinkDone() {
 }
 
 const inviteModeLabel = computed(() => {
-  if (!editingUser.value) return '';
+  if (!editingUser.value) { return ''; }
   return editingUser.value.invite_mode === 'link' ? 'Ссылка в чат' : 'Ссылка на email';
 });
 
 async function copyEditInviteLink() {
   const link = editingUser.value?.invite_link;
-  if (!link) return;
+  if (!link) { return; }
   try {
     await navigator.clipboard.writeText(link);
     toast.add({ severity: 'success', summary: 'Ссылка скопирована', life: 2000 });
@@ -605,7 +605,7 @@ async function copyEditInviteLink() {
 }
 
 async function regenerateInviteLink() {
-  if (!editingUser.value) return;
+  if (!editingUser.value) { return; }
   try {
     const result = await usersStore.regenerateInviteLink(editingUser.value.id);
     editingUser.value = {
@@ -641,7 +641,7 @@ async function regenerateInviteLink() {
 }
 
 async function regenerateEmailInvite() {
-  if (!editingUser.value) return;
+  if (!editingUser.value) { return; }
   try {
     await usersStore.regenerateEmailInvite(editingUser.value.id);
     toast.add({
@@ -675,4 +675,3 @@ async function regenerateEmailInvite() {
   }
 }
 </script>
-

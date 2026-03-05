@@ -233,7 +233,7 @@ const workLogUserOptions = computed(() =>
 );
 const currentUserLabel = computed(() => {
   const me = authStore.user;
-  if (!me) return '—';
+  if (!me) { return '—'; }
   return [me.first_name, me.last_name].filter(Boolean).join(' ') || me.email || '—';
 });
 
@@ -244,7 +244,7 @@ onMounted(async () => {
   const y = calendarStore.currentYear;
   const m = calendarStore.currentMonth;
   await Promise.all([calendarStore.fetchMonth(y, m), fetchData(y, m)]);
-  if (authStore.isAdmin) absencesStore.fetchUsers();
+  if (authStore.isAdmin) { absencesStore.fetchUsers(); }
 });
 
 async function prevMonth() {
@@ -285,38 +285,38 @@ const firstDayOffset = computed(() => {
 
 const deviation = computed(() => factHours.value - calendarStore.normHours);
 const deviationClass = computed(() => {
-  if (Math.abs(deviation.value) < 0.1) return 'bg-green-50 text-green-700';
+  if (Math.abs(deviation.value) < 0.1) { return 'bg-green-50 text-green-700'; }
   return deviation.value > 0 ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700';
 });
 
 function getDayClass(day) {
-  if (day.day_type !== 'working') return 'bg-surface-50';
+  if (day.day_type !== 'working') { return 'bg-surface-50'; }
   const data = dayMap.value[day.date];
   if (!data) {
     return day.isFuture ? '' : 'bg-red-50';
   }
-  if (data.absences.length > 0 && data.workLogs.length === 0) return 'bg-blue-50';
+  if (data.absences.length > 0 && data.workLogs.length === 0) { return 'bg-blue-50'; }
   const h = data.totalHours ?? 0;
-  if (h < 8) return 'bg-yellow-50';
-  if (Math.abs(h - 8) < 0.05) return 'bg-green-50';
-  if (h <= 12) return 'bg-orange-200';
+  if (h < 8) { return 'bg-yellow-50'; }
+  if (Math.abs(h - 8) < 0.05) { return 'bg-green-50'; }
+  if (h <= 12) { return 'bg-orange-200'; }
   return 'bg-red-200';
 }
 
 function getDayTooltip(day) {
-  if (day.day_type !== 'working') return 'Выходной';
+  if (day.day_type !== 'working') { return 'Выходной'; }
   const data = dayMap.value[day.date];
-  if (!data) return 'Логи не добавлены';
-  if (data.absences.length > 0 && data.workLogs.length === 0) return 'Отсутствие';
+  if (!data) { return 'Логи не добавлены'; }
+  if (data.absences.length > 0 && data.workLogs.length === 0) { return 'Отсутствие'; }
   const h = data.totalHours ?? 0;
-  if (h < 8) return `Залогировано ${h.toFixed(1)} ч`;
-  if (h <= 12) return `Превышение ${(h - 8).toFixed(1)} ч`;
+  if (h < 8) { return `Залогировано ${h.toFixed(1)} ч`; }
+  if (h <= 12) { return `Превышение ${(h - 8).toFixed(1)} ч`; }
   return 'Проверьте логи, у вас залогировано много часов';
 }
 
 function getDayNumberClass(day) {
-  if (day.isToday) return 'text-primary font-bold';
-  if (day.day_type !== 'working') return 'text-surface-400';
+  if (day.isToday) { return 'text-primary font-bold'; }
+  if (day.day_type !== 'working') { return 'text-surface-400'; }
   return 'text-surface-700';
 }
 

@@ -150,14 +150,14 @@ const workLogUserOptions = computed(() =>
 );
 const currentUserLabel = computed(() => {
   const me = authStore.user;
-  if (!me) return '—';
+  if (!me) { return '—'; }
   return [me.first_name, me.last_name].filter(Boolean).join(' ') || me.email || '—';
 });
 
 onMounted(() => {
   uiStore.setPageTitle('Рабочие логи');
   loadLogs();
-  if (authStore.isAdmin) absencesStore.fetchUsers();
+  if (authStore.isAdmin) { absencesStore.fetchUsers(); }
 });
 
 const isClosed = computed(() => calendarStore.isClosed);
@@ -171,11 +171,11 @@ async function loadLogs() {
   loading.value = true;
   try {
     const params = {};
-    if (filters.project_id) params.project_id = filters.project_id;
-    if (filters.task_number) params.task_number = filters.task_number;
-    if (filters.comment) params.comment = filters.comment;
-    if (filters.dateRange?.[0]) params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD');
-    if (filters.dateRange?.[1]) params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD');
+    if (filters.project_id) { params.project_id = filters.project_id; }
+    if (filters.task_number) { params.task_number = filters.task_number; }
+    if (filters.comment) { params.comment = filters.comment; }
+    if (filters.dateRange?.[0]) { params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD'); }
+    if (filters.dateRange?.[1]) { params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD'); }
 
     const res = await http.get('/work-logs', { params });
     logs.value = res.data.data ?? res.data;

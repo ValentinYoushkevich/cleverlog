@@ -209,9 +209,9 @@ const exporting = ref(false);
 
 function buildParams() {
   const params = {};
-  if (isAdmin.value && filters.user_id) params.user_id = filters.user_id;
-  if (filters.project_id) params.project_id = filters.project_id;
-  if (filters.type) params.type = filters.type;
+  if (isAdmin.value && filters.user_id) { params.user_id = filters.user_id; }
+  if (filters.project_id) { params.project_id = filters.project_id; }
+  if (filters.type) { params.type = filters.type; }
   const [from, to] = filters.dateRange ?? [];
   if (from) {
     const fromStr = dayjs(from).format('YYYY-MM-DD');

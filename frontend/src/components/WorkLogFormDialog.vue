@@ -225,7 +225,7 @@ async function initForEdit(log) {
 watch(
   () => [props.modelValue, props.editingLog, props.initialDate],
   async ([visible, editingLog]) => {
-    if (!visible) return;
+    if (!visible) { return; }
     if (editingLog) {
       await initForEdit(editingLog);
     } else {
@@ -278,7 +278,7 @@ function close() {
 }
 
 async function onSubmit() {
-  if (!validate()) return;
+  if (!validate()) { return; }
 
   submitting.value = true;
   try {

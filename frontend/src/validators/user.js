@@ -15,4 +15,3 @@ export const updateUserSchema = z.object({
   role: z.enum(['admin', 'user']).optional(),
   status: z.enum(['active', 'inactive']).optional(),
 });
-

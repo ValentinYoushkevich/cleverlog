@@ -23,13 +23,13 @@ export const useCalendarStore = defineStore('calendar', {
       const map = {};
       for (const log of state.workLogs) {
         const dateKey = dayjs(log.date).format('YYYY-MM-DD');
-        if (!map[dateKey]) map[dateKey] = { workLogs: [], absences: [], totalHours: 0 };
+        if (!map[dateKey]) { map[dateKey] = { workLogs: [], absences: [], totalHours: 0 }; }
         map[dateKey].workLogs.push(log);
         map[dateKey].totalHours += log.duration_hours ?? 0;
       }
       for (const abs of state.absences) {
         const dateKey = dayjs(abs.date).format('YYYY-MM-DD');
-        if (!map[dateKey]) map[dateKey] = { workLogs: [], absences: [], totalHours: 0 };
+        if (!map[dateKey]) { map[dateKey] = { workLogs: [], absences: [], totalHours: 0 }; }
         map[dateKey].absences.push(abs);
         map[dateKey].totalHours += abs.duration_hours ?? 0;
       }

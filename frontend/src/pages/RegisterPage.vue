@@ -24,8 +24,8 @@
           Пароль
         </label>
         <Password
-          inputId="register-password"
           v-model="password"
+          inputId="register-password"
           placeholder="Придумайте пароль"
           class="w-full"
           :class="{ 'p-invalid': errors.password }"
@@ -64,8 +64,8 @@
           Подтвердите пароль
         </label>
         <Password
-          inputId="register-confirm-password"
           v-model="confirmPassword"
+          inputId="register-confirm-password"
           placeholder="Повторите пароль"
           class="w-full"
           :class="{ 'p-invalid': errors.confirmPassword }"
@@ -135,10 +135,10 @@ const onSubmit = handleSubmit(async (values) => {
     await router.push({ name: 'login' });
   } catch (err) {
     const code = err.response?.data?.code;
-    if (code === 'INVALID_TOKEN') serverError.value = 'Ссылка недействительна или устарела.';
+    if (code === 'INVALID_TOKEN') { serverError.value = 'Ссылка недействительна или устарела.'; }
     else if (code === 'TOKEN_EXPIRED')
-      serverError.value = 'Ссылка истекла. Запросите новую у администратора.';
-    else serverError.value = 'Произошла ошибка. Попробуйте позже.';
+    { serverError.value = 'Ссылка истекла. Запросите новую у администратора.'; }
+    else { serverError.value = 'Произошла ошибка. Попробуйте позже.'; }
   } finally {
     loading.value = false;
   }

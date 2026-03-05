@@ -138,9 +138,9 @@
         <Column header="" style="width: 60px">
           <template #body="{ data }">
             <Button
-              icon="pi pi-user"
-              text rounded size="small"
               v-tooltip="'Отчёт по пользователю'"
+              icon="pi pi-user" text rounded
+              size="small"
               @click="goToUserReport(data.user_id)"
             />
           </template>
@@ -188,8 +188,8 @@ const chartsReady = ref(false);
 watch(
   () => [loading.value, summary.value],
   ([loadingVal, summaryVal]) => {
-    if (loadingVal) chartsReady.value = false;
-    else if (summaryVal) nextTick(() => { chartsReady.value = true; });
+    if (loadingVal) { chartsReady.value = false; }
+    else if (summaryVal) { nextTick(() => { chartsReady.value = true; }); }
   },
   { immediate: true }
 );
@@ -217,8 +217,8 @@ function nextMonth() {
 
 // Цвета для диаграмм
 const CHART_COLORS = [
-  '#6366f1','#22c55e','#f59e0b','#ef4444','#3b82f6',
-  '#8b5cf6','#ec4899','#14b8a6','#f97316','#06b6d4',
+  '#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6',
+  '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4',
 ];
 
 const hoursChartData = computed(() => {

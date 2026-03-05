@@ -13,10 +13,10 @@ export function usePasswordStrength(password) {
   const isStrong = computed(() => strength.value === 5);
 
   const strengthLabel = computed(() => {
-    if (strength.value <= 1) return { text: 'Очень слабый', severity: 'danger' };
-    if (strength.value <= 2) return { text: 'Слабый', severity: 'danger' };
-    if (strength.value <= 3) return { text: 'Средний', severity: 'warn' };
-    if (strength.value <= 4) return { text: 'Хороший', severity: 'info' };
+    if (strength.value <= 1) { return { text: 'Очень слабый', severity: 'danger' }; }
+    if (strength.value <= 2) { return { text: 'Слабый', severity: 'danger' }; }
+    if (strength.value <= 3) { return { text: 'Средний', severity: 'warn' }; }
+    if (strength.value <= 4) { return { text: 'Хороший', severity: 'info' }; }
     return { text: 'Сильный', severity: 'success' };
   });
 

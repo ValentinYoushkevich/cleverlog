@@ -30,4 +30,3 @@ export const ROLE_LABEL = {
   user: 'Пользователь',
   manager: 'Начальник отдела',
 };
-

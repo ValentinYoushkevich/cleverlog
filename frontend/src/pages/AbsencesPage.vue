@@ -300,7 +300,7 @@ const userOptions = computed(() =>
 );
 const currentUserLabel = computed(() => {
   const me = authStore.user;
-  if (!me) return '—';
+  if (!me) { return '—'; }
   return [me.first_name, me.last_name].filter(Boolean).join(' ') || me.email || '—';
 });
 
@@ -309,17 +309,17 @@ const isAdmin = computed(() => authStore.isAdmin);
 
 function getTypeFilterValue() {
   const t = filters.type;
-  if (t === null || t === undefined) return undefined;
-  if (typeof t === 'object' && t !== null && 'value' in t) return t.value;
+  if (t === null || t === undefined) { return undefined; }
+  if (typeof t === 'object' && t !== null && 'value' in t) { return t.value; }
   return typeof t === 'string' ? t : undefined;
 }
 
 function getListParams() {
   const params = {};
   const typeValue = getTypeFilterValue();
-  if (typeValue) params.type = typeValue;
-  if (filters.dateRange?.[0]) params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD');
-  if (filters.dateRange?.[1]) params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD');
+  if (typeValue) { params.type = typeValue; }
+  if (filters.dateRange?.[0]) { params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD'); }
+  if (filters.dateRange?.[1]) { params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD'); }
   return params;
 }
 
@@ -339,7 +339,7 @@ function resetFilters() {
 
 onMounted(() => {
   uiStore.setPageTitle('Отсутствия');
-  if (authStore.isAdmin) absencesStore.fetchUsers();
+  if (authStore.isAdmin) { absencesStore.fetchUsers(); }
 });
 
 const createDialogVisible = ref(false);
@@ -349,7 +349,7 @@ const submitting = ref(false);
 
 function openCreateDialog() {
   Object.assign(createForm, { user_id: null, type: null, dateRange: null, comment: '' });
-  if (isAdmin.value && users.value.length === 0) absencesStore.fetchUsers();
+  if (isAdmin.value && users.value.length === 0) { absencesStore.fetchUsers(); }
   Object.keys(createErrors).forEach((key) => delete createErrors[key]);
   createDialogVisible.value = true;
 }
@@ -378,7 +378,7 @@ async function onSubmitCreate() {
       date_to: dayjs(createForm.dateRange[1] ?? createForm.dateRange[0]).format('YYYY-MM-DD'),
       comment: createForm.comment || undefined,
     };
-    if (isAdmin.value && createForm.user_id) body.user_id = createForm.user_id;
+    if (isAdmin.value && createForm.user_id) { body.user_id = createForm.user_id; }
     await absencesStore.create(body);
     createDialogVisible.value = false;
     loadAbsences();

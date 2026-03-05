@@ -150,11 +150,11 @@ const exporting = ref(false);
 
 function buildParams() {
   const params = {};
-  if (filters.project_id) params.project_id = filters.project_id;
-  if (filters.user_id) params.user_id = filters.user_id;
-  if (filters.task_number?.trim()) params.task_number = filters.task_number.trim();
-  if (filters.dateRange?.[0]) params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD');
-  if (filters.dateRange?.[1]) params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD');
+  if (filters.project_id) { params.project_id = filters.project_id; }
+  if (filters.user_id) { params.user_id = filters.user_id; }
+  if (filters.task_number?.trim()) { params.task_number = filters.task_number.trim(); }
+  if (filters.dateRange?.[0]) { params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD'); }
+  if (filters.dateRange?.[1]) { params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD'); }
   return params;
 }
 
@@ -195,7 +195,7 @@ function formatDate(value) {
 
 onMounted(async () => {
   uiStore.setPageTitle('Отчёт по проекту');
-  if (!projectsStore.projects.length) await projectsStore.fetchProjects();
+  if (!projectsStore.projects.length) { await projectsStore.fetchProjects(); }
   await absencesStore.fetchUsers();
   await loadReport();
 });
