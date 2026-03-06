@@ -2,12 +2,7 @@
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-semibold text-surface-800">Рабочие логи</h1>
-      <Button
-        label="Добавить лог"
-        icon="pi pi-plus"
-        :disabled="isClosed && !isAdmin"
-        @click="openCreateDialog"
-      />
+      <Button label="Добавить лог" icon="pi pi-plus" @click="openCreateDialog" />
     </div>
 
     <div class="rounded-xl border border-surface-200 bg-surface-0 p-4">
@@ -77,20 +72,22 @@
         <template #body="{ data }">
           <div class="flex justify-end gap-1">
             <Button
+              v-tooltip.top="!isAdmin && isLogInClosedMonth(data) ? 'Месяц закрыт' : ''"
               icon="pi pi-pencil"
               text
               rounded
               size="small"
-              :disabled="isClosed && !isAdmin"
+              :disabled="!isAdmin && isLogInClosedMonth(data)"
               @click="openEditDialog(data)"
             />
             <Button
+              v-tooltip.top="!isAdmin && isLogInClosedMonth(data) ? 'Месяц закрыт' : ''"
               icon="pi pi-trash"
               text
               rounded
               size="small"
               severity="danger"
-              :disabled="isClosed && !isAdmin"
+              :disabled="!isAdmin && isLogInClosedMonth(data)"
               @click="confirmDelete(data)"
             />
           </div>
@@ -128,7 +125,7 @@ import http from '@/api/http.js';
 import WorkLogFormDialog from '@/components/WorkLogFormDialog.vue';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';
-import { useCalendarStore } from '@/stores/calendar.js';
+import { useMonthClosuresStore } from '@/stores/monthClosures.js';
 import { useProjectsStore } from '@/stores/projects.js';
 import { useUiStore } from '@/stores/ui.js';
 
@@ -137,7 +134,7 @@ defineOptions({ name: 'WorkLogsPage' });
 const confirm = useConfirm();
 const toast = useToast();
 const projectsStore = useProjectsStore();
-const calendarStore = useCalendarStore();
+const monthClosuresStore = useMonthClosuresStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 const absencesStore = useAbsencesStore();
@@ -160,8 +157,8 @@ onMounted(() => {
   if (authStore.isAdmin) { absencesStore.fetchUsers(); }
 });
 
-const isClosed = computed(() => calendarStore.isClosed);
 const isAdmin = computed(() => authStore.isAdmin);
+const closedMonths = reactive({});
 
 const logs = ref([]);
 const loading = ref(false);
@@ -178,7 +175,26 @@ async function loadLogs() {
     if (filters.dateRange?.[1]) { params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD'); }
 
     const res = await http.get('/work-logs', { params });
-    logs.value = res.data.data ?? res.data;
+    const data = res.data.data ?? res.data;
+    logs.value = data;
+
+    const ymKeys = Array.from(new Set(data.map((log) => dayjs(log.date).format('YYYY-MM'))));
+    await Promise.all(
+      ymKeys
+        .filter((key) => closedMonths[key] === undefined)
+        .map(async (key) => {
+          const [yearStr, monthStr] = key.split('-');
+          const year = Number(yearStr);
+          const month = Number(monthStr);
+          if (!Number.isFinite(year) || !Number.isFinite(month)) { return; }
+          try {
+            const status = await monthClosuresStore.fetchStatus(year, month);
+            closedMonths[key] = Boolean(status.closed);
+          } catch {
+            closedMonths[key] = false;
+          }
+        }),
+    );
   } finally {
     loading.value = false;
   }
@@ -191,6 +207,11 @@ function resetFilters() {
 
 const dialogVisible = ref(false);
 const editingLog = ref(null);
+
+function isLogInClosedMonth(log) {
+  const key = dayjs(log.date).format('YYYY-MM');
+  return Boolean(closedMonths[key]);
+}
 
 function openCreateDialog() {
   editingLog.value = null;

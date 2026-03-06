@@ -34,12 +34,9 @@ export const useAuthStore = defineStore('auth', {
     async login(credentials) {
       this.loading = true;
       try {
-        const res = await http.post('/auth/login', credentials);
+        const res = await http.post('/auth/login', credentials, { skipAuthRedirect: true });
         this.user = res.data.user;
         await router.push({ name: 'calendar' });
-      } catch (err) {
-        showError(err);
-        throw err;
       } finally {
         this.loading = false;
       }
