@@ -46,4 +46,8 @@ export const AUDIT_EVENT_LABEL = Object.freeze({
   CUSTOM_FIELD_ATTACHED: 'Привязка поля к проекту',
   CUSTOM_FIELD_PROJECT_UPDATED: 'Изменение настроек поля в проекте',
   CUSTOM_FIELD_DETACHED: 'Отвязка поля от проекта',
+
+  // Notifications
+  NOTIFICATIONS_GLOBAL_UPDATED: 'Изменение глобальной рассылки',
+  NOTIFICATIONS_USER_UPDATED: 'Изменение рассылки для пользователя',
 });

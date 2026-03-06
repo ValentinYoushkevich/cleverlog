@@ -59,6 +59,28 @@ export async function seed(knex) {
 
   const [ivan, maria] = users;
 
+  // Extra random-like users for notifications/settings testing
+  const extraFirstNames = ['Алексей', 'Дмитрий', 'Николай', 'Ольга', 'Елена', 'Павел', 'Сергей', 'Анна'];
+  const extraLastNames = ['Смирнов', 'Кузнецов', 'Попов', 'Васильев', 'Новиков', 'Морозов', 'Павлов', 'Волков'];
+
+  const extraUsers = [];
+  for (let i = 1; i <= 70; i += 1) {
+    const fn = extraFirstNames[(i - 1) % extraFirstNames.length];
+    const ln = extraLastNames[(i - 1) % extraLastNames.length];
+    extraUsers.push({
+      first_name: fn,
+      last_name: ln,
+      email: `user${i}@cleverlog.local`,
+      password_hash: userHash,
+      role: 'user',
+      position: 'Employee',
+      status: 'active',
+      hire_date: '2024-02-01',
+    });
+  }
+
+  await knex('users').insert(extraUsers);
+
   const projects = await knex('projects')
     .insert([
       { name: 'CleverLog MVP', status: 'active' },

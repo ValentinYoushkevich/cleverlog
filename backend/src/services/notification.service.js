@@ -7,6 +7,7 @@ import { ReportRepository } from '../repositories/report.repository.js';
 import { getLastWorkingDay } from '../utils/calendar.js';
 import { mailer } from '../utils/mailer.js';
 import { calcFact, calcUnloggedDays } from '../utils/reportHelpers.js';
+import { AuditService } from './audit.service.js';
 
 const DEFAULT_NORM = 168;
 
@@ -106,13 +107,37 @@ export const NotificationService = {
     return { global_enabled: setting?.global_enabled ?? true };
   },
 
-  async updateGlobalSettings({ enabled }) {
+  async updateGlobalSettings({ enabled, actorId, actorRole, ip }) {
+    const before = await NotificationRepository.getGlobal();
     const setting = await NotificationRepository.upsertGlobal(enabled);
+    await AuditService.log({
+      actorId,
+      actorRole,
+      eventType: 'NOTIFICATIONS_GLOBAL_UPDATED',
+      entityType: 'notification_settings',
+      entityId: null,
+      before: before ? { global_enabled: before.global_enabled } : null,
+      after: { global_enabled: setting.global_enabled },
+      ip,
+      result: 'success',
+    });
     return setting;
   },
 
-  async updateUserSettings({ userId, enabled }) {
+  async updateUserSettings({ userId, enabled, actorId, actorRole, ip }) {
+    const before = await NotificationRepository.getForUser(userId);
     const setting = await NotificationRepository.upsertForUser(userId, enabled);
+    await AuditService.log({
+      actorId,
+      actorRole,
+      eventType: 'NOTIFICATIONS_USER_UPDATED',
+      entityType: 'user',
+      entityId: userId,
+      before: before ? { enabled: before.enabled } : null,
+      after: { enabled: setting.enabled },
+      ip,
+      result: 'success',
+    });
     return setting;
   },
 };

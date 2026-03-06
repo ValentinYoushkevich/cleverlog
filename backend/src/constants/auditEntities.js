@@ -5,4 +5,5 @@ export const AUDIT_ENTITY_LABEL = Object.freeze({
   calendar: 'Календарь',
   custom_field: 'Кастомное поле',
   project: 'Проект',
+  notification_settings: 'Настройки уведомлений',
 });

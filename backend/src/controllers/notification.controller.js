@@ -17,7 +17,12 @@ export const NotificationController = {
   async updateGlobal(req, res, next) {
     try {
       const { enabled } = globalSchema.parse(req.body);
-      const result = await NotificationService.updateGlobalSettings({ enabled });
+      const result = await NotificationService.updateGlobalSettings({
+        enabled,
+        actorId: req.user.id,
+        actorRole: req.user.role,
+        ip: req.ip,
+      });
       return res.json(result);
     } catch (err) {
       return next(err);
@@ -30,6 +35,9 @@ export const NotificationController = {
       const result = await NotificationService.updateUserSettings({
         userId: req.params.userId,
         enabled,
+        actorId: req.user.id,
+        actorRole: req.user.role,
+        ip: req.ip,
       });
       return res.json(result);
     } catch (err) {

@@ -60,6 +60,9 @@
     <div class="flex flex-1 flex-col overflow-hidden">
       <header class="flex h-16 shrink-0 items-center justify-between border-b border-surface-200 bg-surface-0 px-6">
         <div class="flex items-center gap-3">
+          <span class="text-sm font-medium capitalize text-surface-700">
+            {{ calendarStore.monthLabel }}
+          </span>
           <Tag v-if="isClosed" value="Месяц закрыт" severity="danger" icon="pi pi-lock" />
         </div>
         <div class="flex items-center gap-2">
@@ -84,15 +87,21 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth.js';
 import { useCalendarStore } from '@/stores/calendar.js';
+import { useMonthClosuresStore } from '@/stores/monthClosures.js';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { computed } from 'vue';
 
 defineOptions({ name: 'AppLayout' });
 
 const authStore = useAuthStore();
 const calendarStore = useCalendarStore();
+const monthClosuresStore = useMonthClosuresStore();
+const confirm = useConfirm();
+const toast = useToast();
 
 const isAdmin = computed(() => authStore.isAdmin);
 const userName = computed(() => authStore.userName);
@@ -124,7 +133,38 @@ async function handleLogout() {
   await authStore.logout();
 }
 
-function handleMonthToggle() {
-  // реализация в MODULE_16
+async function handleMonthToggle() {
+  const year = calendarStore.currentYear;
+  const month = calendarStore.currentMonth;
+  const action = calendarStore.isClosed ? 'открыть' : 'закрыть';
+
+  confirm.require({
+    message: `Вы уверены, что хотите ${action} месяц?`,
+    header: 'Подтверждение',
+    icon: 'pi pi-lock',
+    acceptLabel: action.charAt(0).toUpperCase() + action.slice(1),
+    rejectLabel: 'Отмена',
+    accept: async () => {
+      try {
+        if (calendarStore.isClosed) {
+          await monthClosuresStore.open(year, month);
+        } else {
+          await monthClosuresStore.close(year, month);
+        }
+        await calendarStore.fetchMonth(year, month);
+        toast.add({
+          severity: 'success',
+          summary: `Месяц ${action === 'закрыть' ? 'закрыт' : 'открыт'}`,
+          life: 3000,
+        });
+      } catch (err) {
+        toast.add({
+          severity: 'error',
+          summary: err.response?.data?.message ?? 'Ошибка',
+          life: 3000,
+        });
+      }
+    },
+  });
 }
 </script>
