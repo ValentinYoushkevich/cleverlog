@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { AUDIT_ENTITY_LABEL } from '../constants/auditEntities.js';
 import { AUDIT_EVENT_LABEL } from '../constants/auditEvents.js';
 import { AuditLogRepository } from '../repositories/auditLog.repository.js';
 
@@ -9,15 +10,33 @@ function toEvent(type, labelFromDb) {
   return { type, name };
 }
 
+function toEntity(type) {
+  if (!type) {
+    return { type: null, name: '' };
+  }
+  return { type, name: AUDIT_ENTITY_LABEL[type] ?? type };
+}
+
 export const AuditLogService = {
   async list(filters) {
     const page = filters.page || 1;
     const limit = filters.limit || 50;
 
-    const result = await AuditLogRepository.findAll(filters);
+    const searchEntityTypes = [];
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      for (const [type, label] of Object.entries(AUDIT_ENTITY_LABEL)) {
+        if (label.toLowerCase().includes(searchLower)) {
+          searchEntityTypes.push(type);
+        }
+      }
+    }
+
+    const result = await AuditLogRepository.findAll({ ...filters, searchEntityTypes });
     const data = result.data.map((row) => ({
       ...row,
       event: toEvent(row.event_type, row.event_label),
+      entity: toEntity(row.entity_type),
     }));
     return {
       data,
@@ -38,12 +57,22 @@ export const AuditLogService = {
 
     return {
       event_types: event_types.map((row) => toEvent(row.event_type, row.event_label)),
-      entity_types,
+      entity_types: entity_types.map((type) => toEntity(type)),
     };
   },
 
   async export(filters) {
-    const rows = await AuditLogRepository.findAllRaw(filters);
+    const searchEntityTypes = [];
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      for (const [type, label] of Object.entries(AUDIT_ENTITY_LABEL)) {
+        if (label.toLowerCase().includes(searchLower)) {
+          searchEntityTypes.push(type);
+        }
+      }
+    }
+
+    const rows = await AuditLogRepository.findAllRaw({ ...filters, searchEntityTypes });
 
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Журнал аудита');
@@ -67,7 +96,7 @@ export const AuditLogService = {
           : 'Система',
         actor_role: row.actor_role || '—',
         event_type: `${toEvent(row.event_type, row.event_label).name} (${row.event_type})`,
-        entity_type: row.entity_type,
+        entity_type: toEntity(row.entity_type).name,
         entity_id: row.entity_id || '—',
         ip: row.ip || '—',
         result: row.result,

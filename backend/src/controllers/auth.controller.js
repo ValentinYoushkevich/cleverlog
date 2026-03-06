@@ -11,7 +11,9 @@ import {
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'none',
+  // In dev (http://localhost) browsers reject SameSite=None without Secure.
+  // We only need SameSite=None in production deployments with separate frontend domain.
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 

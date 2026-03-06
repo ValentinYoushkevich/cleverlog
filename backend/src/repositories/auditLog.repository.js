@@ -9,6 +9,7 @@ function applyFilters(query, {
   ip,
   result,
   search,
+  searchEntityTypes,
 }) {
   if (actorId) {
     query.where('al.actor_id', actorId);
@@ -38,6 +39,9 @@ function applyFilters(query, {
         .orWhereILike('al.entity_type', `%${search}%`);
     });
   }
+  if (Array.isArray(searchEntityTypes) && searchEntityTypes.length > 0) {
+    query.orWhereIn('al.entity_type', searchEntityTypes);
+  }
 }
 
 export const AuditLogRepository = {
@@ -50,6 +54,7 @@ export const AuditLogRepository = {
     ip,
     result,
     search,
+    searchEntityTypes,
     page,
     limit,
   }) {
@@ -65,6 +70,7 @@ export const AuditLogRepository = {
       ip,
       result,
       search,
+      searchEntityTypes,
     });
 
     const countRow = await baseQuery.clone().countDistinct('al.id as total').first();
