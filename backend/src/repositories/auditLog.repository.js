@@ -34,6 +34,7 @@ function applyFilters(query, {
   if (search) {
     query.where(function scopedSearch() {
       this.whereILike('al.event_type', `%${search}%`)
+        .orWhereILike('al.event_label', `%${search}%`)
         .orWhereILike('al.entity_type', `%${search}%`);
     });
   }
@@ -77,6 +78,7 @@ export const AuditLogRepository = {
         'al.actor_id',
         'al.actor_role',
         'al.event_type',
+        'al.event_label',
         'al.entity_type',
         'al.entity_id',
         'al.before',
@@ -101,6 +103,7 @@ export const AuditLogRepository = {
         'al.timestamp',
         'al.actor_role',
         'al.event_type',
+        'al.event_label',
         'al.entity_type',
         'al.entity_id',
         'al.ip',
@@ -116,6 +119,10 @@ export const AuditLogRepository = {
     return query;
   },
 
-  getDistinctEventTypes: () => db('audit_logs').distinct('event_type').orderBy('event_type').pluck('event_type'),
+  getDistinctEventTypes: () => db('audit_logs')
+    .select('event_type')
+    .max('event_label as event_label')
+    .groupBy('event_type')
+    .orderBy('event_type'),
   getDistinctEntityTypes: () => db('audit_logs').distinct('entity_type').orderBy('entity_type').pluck('entity_type'),
 };

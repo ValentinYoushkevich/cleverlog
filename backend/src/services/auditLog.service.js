@@ -1,5 +1,13 @@
 import ExcelJS from 'exceljs';
+import { AUDIT_EVENT_LABEL } from '../constants/auditEvents.js';
 import { AuditLogRepository } from '../repositories/auditLog.repository.js';
+
+function toEvent(type, labelFromDb) {
+  const name = (labelFromDb && labelFromDb !== type)
+    ? labelFromDb
+    : (AUDIT_EVENT_LABEL[type] ?? type);
+  return { type, name };
+}
 
 export const AuditLogService = {
   async list(filters) {
@@ -7,8 +15,12 @@ export const AuditLogService = {
     const limit = filters.limit || 50;
 
     const result = await AuditLogRepository.findAll(filters);
+    const data = result.data.map((row) => ({
+      ...row,
+      event: toEvent(row.event_type, row.event_label),
+    }));
     return {
-      data: result.data,
+      data,
       pagination: {
         total: result.total,
         page,
@@ -24,7 +36,10 @@ export const AuditLogService = {
       AuditLogRepository.getDistinctEntityTypes(),
     ]);
 
-    return { event_types, entity_types };
+    return {
+      event_types: event_types.map((row) => toEvent(row.event_type, row.event_label)),
+      entity_types,
+    };
   },
 
   async export(filters) {
@@ -51,7 +66,7 @@ export const AuditLogService = {
           ? `${row.last_name} ${row.first_name} (${row.actor_email})`
           : 'Система',
         actor_role: row.actor_role || '—',
-        event_type: row.event_type,
+        event_type: `${toEvent(row.event_type, row.event_label).name} (${row.event_type})`,
         entity_type: row.entity_type,
         entity_id: row.entity_id || '—',
         ip: row.ip || '—',
