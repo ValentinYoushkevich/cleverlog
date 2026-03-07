@@ -342,6 +342,7 @@ function confirmDelete(log) {
     message: `Удалить лог «${log.project_name}»?`,
     header: 'Подтверждение',
     acceptSeverity: 'danger',
+    acceptProps: { severity: 'danger' },
     acceptLabel: 'Удалить',
     rejectLabel: 'Отмена',
     accept: async () => {
@@ -361,6 +362,7 @@ function confirmDeleteAbsence(abs) {
     message: 'Удалить запись об отсутствии?',
     header: 'Подтверждение',
     acceptSeverity: 'danger',
+    acceptProps: { severity: 'danger' },
     acceptLabel: 'Удалить',
     rejectLabel: 'Отмена',
     accept: async () => {

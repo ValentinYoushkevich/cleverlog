@@ -1,2 +1,7 @@
 @import "tailwindcss";
 @import "tailwindcss-primeui";
+
+/* Сообщения об ошибках валидации — красный цвет */
+.p-error {
+  color: #dc2626 !important;
+}

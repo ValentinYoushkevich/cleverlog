@@ -143,6 +143,8 @@ async function handleMonthToggle() {
     message: `Вы уверены, что хотите ${action} месяц?`,
     header: 'Подтверждение',
     icon: 'pi pi-lock',
+    acceptSeverity: 'danger',
+    acceptProps: { severity: 'danger' },
     acceptLabel: action.charAt(0).toUpperCase() + action.slice(1),
     rejectLabel: 'Отмена',
     accept: async () => {

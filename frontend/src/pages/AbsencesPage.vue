@@ -434,6 +434,7 @@ function confirmDelete(absence) {
     header: 'Подтверждение',
     icon: 'pi pi-trash',
     acceptSeverity: 'danger',
+    acceptProps: { severity: 'danger' },
     acceptLabel: 'Удалить',
     rejectLabel: 'Отмена',
     accept: async () => {

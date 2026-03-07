@@ -229,6 +229,7 @@ function confirmDelete(log) {
     header: 'Подтверждение',
     icon: 'pi pi-trash',
     acceptSeverity: 'danger',
+    acceptProps: { severity: 'danger' },
     acceptLabel: 'Удалить',
     rejectLabel: 'Отмена',
     accept: async () => {
