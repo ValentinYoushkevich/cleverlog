@@ -1,4 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import winston from 'winston';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const logsDir = path.join(__dirname, '../../logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
 // Логируем все в одном месте, вместо кучи консольных логов по всему проекту.
 const logger = winston.createLogger({
@@ -9,8 +18,13 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
+    new winston.transports.File({
+      filename: path.join(logsDir, 'error.log'),
+      level: 'error',
+    }),
+    new winston.transports.File({
+      filename: path.join(logsDir, 'combined.log'),
+    }),
   ],
 });
 

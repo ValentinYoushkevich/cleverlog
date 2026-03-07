@@ -140,7 +140,7 @@
                 rounded
                 size="small"
                 severity="danger"
-                @click="confirmDeleteLog(log)"
+                @click="confirmDelete(log)"
               />
             </div>
           </div>
@@ -337,7 +337,7 @@ async function onWorkLogSaved() {
   await fetchData(calendarStore.currentYear, calendarStore.currentMonth);
 }
 
-function confirmDeleteLog(log) {
+function confirmDelete(log) {
   confirm.require({
     message: `Удалить лог «${log.project_name}»?`,
     header: 'Подтверждение',

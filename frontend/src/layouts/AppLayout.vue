@@ -121,6 +121,7 @@ const adminNavItems = [
   { name: 'dashboard', label: 'Дашборд', icon: 'pi pi-th-large' },
   { name: 'reports-project', label: 'Отчет по проекту', icon: 'pi pi-briefcase' },
   { name: 'reports-monthly-summary', label: 'Свод по месяцу', icon: 'pi pi-table' },
+  { name: 'reports-unlogged', label: 'Незаполнившие дни', icon: 'pi pi-exclamation-triangle' },
   { name: 'admin-users', label: 'Пользователи', icon: 'pi pi-users' },
   { name: 'admin-projects', label: 'Проекты', icon: 'pi pi-folder' },
   { name: 'admin-custom-fields', label: 'Кастомные поля', icon: 'pi pi-sliders-h' },

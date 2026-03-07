@@ -69,6 +69,12 @@ const router = createRouter({
           meta: { adminOnly: true },
         },
         {
+          path: 'reports/unlogged',
+          name: 'reports-unlogged',
+          component: () => import('@/pages/reports/UnloggedPage.vue'),
+          meta: { adminOnly: true },
+        },
+        {
           path: 'dashboard',
           name: 'dashboard',
           component: () => import('@/pages/DashboardPage.vue'),

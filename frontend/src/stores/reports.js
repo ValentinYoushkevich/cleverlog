@@ -10,6 +10,9 @@ export const useReportsStore = defineStore('reports', {
     monthlyNorm: 168,
     monthlyLoading: false,
     monthlyExporting: false,
+    unloggedUsers: [],
+    unloggedLoading: false,
+    unloggedExporting: false,
   }),
 
   actions: {
@@ -88,6 +91,35 @@ export const useReportsStore = defineStore('reports', {
         throw err;
       } finally {
         this.monthlyExporting = false;
+      }
+    },
+
+    async fetchUnlogged({ year, month }) {
+      this.unloggedLoading = true;
+      try {
+        const res = await http.get('/reports/unlogged', { params: { year, month } });
+        this.unloggedUsers = res.data?.users ?? [];
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.unloggedLoading = false;
+      }
+    },
+
+    async exportUnlogged({ year, month }) {
+      this.unloggedExporting = true;
+      try {
+        const res = await http.get('/reports/unlogged/export', {
+          params: { year, month },
+          responseType: 'blob',
+        });
+        return res.data;
+      } catch (err) {
+        showError(err);
+        throw err;
+      } finally {
+        this.unloggedExporting = false;
       }
     },
   },
