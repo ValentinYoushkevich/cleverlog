@@ -94,7 +94,11 @@
         </template>
       </Column>
       <template #empty>
-        <div class="py-8 text-center text-surface-400">Логи не найдены</div>
+        <EmptyState
+          icon="pi pi-clock"
+          title="Логи не найдены"
+          description="Создайте первый рабочий лог или измените фильтры"
+        />
       </template>
     </DataTable>
 
@@ -122,6 +126,7 @@ import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import http from '@/api/http.js';
+import EmptyState from '@/components/EmptyState.vue';
 import WorkLogFormDialog from '@/components/WorkLogFormDialog.vue';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';

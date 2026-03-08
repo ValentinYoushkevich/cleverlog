@@ -100,6 +100,7 @@ defineOptions({ name: 'AppLayout' });
 const authStore = useAuthStore();
 const calendarStore = useCalendarStore();
 const monthClosuresStore = useMonthClosuresStore();
+
 const confirm = useConfirm();
 const toast = useToast();
 

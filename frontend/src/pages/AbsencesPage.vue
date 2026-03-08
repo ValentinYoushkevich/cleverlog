@@ -89,7 +89,11 @@
         </template>
       </Column>
       <template #empty>
-        <div class="py-8 text-center text-surface-400">Записи не найдены</div>
+        <EmptyState
+          icon="pi pi-calendar-times"
+          title="Записи не найдены"
+          description="Добавьте отсутствие или измените фильтры"
+        />
       </template>
     </DataTable>
 
@@ -272,6 +276,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
+import EmptyState from '@/components/EmptyState.vue';
 import { parseDurationToHours } from '@/composables/useDuration.js';
 import { ABSENCE_LABEL, ABSENCE_SEVERITY, ABSENCE_TYPES } from '@/constants/absences.js';
 import { useAbsencesStore } from '@/stores/absences.js';
