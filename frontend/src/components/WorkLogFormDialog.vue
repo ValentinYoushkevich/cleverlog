@@ -195,6 +195,14 @@ const form = reactive({
   custom_fields: {},
 });
 
+watch(
+  () => ({ ...form, custom_fields: { ...form.custom_fields } }),
+  () => {
+    Object.keys(formErrors).forEach((key) => delete formErrors[key]);
+  },
+  { deep: true }
+);
+
 function resetForm() {
   Object.assign(form, {
     user_id: null,

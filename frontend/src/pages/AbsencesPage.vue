@@ -141,19 +141,19 @@
         </div>
 
         <div>
-          <label for="absence-create-range" class="mb-1 block text-sm font-medium text-surface-700">
-            Период *
+          <label for="absence-create-date" class="mb-1 block text-sm font-medium text-surface-700">
+            Дата *
           </label>
           <DatePicker
-            id="absence-create-range"
-            v-model="createForm.dateRange"
-            selectionMode="range"
+            id="absence-create-date"
+            v-model="createForm.date"
             class="w-full"
-            :class="{ 'p-invalid': createErrors.dateRange }"
-            placeholder="Выберите даты"
+            dateFormat="dd.mm.yy"
+            :class="{ 'p-invalid': createErrors.date }"
+            placeholder="Выберите дату"
             showIcon
           />
-          <small v-if="createErrors.dateRange" class="p-error">{{ createErrors.dateRange }}</small>
+          <small v-if="createErrors.date" class="p-error">{{ createErrors.date }}</small>
         </div>
 
         <div>
@@ -225,14 +225,16 @@
         </div>
         <div>
           <label for="absence-edit-duration" class="mb-1 block text-sm font-medium text-surface-700">
-            Длительность <span class="font-normal text-surface-400">(например: 4h, 0.5d)</span>
+            Длительность * <span class="font-normal text-surface-400">(макс. 24ч или 1д)</span>
           </label>
           <InputText
             id="absence-edit-duration"
             v-model="editForm.duration"
             class="w-full"
+            :class="{ 'p-invalid': editErrors.duration }"
             placeholder="1d"
           />
+          <small v-if="editErrors.duration" class="p-error">{{ editErrors.duration }}</small>
         </div>
         <div>
           <label for="absence-edit-comment" class="mb-1 block text-sm font-medium text-surface-700">
@@ -270,6 +272,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
+import { parseDurationToHours } from '@/composables/useDuration.js';
 import { ABSENCE_LABEL, ABSENCE_SEVERITY, ABSENCE_TYPES } from '@/constants/absences.js';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';
@@ -343,12 +346,20 @@ onMounted(() => {
 });
 
 const createDialogVisible = ref(false);
-const createForm = reactive({ user_id: null, type: null, dateRange: null, comment: '' });
+const createForm = reactive({ user_id: null, type: null, date: null, comment: '' });
 const createErrors = reactive({});
 const submitting = ref(false);
 
+watch(
+  () => ({ ...createForm }),
+  () => {
+    Object.keys(createErrors).forEach((key) => delete createErrors[key]);
+  },
+  { deep: true }
+);
+
 function openCreateDialog() {
-  Object.assign(createForm, { user_id: null, type: null, dateRange: null, comment: '' });
+  Object.assign(createForm, { user_id: null, type: null, date: null, comment: '' });
   if (isAdmin.value && users.value.length === 0) { absencesStore.fetchUsers(); }
   Object.keys(createErrors).forEach((key) => delete createErrors[key]);
   createDialogVisible.value = true;
@@ -364,18 +375,19 @@ async function onSubmitCreate() {
     createErrors.type = 'Выберите тип';
     return;
   }
-  if (!createForm.dateRange?.[0]) {
-    createErrors.dateRange = 'Выберите период';
+  if (!createForm.date) {
+    createErrors.date = 'Выберите дату';
     return;
   }
 
   submitting.value = true;
   delete createErrors.submit;
   try {
+    const dateStr = dayjs(createForm.date).format('YYYY-MM-DD');
     const body = {
       type: createForm.type,
-      date_from: dayjs(createForm.dateRange[0]).format('YYYY-MM-DD'),
-      date_to: dayjs(createForm.dateRange[1] ?? createForm.dateRange[0]).format('YYYY-MM-DD'),
+      date_from: dateStr,
+      date_to: dateStr,
       comment: createForm.comment || undefined,
     };
     if (isAdmin.value && createForm.user_id) { body.user_id = createForm.user_id; }
@@ -392,6 +404,15 @@ async function onSubmitCreate() {
 const editDialogVisible = ref(false);
 const editingAbsence = ref(null);
 const editForm = reactive({ type: null, date: null, duration: '', comment: '' });
+const editErrors = reactive({});
+
+watch(
+  () => ({ ...editForm }),
+  () => {
+    Object.keys(editErrors).forEach((key) => delete editErrors[key]);
+  },
+  { deep: true }
+);
 
 function openEditDialog(absence) {
   editingAbsence.value = absence;
@@ -401,10 +422,30 @@ function openEditDialog(absence) {
     duration: `${absence.duration_hours}h`,
     comment: absence.comment ?? '',
   });
+  Object.keys(editErrors).forEach((key) => delete editErrors[key]);
   editDialogVisible.value = true;
 }
 
 async function onSubmitEdit() {
+  Object.keys(editErrors).forEach((key) => delete editErrors[key]);
+  if (!editForm.duration?.trim()) {
+    editErrors.duration = 'Укажите длительность';
+    return;
+  }
+  const hours = parseDurationToHours(editForm.duration);
+  if (hours === null) {
+    editErrors.duration = 'Неверный формат (например: 4h, 0.5d)';
+    return;
+  }
+  if (hours <= 0) {
+    editErrors.duration = 'Длительность должна быть больше 0';
+    return;
+  }
+  if (hours > 24) {
+    editErrors.duration = 'Максимум 24ч или 1д';
+    return;
+  }
+
   submitting.value = true;
   try {
     await absencesStore.update(editingAbsence.value.id, {

@@ -27,7 +27,7 @@ function generateDateRange(from, to) {
 
 export const AbsenceService = {
   async list({ userId, isAdmin, ...filters }) {
-    const effectiveUserId = isAdmin ? filters.user_id : userId;
+    const effectiveUserId = (isAdmin && filters.user_id) ? filters.user_id : userId;
     const page = filters.page || 1;
     const limit = filters.limit || 50;
 
@@ -161,7 +161,9 @@ export const AbsenceService = {
       updateData.comment = data.comment;
     }
     if (data.duration) {
-      updateData.duration_days = parseDurationToDays(data.duration);
+      const days = parseDurationToDays(data.duration);
+      if (days > 3) { throw appError(400, 'DURATION_EXCEEDS_MAX', 'Длительность не более 24ч или 1д'); }
+      updateData.duration_days = days;
     }
 
     const before = {

@@ -17,7 +17,7 @@ function appError(status, code, message) {
 
 export const WorkLogService = {
   async list({ userId, isAdmin, ...filters }) {
-    const effectiveUserId = isAdmin ? filters.user_id : userId;
+    const effectiveUserId = (isAdmin && filters.user_id) ? filters.user_id : userId;
     const page = filters.page || 1;
     const limit = filters.limit || 50;
 
