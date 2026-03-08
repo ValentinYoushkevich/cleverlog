@@ -113,4 +113,11 @@ export const WorkLogRepository = {
     .join('custom_fields as cf', 'cf.id', 'wcv.custom_field_id')
     .where('wcv.work_log_id', workLogId)
     .select('wcv.custom_field_id', 'wcv.value', 'cf.name', 'cf.type'),
+
+  async getCustomValuesForLogs(workLogIds) {
+    if (!workLogIds?.length) { return []; }
+    return db('work_log_custom_values as wcv')
+      .whereIn('wcv.work_log_id', workLogIds)
+      .select('wcv.work_log_id', 'wcv.custom_field_id', 'wcv.value');
+  },
 };

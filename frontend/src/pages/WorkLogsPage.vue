@@ -171,8 +171,12 @@ async function loadLogs() {
     if (filters.project_id) { params.project_id = filters.project_id; }
     if (filters.task_number) { params.task_number = filters.task_number; }
     if (filters.comment) { params.comment = filters.comment; }
-    if (filters.dateRange?.[0]) { params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD'); }
-    if (filters.dateRange?.[1]) { params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD'); }
+    if (filters.dateRange?.[0]) {
+      params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD');
+      params.date_to = filters.dateRange[1]
+        ? dayjs(filters.dateRange[1]).format('YYYY-MM-DD')
+        : params.date_from;
+    }
 
     const res = await http.get('/work-logs', { params });
     const data = res.data.data ?? res.data;

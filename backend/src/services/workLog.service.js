@@ -32,9 +32,18 @@ export const WorkLogService = {
       limit,
     });
 
+    const logIds = result.data.map((l) => l.id);
+    const customRows = await WorkLogRepository.getCustomValuesForLogs(logIds);
+    const customByLog = {};
+    for (const row of customRows) {
+      if (!customByLog[row.work_log_id]) { customByLog[row.work_log_id] = {}; }
+      customByLog[row.work_log_id][row.custom_field_id] = row.value;
+    }
+
     const data = result.data.map((log) => ({
       ...log,
       duration_hours: daysToHours(log.duration_days),
+      custom_fields: customByLog[log.id] || {},
     }));
 
     return {

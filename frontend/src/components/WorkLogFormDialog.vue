@@ -116,11 +116,13 @@
             v-if="field.type === 'text'"
             v-model="form.custom_fields[field.custom_field_id]"
             class="w-full"
+            :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
           <InputNumber
             v-else-if="field.type === 'number'"
             v-model="form.custom_fields[field.custom_field_id]"
             class="w-full"
+            :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
           <Select
             v-else-if="field.type === 'dropdown'"
@@ -129,12 +131,17 @@
             optionLabel="label"
             optionValue="label"
             class="w-full"
+            :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
           <Checkbox
             v-else-if="field.type === 'checkbox'"
             v-model="form.custom_fields[field.custom_field_id]"
             :binary="true"
+            :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
+          <small v-if="formErrors['cf_' + field.custom_field_id]" class="p-error">{{
+            formErrors['cf_' + field.custom_field_id]
+          }}</small>
         </div>
       </template>
 
@@ -218,16 +225,29 @@ function resetForm() {
 }
 
 async function initForEdit(log) {
+  const savedCustomFields = log.custom_fields ? { ...log.custom_fields } : {};
   Object.assign(form, {
     date: new Date(log.date),
     project_id: log.project_id,
     duration: `${log.duration_hours}h`,
     task_number: log.task_number,
     comment: log.comment,
-    custom_fields: {},
+    custom_fields: savedCustomFields,
   });
   Object.keys(formErrors).forEach((key) => delete formErrors[key]);
   await loadProjectFields(log.project_id);
+  // Привести типы значений под вид поля (checkbox → boolean, number → number)
+  for (const field of projectFields.value) {
+    const id = field.custom_field_id;
+    const raw = form.custom_fields[id];
+    if (raw === undefined) { continue; }
+    if (field.type === 'checkbox') {
+      form.custom_fields[id] = raw === 'true' || raw === true;
+    } else if (field.type === 'number') {
+      const n = Number(raw);
+      form.custom_fields[id] = Number.isFinite(n) ? n : raw;
+    }
+  }
 }
 
 watch(
@@ -246,6 +266,12 @@ watch(
 async function onProjectChange() {
   form.custom_fields = {};
   await loadProjectFields(form.project_id);
+}
+
+function isCustomFieldEmpty(field, value) {
+  if (field.type === 'checkbox') { return value !== true; }
+  if (field.type === 'number') { return value === null || value === ''; }
+  return !value?.toString?.()?.trim?.();
 }
 
 function validate() {
@@ -277,6 +303,14 @@ function validate() {
   if (!form.comment?.trim()) {
     formErrors.comment = 'Комментарий обязателен';
     valid = false;
+  }
+  for (const field of projectFields.value) {
+    if (!field.is_required) { continue; }
+    const value = form.custom_fields[field.custom_field_id];
+    if (isCustomFieldEmpty(field, value)) {
+      formErrors['cf_' + field.custom_field_id] = `${field.name} обязательно`;
+      valid = false;
+    }
   }
   return valid;
 }
