@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- Глобальный спиннер при первой инициализации -->
     <div
       v-if="initializing"
       class="flex min-h-screen items-center justify-center"
@@ -11,33 +12,44 @@
     </div>
     <template v-else>
       <RouterView />
+      <Toast position="top-right" />
+      <ConfirmDialog />
     </template>
-    <Toast position="top-right" />
-    <ConfirmDialog />
   </div>
 </template>
 
 <script setup>
-import router from '@/router/index.js';
+import { useAuthStore } from '@/stores/auth.js';
+import { useCalendarStore } from '@/stores/calendar.js';
+import { useProjectsStore } from '@/stores/projects.js';
 import { setupErrorLogger } from '@/utils/errorLogger.js';
-import { setToast } from '@/utils/toast.js';
+import dayjs from 'dayjs';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ProgressSpinner from 'primevue/progressspinner';
 import Toast from 'primevue/toast';
-import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
 defineOptions({ name: 'App' });
 
 const initializing = ref(true);
-const toast = useToast();
+const authStore = useAuthStore();
+const projectsStore = useProjectsStore();
+const calendarStore = useCalendarStore();
 
 onMounted(async () => {
-  setToast(toast);
   setupErrorLogger();
 
-  // Дожидаемся, пока роутер (и guards) полностью разрешат стартовый маршрут
-  await router.isReady();
-  initializing.value = false;
+  try {
+    await authStore.fetchMe();
+
+    if (authStore.isAuthenticated) {
+      await Promise.all([
+        projectsStore.fetchProjects(),
+        calendarStore.fetchMonth(dayjs().year(), dayjs().month() + 1),
+      ]);
+    }
+  } finally {
+    initializing.value = false;
+  }
 });
 </script>

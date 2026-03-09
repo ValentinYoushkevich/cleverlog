@@ -73,10 +73,15 @@ export const ReportService = {
       dateTo,
     });
 
-    const filteredAbsences = type && type !== 'work'
-      ? absences.filter((absence) => absence.type === type)
-      : absences;
-    const filteredWork = (!type || type === 'work') ? workLogs : [];
+    const includeWork = !type || type === 'work';
+    const includeAbsences = (!type || type !== 'work') && !projectId;
+
+    const filteredAbsences = includeAbsences
+      ? (type && type !== 'work'
+        ? absences.filter((absence) => absence.type === type)
+        : absences)
+      : [];
+    const filteredWork = includeWork ? workLogs : [];
 
     const finalWork = filteredWork.filter((log) => {
       if (taskNumber && !log.task_number.toLowerCase().includes(taskNumber.toLowerCase())) {

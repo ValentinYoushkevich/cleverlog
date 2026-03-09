@@ -247,6 +247,9 @@ function resetFilters() {
     type: null,
     dateRange: null,
   });
+
+  // После сброса сразу загружаем отчёт без фильтров
+  loadReport();
 }
 
 async function doExport() {

@@ -106,7 +106,7 @@
       <form class="space-y-4" @submit.prevent="onSubmitCreate">
         <div v-if="isAdmin">
           <label for="absence-create-user" class="mb-1 block text-sm font-medium text-surface-700">
-            Пользователь *
+            Пользователь <span class="text-red-500">*</span>
           </label>
           <Select
             id="absence-create-user"
@@ -129,7 +129,7 @@
         </div>
         <div>
           <label for="absence-create-type" class="mb-1 block text-sm font-medium text-surface-700">
-            Тип *
+            Тип <span class="text-red-500">*</span>
           </label>
           <Select
             id="absence-create-type"
@@ -146,7 +146,7 @@
 
         <div>
           <label for="absence-create-date" class="mb-1 block text-sm font-medium text-surface-700">
-            Дата *
+            Дата <span class="text-red-500">*</span>
           </label>
           <DatePicker
             id="absence-create-date"
@@ -229,7 +229,8 @@
         </div>
         <div>
           <label for="absence-edit-duration" class="mb-1 block text-sm font-medium text-surface-700">
-            Длительность * <span class="font-normal text-surface-400">(макс. 24ч или 1д)</span>
+            Длительность <span class="text-red-500">*</span>
+            <span class="font-normal text-surface-400">(макс. 24ч или 1д)</span>
           </label>
           <InputText
             id="absence-edit-duration"

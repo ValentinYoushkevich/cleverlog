@@ -8,7 +8,9 @@
   >
     <form class="space-y-4" @submit.prevent="onSubmit">
       <div v-if="isAdmin && !editingLog">
-        <label for="worklog-user" class="mb-1 block text-sm font-medium text-surface-700">Пользователь *</label>
+        <label for="worklog-user" class="mb-1 block text-sm font-medium text-surface-700">
+          Пользователь <span class="text-red-500">*</span>
+        </label>
         <Select
           id="worklog-user"
           v-model="form.user_id"
@@ -35,7 +37,9 @@
         />
       </div>
       <div>
-        <label for="worklog-date" class="mb-1 block text-sm font-medium text-surface-700">Дата *</label>
+        <label for="worklog-date" class="mb-1 block text-sm font-medium text-surface-700">
+          Дата <span class="text-red-500">*</span>
+        </label>
         <DatePicker
           id="worklog-date"
           v-model="form.date"
@@ -48,7 +52,9 @@
       </div>
 
       <div>
-        <label for="worklog-project" class="mb-1 block text-sm font-medium text-surface-700">Проект *</label>
+        <label for="worklog-project" class="mb-1 block text-sm font-medium text-surface-700">
+          Проект <span class="text-red-500">*</span>
+        </label>
         <Select
           id="worklog-project"
           v-model="form.project_id"
@@ -65,7 +71,7 @@
 
       <div>
         <label for="worklog-duration" class="mb-1 block text-sm font-medium text-surface-700">
-          Длительность *
+          Длительность <span class="text-red-500">*</span>
           <span class="font-normal text-surface-400">(например: 1h 30m, 2d, 45m)</span>
         </label>
         <InputText
@@ -80,7 +86,7 @@
 
       <div>
         <label for="worklog-task-number" class="mb-1 block text-sm font-medium text-surface-700">
-          Task Number *
+          Task Number <span class="text-red-500">*</span>
         </label>
         <InputText
           id="worklog-task-number"
@@ -93,7 +99,9 @@
       </div>
 
       <div>
-        <label for="worklog-comment" class="mb-1 block text-sm font-medium text-surface-700">Комментарий *</label>
+        <label for="worklog-comment" class="mb-1 block text-sm font-medium text-surface-700">
+          Комментарий <span class="text-red-500">*</span>
+        </label>
         <Textarea
           id="worklog-comment"
           v-model="form.comment"

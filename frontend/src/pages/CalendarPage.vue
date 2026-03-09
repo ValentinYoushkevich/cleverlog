@@ -91,9 +91,22 @@
     </div>
 
     <div class="flex gap-4 text-xs text-surface-500">
-      <div class="flex items-center gap-1.5"><span class="block h-3 w-3 rounded bg-green-200" />Есть логи</div>
-      <div class="flex items-center gap-1.5"><span class="block h-3 w-3 rounded bg-blue-200" />Отсутствие</div>
-      <div class="flex items-center gap-1.5"><span class="block h-3 w-3 rounded bg-surface-100" />Выходной</div>
+      <div class="flex items-center gap-1.5">
+        <span class="block h-3 w-3 rounded bg-green-200" />
+        Логи заполненные
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="block h-3 w-3 rounded bg-yellow-200" />
+        Логи неполные
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="block h-3 w-3 rounded bg-blue-200" />
+        Отсутствие
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="block h-3 w-3 rounded bg-surface-100" />
+        Выходной
+      </div>
     </div>
 
     <Drawer
@@ -150,6 +163,14 @@
         <div>
           <div class="mb-2 flex items-center justify-between">
             <h3 class="font-medium text-surface-700">Отсутствия</h3>
+            <Button
+              v-if="canEdit && selectedDay.day_type === 'working'"
+              label="Добавить"
+              icon="pi pi-plus"
+              size="small"
+              text
+              @click="openAddAbsence"
+            />
           </div>
           <div v-if="dayMap[selectedDay.date]?.absences?.length" class="space-y-2">
             <div
@@ -185,6 +206,98 @@
       :current-user-label="currentUserLabel"
       @saved="onWorkLogSaved"
     />
+
+    <Dialog
+      v-model:visible="absenceDialogVisible"
+      header="Добавить отсутствие"
+      modal
+      class="w-full max-w-md"
+    >
+      <form class="space-y-4" @submit.prevent="onSubmitAbsence">
+        <div v-if="isAdmin">
+          <label for="calendar-absence-user" class="mb-1 block text-sm font-medium text-surface-700">
+            Пользователь <span class="text-red-500">*</span>
+          </label>
+          <Select
+            id="calendar-absence-user"
+            v-model="absenceForm.user_id"
+            :options="workLogUserOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Выберите пользователя"
+            class="w-full"
+            :class="{ 'p-invalid': absenceErrors.user_id }"
+          />
+          <small v-if="absenceErrors.user_id" class="p-error">{{ absenceErrors.user_id }}</small>
+        </div>
+        <div v-else>
+          <label for="calendar-absence-user-readonly" class="mb-1 block text-sm font-medium text-surface-700">
+            Пользователь
+          </label>
+          <InputText
+            id="calendar-absence-user-readonly"
+            :model-value="currentUserLabel"
+            class="w-full"
+            disabled
+          />
+        </div>
+
+        <div>
+          <label for="calendar-absence-type" class="mb-1 block text-sm font-medium text-surface-700">
+            Тип <span class="text-red-500">*</span>
+          </label>
+          <Select
+            id="calendar-absence-type"
+            v-model="absenceForm.type"
+            :options="ABSENCE_TYPES"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Выберите тип"
+            class="w-full"
+            :class="{ 'p-invalid': absenceErrors.type }"
+          />
+          <small v-if="absenceErrors.type" class="p-error">{{ absenceErrors.type }}</small>
+        </div>
+
+        <div>
+          <label for="calendar-absence-date" class="mb-1 block text-sm font-medium text-surface-700">
+            Дата <span class="text-red-500">*</span>
+          </label>
+          <DatePicker
+            id="calendar-absence-date"
+            v-model="absenceForm.date"
+            class="w-full"
+            dateFormat="dd.mm.yy"
+            :class="{ 'p-invalid': absenceErrors.date }"
+            placeholder="Выберите дату"
+            showIcon
+          />
+          <small v-if="absenceErrors.date" class="p-error">{{ absenceErrors.date }}</small>
+        </div>
+
+        <div>
+          <label for="calendar-absence-comment" class="mb-1 block text-sm font-medium text-surface-700">
+            Комментарий
+          </label>
+          <Textarea
+            id="calendar-absence-comment"
+            v-model="absenceForm.comment"
+            rows="2"
+            class="w-full"
+            placeholder="Необязательно"
+          />
+        </div>
+
+        <Message v-if="absenceErrors.submit" severity="error" :closable="false" class="w-full">
+          {{ absenceErrors.submit }}
+        </Message>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <Button label="Отмена" severity="secondary" @click="absenceDialogVisible = false" />
+          <Button type="submit" label="Создать" :loading="absenceSubmitting" />
+        </div>
+      </form>
+    </Dialog>
   </div>
 </template>
 
@@ -192,7 +305,7 @@
 import http from '@/api/http.js';
 import WorkLogFormDialog from '@/components/WorkLogFormDialog.vue';
 import { useCalendarData } from '@/composables/useCalendarData.js';
-import { ABSENCE_LABEL, ABSENCE_SEVERITY } from '@/constants/absences.js';
+import { ABSENCE_LABEL, ABSENCE_SEVERITY, ABSENCE_TYPES } from '@/constants/absences.js';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';
 import { useCalendarStore } from '@/stores/calendar.js';
@@ -201,11 +314,17 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import isoWeek from 'dayjs/plugin/isoWeek.js';
 import Button from 'primevue/button';
+import DatePicker from 'primevue/datepicker';
+import Dialog from 'primevue/dialog';
 import Drawer from 'primevue/drawer';
+import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
+import Select from 'primevue/select';
 import Tag from 'primevue/tag';
+import Textarea from 'primevue/textarea';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 dayjs.extend(isoWeek);
 dayjs.locale('ru');
@@ -323,6 +442,10 @@ function getDayNumberClass(day) {
 const drawerVisible = ref(false);
 const selectedDay = ref(null);
 const workLogDialogVisible = ref(false);
+const absenceDialogVisible = ref(false);
+const absenceForm = reactive({ user_id: null, type: null, date: null, comment: '' });
+const absenceErrors = reactive({});
+const absenceSubmitting = ref(false);
 
 function openDayDrawer(day) {
   selectedDay.value = day;
@@ -333,8 +456,61 @@ function openAddWorkLog() {
   workLogDialogVisible.value = true;
 }
 
+function openAddAbsence() {
+  Object.assign(absenceForm, { user_id: null, type: null, date: null, comment: '' });
+  if (selectedDay.value) {
+    absenceForm.date = new Date(selectedDay.value.date);
+  }
+  if (isAdmin.value && absencesStore.users.length === 0) {
+    absencesStore.fetchUsers();
+  }
+  Object.keys(absenceErrors).forEach((key) => delete absenceErrors[key]);
+  absenceDialogVisible.value = true;
+}
+
 async function onWorkLogSaved() {
   await fetchData(calendarStore.currentYear, calendarStore.currentMonth);
+}
+
+async function onSubmitAbsence() {
+  Object.keys(absenceErrors).forEach((key) => delete absenceErrors[key]);
+
+  if (isAdmin.value && !absenceForm.user_id) {
+    absenceErrors.user_id = 'Выберите пользователя';
+    return;
+  }
+  if (!absenceForm.type) {
+    absenceErrors.type = 'Выберите тип';
+    return;
+  }
+  if (!absenceForm.date) {
+    absenceErrors.date = 'Выберите дату';
+    return;
+  }
+
+  absenceSubmitting.value = true;
+  delete absenceErrors.submit;
+
+  try {
+    const dateStr = dayjs(absenceForm.date).format('YYYY-MM-DD');
+    const body = {
+      type: absenceForm.type,
+      date_from: dateStr,
+      date_to: dateStr,
+      comment: absenceForm.comment || undefined,
+    };
+    if (isAdmin.value && absenceForm.user_id) {
+      body.user_id = absenceForm.user_id;
+    }
+    await absencesStore.create(body);
+    absenceDialogVisible.value = false;
+    await fetchData(calendarStore.currentYear, calendarStore.currentMonth);
+    toast.add({ severity: 'success', summary: 'Создано', life: 3000 });
+  } catch (err) {
+    absenceErrors.submit = err.response?.data?.message ?? 'Ошибка создания';
+  } finally {
+    absenceSubmitting.value = false;
+  }
 }
 
 function confirmDelete(log) {
