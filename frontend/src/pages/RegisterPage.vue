@@ -94,14 +94,7 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
-import Password from 'primevue/password';
-import ProgressBar from 'primevue/progressbar';
-import Tag from 'primevue/tag';
 import { useForm } from 'vee-validate';
-import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import http from '@/api/http.js';

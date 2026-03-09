@@ -313,18 +313,8 @@ import { useUiStore } from '@/stores/ui.js';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import isoWeek from 'dayjs/plugin/isoWeek.js';
-import Button from 'primevue/button';
-import DatePicker from 'primevue/datepicker';
-import Dialog from 'primevue/dialog';
-import Drawer from 'primevue/drawer';
-import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
-import Select from 'primevue/select';
-import Tag from 'primevue/tag';
-import Textarea from 'primevue/textarea';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, reactive, ref } from 'vue';
 
 dayjs.extend(isoWeek);
 dayjs.locale('ru');

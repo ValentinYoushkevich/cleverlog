@@ -159,17 +159,7 @@ import { CUSTOM_FIELD_TYPES } from '@/constants/projects.js';
 import { useCustomFieldsStore } from '@/stores/customFields.js';
 import { useUiStore } from '@/stores/ui.js';
 import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
-import ProgressSpinner from 'primevue/progressspinner';
-import Select from 'primevue/select';
-import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
-import { onMounted, reactive, ref } from 'vue';
 
 defineOptions({ name: 'CustomFieldsPage' });
 

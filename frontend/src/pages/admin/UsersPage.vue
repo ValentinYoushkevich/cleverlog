@@ -352,12 +352,12 @@
 
 <script setup>
 import {
-  ROLE_LABEL,
-  ROLE_SEVERITY,
-  STATUS_LABEL,
-  STATUS_SEVERITY,
-  USER_ROLE_OPTIONS,
-  USER_STATUS_OPTIONS,
+    ROLE_LABEL,
+    ROLE_SEVERITY,
+    STATUS_LABEL,
+    STATUS_SEVERITY,
+    USER_ROLE_OPTIONS,
+    USER_STATUS_OPTIONS,
 } from '@/constants/users.js';
 import { useDirectoriesStore } from '@/stores/directories.js';
 import { useUiStore } from '@/stores/ui.js';
@@ -365,17 +365,7 @@ import { useUsersStore } from '@/stores/users.js';
 import { createUserSchema } from '@/validators/user.js';
 import dayjs from 'dayjs';
 import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
-import Select from 'primevue/select';
-import Tag from 'primevue/tag';
-import ToggleSwitch from 'primevue/toggleswitch';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, reactive, ref } from 'vue';
 
 defineOptions({ name: 'UsersPage' });
 

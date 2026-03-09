@@ -92,11 +92,6 @@ import { useUiStore } from '@/stores/ui.js';
 import { downloadBlob } from '@/utils/download.js';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import { computed, onMounted, ref } from 'vue';
 
 dayjs.locale('ru');
 defineOptions({ name: 'MonthlySummaryPage' });

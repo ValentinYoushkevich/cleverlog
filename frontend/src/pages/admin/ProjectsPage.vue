@@ -214,18 +214,7 @@ import { useProjectsStore } from '@/stores/projects.js';
 import { useUiStore } from '@/stores/ui.js';
 import dayjs from 'dayjs';
 import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import Drawer from 'primevue/drawer';
-import InputText from 'primevue/inputtext';
-import ProgressSpinner from 'primevue/progressspinner';
-import Select from 'primevue/select';
-import Tag from 'primevue/tag';
-import ToggleSwitch from 'primevue/toggleswitch';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, reactive, ref } from 'vue';
 
 defineOptions({ name: 'ProjectsPage' });
 

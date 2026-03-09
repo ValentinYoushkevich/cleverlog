@@ -6,7 +6,6 @@ import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
 import Tooltip from 'primevue/tooltip'
-import { createApp } from 'vue'
 
 import App from '@/App.vue'
 import '@/assets/main.css'

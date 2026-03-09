@@ -109,13 +109,6 @@
 
 <script setup>
 import dayjs from 'dayjs';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import DatePicker from 'primevue/datepicker';
-import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
-import { computed, onMounted, reactive, ref } from 'vue';
 
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useProjectsStore } from '@/stores/projects.js';

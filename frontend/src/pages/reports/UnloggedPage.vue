@@ -84,11 +84,6 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Tag from 'primevue/tag';
-import { computed, onMounted, ref } from 'vue';
 
 import { useReportsStore } from '@/stores/reports.js';
 import { useUiStore } from '@/stores/ui.js';

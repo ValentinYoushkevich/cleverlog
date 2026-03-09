@@ -1,5 +1,3 @@
-import { computed } from 'vue';
-
 export function usePasswordStrength(password) {
   const criteria = computed(() => [
     { label: 'Минимум 8 символов', met: password.value?.length >= 8 },

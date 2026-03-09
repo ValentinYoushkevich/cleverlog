@@ -124,11 +124,7 @@ import { useUiStore } from '@/stores/ui.js';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import isoWeek from 'dayjs/plugin/isoWeek.js';
-import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
-import Popover from 'primevue/popover';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref } from 'vue';
 
 dayjs.extend(isoWeek);
 dayjs.locale('ru');

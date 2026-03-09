@@ -153,13 +153,6 @@
 
 <script setup>
 import dayjs from 'dayjs';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import DatePicker from 'primevue/datepicker';
-import Select from 'primevue/select';
-import Tag from 'primevue/tag';
-import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { ABSENCE_LABEL } from '@/constants/absences.js';

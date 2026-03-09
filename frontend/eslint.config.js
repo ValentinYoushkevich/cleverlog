@@ -4,6 +4,7 @@ import pluginUnicorn from 'eslint-plugin-unicorn'
 import pluginVue from 'eslint-plugin-vue'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
+import autoImportConfig from './.eslintrc-auto-import.json' assert { type: 'json' }
 
 export default defineConfig([
   {
@@ -17,6 +18,7 @@ export default defineConfig([
     languageOptions: {
       globals: {
         ...globals.browser,
+        ...(autoImportConfig.globals ?? {}),
       },
     },
   },

@@ -158,14 +158,6 @@ import { useDashboardStore } from '@/stores/dashboard.js';
 import { useUiStore } from '@/stores/ui.js';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Chart from 'primevue/chart';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import ProgressSpinner from 'primevue/progressspinner';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 dayjs.locale('ru');

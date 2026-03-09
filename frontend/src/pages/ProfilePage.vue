@@ -161,15 +161,7 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod';
-import Button from 'primevue/button';
-import Card from 'primevue/card';
-import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
-import Password from 'primevue/password';
-import ProgressBar from 'primevue/progressbar';
-import Tag from 'primevue/tag';
 import { useForm } from 'vee-validate';
-import { onMounted, ref, watch } from 'vue';
 
 import { usePasswordStrength } from '@/composables/usePasswordStrength.js';
 import { useAuthStore } from '@/stores/auth.js';

@@ -15,6 +15,7 @@
 
 <script setup>
 defineOptions({ name: 'EmptyState' });
+
 defineProps({
   icon: { type: String, default: 'pi pi-inbox' },
   title: { type: String, default: 'Нет данных' },

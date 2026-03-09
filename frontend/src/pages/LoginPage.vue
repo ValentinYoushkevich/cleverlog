@@ -47,12 +47,7 @@
 
 <script setup>
 import { toTypedSchema } from '@vee-validate/zod';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
-import Password from 'primevue/password';
 import { useForm } from 'vee-validate';
-import { ref } from 'vue';
 
 import { useAuthStore } from '@/stores/auth.js';
 import { loginSchema } from '@/validators/auth.js';

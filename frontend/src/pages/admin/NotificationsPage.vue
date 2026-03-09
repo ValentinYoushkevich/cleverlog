@@ -80,12 +80,7 @@ import { useNotificationsStore } from '@/stores/notifications.js';
 import { useUiStore } from '@/stores/ui.js';
 import { useUsersStore } from '@/stores/users.js';
 import { storeToRefs } from 'pinia';
-import Card from 'primevue/card';
-import InputText from 'primevue/inputtext';
-import ProgressSpinner from 'primevue/progressspinner';
-import ToggleSwitch from 'primevue/toggleswitch';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, reactive, ref } from 'vue';
 
 defineOptions({ name: 'NotificationsPage' });
 

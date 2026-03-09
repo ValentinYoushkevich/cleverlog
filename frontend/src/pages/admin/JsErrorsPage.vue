@@ -133,13 +133,6 @@
 import { useJsErrorsStore } from '@/stores/jsErrors.js';
 import { useUiStore } from '@/stores/ui.js';
 import dayjs from 'dayjs';
-import { storeToRefs } from 'pinia';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import { onMounted, reactive, ref } from 'vue';
 
 defineOptions({ name: 'JsErrorsPage' });
 

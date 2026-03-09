@@ -103,12 +103,8 @@
 import { useAuthStore } from '@/stores/auth.js';
 import { useCalendarStore } from '@/stores/calendar.js';
 import { useMonthClosuresStore } from '@/stores/monthClosures.js';
-import Avatar from 'primevue/avatar';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import { computed } from 'vue';
 
 defineOptions({ name: 'AppLayout' });
 

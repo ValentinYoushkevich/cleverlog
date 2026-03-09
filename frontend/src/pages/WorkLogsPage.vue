@@ -116,15 +116,8 @@
 
 <script setup>
 import dayjs from 'dayjs';
-import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
-import DatePicker from 'primevue/datepicker';
-import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, reactive, ref } from 'vue';
 
 import http from '@/api/http.js';
 import EmptyState from '@/components/EmptyState.vue';
