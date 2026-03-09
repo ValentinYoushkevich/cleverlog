@@ -1,6 +1,11 @@
-import { useAuthStore } from '@/stores/auth.js';
 import { createRouter, createWebHistory } from 'vue-router';
 
+/**
+ * Матрица защиты (MODULE_20):
+ * - public: true → /login, /register/:token (все)
+ * - requiresAuth: true → все остальные (User + Admin)
+ * - adminOnly: true → reports/project, reports/monthly-summary, reports/unlogged, dashboard, admin/*
+ */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -125,30 +130,26 @@ const router = createRouter({
   ],
 });
 
-let authChecked = false;
-
 router.beforeEach(async (to) => {
+  const { useAuthStore } = await import('@/stores/auth.js');
   const authStore = useAuthStore();
 
-  if (!authChecked) {
+  if (!authStore.user && !to.meta.public) {
     await authStore.fetchMe();
-    authChecked = true;
   }
 
-  // Регистрация по инвайту должна быть доступна без авторизации.
-  if (to.name === 'register') {
-    return true;
+  const isAuthenticated = authStore.isAuthenticated;
+  const isAdmin = authStore.isAdmin;
+
+  if (to.meta.public && isAuthenticated) {
+    return { name: 'calendar' };
   }
 
-  if (to.path === '/') {
-    return authStore.isAuthenticated ? { name: 'calendar' } : { name: 'login' };
-  }
-
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.meta.requiresAuth && !isAuthenticated) {
     return { name: 'login' };
   }
 
-  if (to.meta.public && authStore.isAuthenticated) {
+  if (to.meta.adminOnly && !isAdmin) {
     return { name: 'calendar' };
   }
 });

@@ -256,7 +256,7 @@ async function loadProjectFields() {
   }
 }
 
-async function updateField(field, key) {
+async function updateField(field) {
   updatingField.value = true;
   try {
     await projectsStore.updateProjectField(drawerProject.value.id, field.custom_field_id, {

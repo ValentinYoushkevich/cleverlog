@@ -11,7 +11,6 @@ import { createApp } from 'vue'
 import App from '@/App.vue'
 import '@/assets/main.css'
 import router from '@/router/index.js'
-import { setupErrorLogger } from '@/utils/errorLogger.js'
 
 const BlueAuraPreset = definePreset(Aura, {
   semantic: {
@@ -49,4 +48,3 @@ app.use(ConfirmationService)
 app.directive('tooltip', Tooltip)
 
 app.mount('#app')
-setupErrorLogger()
