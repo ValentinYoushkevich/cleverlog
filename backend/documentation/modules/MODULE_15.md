@@ -43,6 +43,7 @@ import dashboardRouter from '@/routes/dashboardRouter.js';
 import auditLogRouter from '@/routes/auditLogRouter.js';
 import notificationRouter from '@/routes/notificationRouter.js';
 import jsErrorRouter from '@/routes/jsErrorRouter.js';
+import jsErrorsRouter from '@/routes/jsErrorsRouter.js';
 
 // Error handler
 import { errorHandler } from '@/middlewares/errorHandler.js';
@@ -75,6 +76,7 @@ app.use('/api/month-closures', monthClosureRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/audit-logs', auditLogRouter);
+app.use('/api/js-errors', jsErrorsRouter);
 app.use('/api/notifications', notificationRouter);
 
 // Глобальный error handler — ПОСЛЕДНИМ
@@ -126,6 +128,7 @@ export default app;
 | `/api/dashboard/users` | GET | ✅ | ✅ | ❌ | — |
 | `/api/audit-logs` | GET | ✅ | ✅ | ❌ | — |
 | `/api/audit-logs/export` | GET | ✅ | ✅ | ❌ | — |
+| `/api/js-errors` | GET | ✅ | ✅ | ❌ | — |
 | `/api/notifications/settings` | GET/PATCH | ✅ | ✅ | ❌ | — |
 | `/api/notifications/users/:id` | PATCH | ✅ | ✅ | ❌ | — |
 

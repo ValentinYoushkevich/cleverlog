@@ -57,7 +57,7 @@ useAuthStore — пользователь, роль, login/logout/fetchMe. useCa
 /admin/notifications — глобальный ToggleSwitch рассылки. DataTable пользователей с колонкой ToggleSwitch per-user.
 
 19. Логирование JS-ошибок
-Глобальный обработчик: app.config.errorHandler + window.onerror + unhandledrejection → POST /api/log-js-error. Без UI-компонента.
+Глобальный обработчик: app.config.errorHandler + window.onerror + unhandledrejection → POST /api/log-js-error.
 
 20. RBAC — финальный модуль
 Composable usePermissions — скрытие элементов UI по роли (v-if). Navigation guard: запрет Admin-страниц для User. Скрытие Admin-only элементов (дашборд, управление пользователями/проектами/полями/календарём, закрытие месяца, аудит, уведомления, колонка «Пользователь» в экспорте). Финальное тестирование по матрице RBAC.

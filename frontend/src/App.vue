@@ -11,48 +11,33 @@
     </div>
     <template v-else>
       <RouterView />
-      <Toast position="top-right" />
-      <ConfirmDialog />
     </template>
+    <Toast position="top-right" />
+    <ConfirmDialog />
   </div>
 </template>
 
 <script setup>
-import { useAuthStore } from '@/stores/auth.js';
-import { useCalendarStore } from '@/stores/calendar.js';
-import { useProjectsStore } from '@/stores/projects.js';
+import router from '@/router/index.js';
 import { setupErrorLogger } from '@/utils/errorLogger.js';
 import { setToast } from '@/utils/toast.js';
-import dayjs from 'dayjs';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ProgressSpinner from 'primevue/progressspinner';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { nextTick, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 defineOptions({ name: 'App' });
 
 const initializing = ref(true);
-const authStore = useAuthStore();
-const projectsStore = useProjectsStore();
-const calendarStore = useCalendarStore();
+const toast = useToast();
 
 onMounted(async () => {
+  setToast(toast);
   setupErrorLogger();
 
-  try {
-    await authStore.fetchMe();
-
-    if (authStore.isAuthenticated) {
-      await Promise.all([
-        projectsStore.fetchProjects(),
-        calendarStore.fetchMonth(dayjs().year(), dayjs().month() + 1),
-      ]);
-    }
-  } finally {
-    initializing.value = false;
-    await nextTick();
-    setToast(useToast());
-  }
+  // Дожидаемся, пока роутер (и guards) полностью разрешат стартовый маршрут
+  await router.isReady();
+  initializing.value = false;
 });
 </script>

@@ -121,6 +121,12 @@ const router = createRouter({
           component: () => import('@/pages/admin/AuditLogsPage.vue'),
           meta: { adminOnly: true },
         },
+        {
+          path: 'admin/debug/js-errors',
+          name: 'admin-js-errors',
+          component: () => import('@/pages/admin/JsErrorsPage.vue'),
+          meta: { adminOnly: true },
+        },
       ],
     },
     {
@@ -134,22 +140,27 @@ router.beforeEach(async (to) => {
   const { useAuthStore } = await import('@/stores/auth.js');
   const authStore = useAuthStore();
 
-  if (!authStore.user && !to.meta.public) {
-    await authStore.fetchMe();
-  }
+  const isPublic = to.matched.some((r) => r.meta?.public);
+  const requiresAuth = to.matched.some((r) => r.meta?.requiresAuth) || !isPublic;
+  const adminOnly = to.matched.some((r) => r.meta?.adminOnly);
 
-  const isAuthenticated = authStore.isAuthenticated;
-  const isAdmin = authStore.isAdmin;
-
-  if (to.meta.public && isAuthenticated) {
+  // Если идём на public-страницу и уже авторизованы — отправляем в календарь
+  if (isPublic && authStore.isAuthenticated) {
     return { name: 'calendar' };
   }
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  // Для всех защищённых страниц пытаемся подтянуть /me, если ещё не знаем пользователя
+  if (requiresAuth && !authStore.user) {
+    await authStore.fetchMe();
+  }
+
+  // Если после /me всё равно не авторизованы — на логин
+  if (requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' };
   }
 
-  if (to.meta.adminOnly && !isAdmin) {
+  // Защита adminOnly
+  if (adminOnly && !authStore.isAdmin) {
     return { name: 'calendar' };
   }
 });

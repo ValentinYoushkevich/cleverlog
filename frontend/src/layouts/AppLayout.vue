@@ -35,6 +35,21 @@
               </RouterLink>
             </li>
           </ul>
+          <div class="mt-6 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-surface-400">
+            Отладка
+          </div>
+          <ul class="space-y-1">
+            <li v-for="item in debugNavItems" :key="item.name">
+              <RouterLink
+                :to="{ name: item.name }"
+                class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
+                active-class="bg-primary-50 text-primary font-medium"
+              >
+                <i :class="item.icon" />
+                <span>{{ item.label }}</span>
+              </RouterLink>
+            </li>
+          </ul>
         </template>
       </nav>
 
@@ -129,6 +144,10 @@ const adminNavItems = [
   { name: 'admin-calendar', label: 'Календарь', icon: 'pi pi-calendar-plus' },
   { name: 'admin-notifications', label: 'Уведомления', icon: 'pi pi-bell' },
   { name: 'admin-audit-logs', label: 'Журнал аудита', icon: 'pi pi-list' },
+];
+
+const debugNavItems = [
+  { name: 'admin-js-errors', label: 'Ошибки фронта', icon: 'pi pi-exclamation-triangle' },
 ];
 
 async function handleLogout() {
