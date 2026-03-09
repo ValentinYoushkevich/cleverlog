@@ -298,6 +298,15 @@ onMounted(async () => {
       filters.dateRange = [start.toDate(), start.endOf('month').toDate()];
     }
   }
+
+  // Для Admin / SuperAdmin по умолчанию показываем отчёт по самому себе
+  if (
+    !filters.user_id
+    && authStore.user
+    && (authStore.user.role === 'admin' || authStore.user.role === 'superadmin')
+  ) {
+    filters.user_id = authStore.user.id;
+  }
   await loadReport();
 });
 </script>
