@@ -16,13 +16,14 @@ export async function seed(knex) {
   await knex('projects').del();
   await knex('users').del();
 
+  // --- Users (1 admin + 2 employees) ---
   const adminHash = await argon2.hash('Admin' + '1234!');
   const userHash = await argon2.hash('User' + '1234!');
 
   const [admin] = await knex('users')
     .insert({
-      first_name: 'Супер',
-      last_name: 'Админ',
+      first_name: 'Админ',
+      last_name: 'Супер',
       email: 'admin@cleverlog.local',
       password_hash: adminHash,
       role: 'admin',
@@ -32,143 +33,140 @@ export async function seed(knex) {
     })
     .returning('*');
 
-  const users = await knex('users')
+  const [frontendUser, backendUser] = await knex('users')
     .insert([
       {
         first_name: 'Иван',
         last_name: 'Иванов',
-        email: 'ivanov@cleverlog.local',
+        email: 'frontend@cleverlog.local',
         password_hash: userHash,
         role: 'user',
-        position: 'Developer',
+        position: 'Frontend Developer',
         status: 'active',
         hire_date: '2024-03-01',
       },
       {
         first_name: 'Мария',
         last_name: 'Петрова',
-        email: 'petrova@cleverlog.local',
+        email: 'backend@cleverlog.local',
         password_hash: userHash,
         role: 'user',
-        position: 'Designer',
+        position: 'Backend Developer',
         status: 'active',
-        hire_date: '2024-06-01',
+        hire_date: '2024-03-01',
       },
     ])
     .returning('*');
 
-  const [ivan, maria] = users;
-
-  // Extra random-like users for notifications/settings testing
-  const extraFirstNames = ['Алексей', 'Дмитрий', 'Николай', 'Ольга', 'Елена', 'Павел', 'Сергей', 'Анна'];
-  const extraLastNames = ['Смирнов', 'Кузнецов', 'Попов', 'Васильев', 'Новиков', 'Морозов', 'Павлов', 'Волков'];
-
-  const extraUsers = [];
-  for (let i = 1; i <= 70; i += 1) {
-    const fn = extraFirstNames[(i - 1) % extraFirstNames.length];
-    const ln = extraLastNames[(i - 1) % extraLastNames.length];
-    extraUsers.push({
-      first_name: fn,
-      last_name: ln,
-      email: `user${i}@cleverlog.local`,
-      password_hash: userHash,
-      role: 'user',
-      position: 'Employee',
-      status: 'active',
-      hire_date: '2024-02-01',
-    });
-  }
-
-  await knex('users').insert(extraUsers);
-
-  const projects = await knex('projects')
+  // --- Projects (3 simple projects) ---
+  const [projectA, projectB, projectC] = await knex('projects')
     .insert([
       { name: 'CleverLog MVP', status: 'active' },
-      { name: 'Internal Tools', status: 'on_hold' },
+      { name: 'Internal Tools', status: 'active' },
+      { name: 'Website Redesign', status: 'active' },
     ])
     .returning('*');
 
-  const [projectA, projectB] = projects;
-
-  // Custom fields (5 total, 2 deleted)
-  const deletedAt1 = new Date('2026-01-15T10:00:00Z');
-  const deletedAt2 = new Date('2026-02-10T10:00:00Z');
-
-  const customFields = await knex('custom_fields')
+  // --- Custom fields (3 active) ---
+  const [, typeField] = await knex('custom_fields')
     .insert([
       { name: 'Клиент', type: 'text', deleted_at: null },
-      { name: 'Приоритет', type: 'dropdown', deleted_at: null },
+      { name: 'Тип задачи', type: 'dropdown', deleted_at: null },
       { name: 'Срочно', type: 'checkbox', deleted_at: null },
-      { name: 'Старое поле (удалено)', type: 'number', deleted_at: deletedAt1 },
-      { name: 'Статус задачи (удалено)', type: 'dropdown', deleted_at: deletedAt2 },
     ])
     .returning('*');
 
-  const priorityField = customFields.find((f) => f.name === 'Приоритет');
-  const deletedDropdownField = customFields.find((f) => f.name === 'Статус задачи (удалено)');
-
-  if (priorityField) {
+  if (typeField) {
     await knex('custom_field_options').insert([
-      { custom_field_id: priorityField.id, label: 'Низкий', sort_order: 0 },
-      { custom_field_id: priorityField.id, label: 'Средний', sort_order: 1 },
-      { custom_field_id: priorityField.id, label: 'Высокий', sort_order: 2 },
-    ]);
-  }
-  if (deletedDropdownField) {
-    await knex('custom_field_options').insert([
-      { custom_field_id: deletedDropdownField.id, label: 'В работе', sort_order: 0 },
-      { custom_field_id: deletedDropdownField.id, label: 'Готово', sort_order: 1 },
+      { custom_field_id: typeField.id, label: 'Разработка', sort_order: 0 },
+      { custom_field_id: typeField.id, label: 'Рефакторинг', sort_order: 1 },
+      { custom_field_id: typeField.id, label: 'Поддержка', sort_order: 2 },
     ]);
   }
 
-  // Work logs: per user: Feb=2, Mar=3, Apr=4 (2026)
-  function buildWorkLogsForUser(user, startTaskNumber) {
-    const rows = [];
-    let n = startTaskNumber;
-
-    const push = (date, project, durationDays, comment) => {
-      rows.push({
-        user_id: user.id,
-        project_id: project.id,
-        date,
-        duration_days: durationDays,
-        comment,
-        task_number: `CL-${n}`,
-      });
-      n += 1;
-    };
-
-    // February (2)
-    push('2026-02-05', projectA, 1, 'Работа над задачей');
-    push('2026-02-18', projectB, 0.5, 'Созвон и правки');
-
-    // March (3)
-    push('2026-03-03', projectA, 1, 'Разработка фичи');
-    push('2026-03-12', projectA, 0.75, 'Доработка и тесты');
-    push('2026-03-25', projectB, 0.5, 'Рефакторинг');
-
-    // April (4)
-    push('2026-04-02', projectA, 1, 'Новая задача');
-    push('2026-04-10', projectB, 0.5, 'Мелкие исправления');
-    push('2026-04-17', projectA, 0.75, 'Код-ревью и правки');
-    push('2026-04-28', projectB, 1, 'Закрытие задач месяца');
-
-    return rows;
-  }
+  // --- Work logs: по 3–4 лога на каждого в одном месяце (март 2026) ---
+  const YEAR = 2026;
+  const MONTH = 3;
+  const makeDate = (day) => `${YEAR}-${String(MONTH).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   const workLogs = [
-    ...buildWorkLogsForUser(admin, 100),
-    ...buildWorkLogsForUser(ivan, 200),
-    ...buildWorkLogsForUser(maria, 300),
+    // Admin
+    {
+      user_id: admin.id,
+      project_id: projectA.id,
+      date: makeDate(1),
+      duration_days: 0.5,
+      comment: 'Настройка CleverLog',
+      task_number: 'CL-100',
+    },
+    {
+      user_id: admin.id,
+      project_id: projectB.id,
+      date: makeDate(5),
+      duration_days: 0.5,
+      comment: 'Администрирование Internal Tools',
+      task_number: 'CL-101',
+    },
+
+    // Frontend user
+    {
+      user_id: frontendUser.id,
+      project_id: projectA.id,
+      date: makeDate(3),
+      duration_days: 1,
+      comment: 'Верстка календаря',
+      task_number: 'CL-200',
+    },
+    {
+      user_id: frontendUser.id,
+      project_id: projectC.id,
+      date: makeDate(7),
+      duration_days: 0.5,
+      comment: 'Исправление багов',
+      task_number: 'CL-201',
+    },
+    {
+      user_id: frontendUser.id,
+      project_id: projectA.id,
+      date: makeDate(10),
+      duration_days: 0.5,
+      comment: 'UI‑улучшения',
+      task_number: 'CL-202',
+    },
+
+    // Backend user
+    {
+      user_id: backendUser.id,
+      project_id: projectB.id,
+      date: makeDate(4),
+      duration_days: 1,
+      comment: 'API для отчёта по пользователю',
+      task_number: 'CL-300',
+    },
+    {
+      user_id: backendUser.id,
+      project_id: projectA.id,
+      date: makeDate(8),
+      duration_days: 0.5,
+      comment: 'Оптимизация запросов',
+      task_number: 'CL-301',
+    },
+    {
+      user_id: backendUser.id,
+      project_id: projectC.id,
+      date: makeDate(15),
+      duration_days: 0.5,
+      comment: 'Интеграция с внешним сервисом',
+      task_number: 'CL-302',
+    },
   ];
 
   await knex('work_logs').insert(workLogs);
 
-  const now = new Date();
   await knex('calendar_settings').insert({
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-    norm_hours: 168,
+    year: YEAR,
+    month: MONTH,
+    norm_hours: 144,
   });
 
   await knex('notification_settings').insert({
