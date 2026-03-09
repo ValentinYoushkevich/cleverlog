@@ -35,6 +35,7 @@
         <DatePicker
           v-model="filters.dateRange"
           selectionMode="range"
+          dateFormat="dd.mm.yy"
           placeholder="Период"
           class="w-full"
           showIcon

@@ -11,7 +11,7 @@
     </div>
 
     <div class="rounded-xl border border-surface-200 bg-surface-0 p-4">
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-4 gap-3">
         <Select
           v-model="filters.type"
           :options="ABSENCE_TYPES"
@@ -24,14 +24,17 @@
         <DatePicker
           v-model="filters.dateRange"
           selectionMode="range"
+          dateFormat="dd.mm.yy"
           placeholder="Период"
           class="w-full"
           showIcon
         />
-        <div class="flex gap-2">
-          <Button label="Найти" icon="pi pi-search" class="flex-1" @click="loadAbsences" />
-          <Button label="Сбросить" severity="secondary" class="flex-1" @click="resetFilters" />
-        </div>
+        <div />
+        <div />
+      </div>
+      <div class="mt-3 flex gap-2">
+        <Button label="Найти" icon="pi pi-search" size="small" @click="loadAbsences" />
+        <Button label="Сбросить" severity="secondary" size="small" @click="resetFilters" />
       </div>
     </div>
 
@@ -336,19 +339,22 @@ function loadAbsences() {
   absencesStore.fetchList(getListParams());
 }
 
-watch(
-  () => ({ type: filters.type, dateRange: filters.dateRange }),
-  () => loadAbsences(),
-  { deep: true, immediate: true }
-);
-
 function resetFilters() {
   Object.assign(filters, { type: null, dateRange: null });
+  loadAbsences();
 }
 
 onMounted(() => {
   uiStore.setPageTitle('Отсутствия');
   if (authStore.isAdmin) { absencesStore.fetchUsers(); }
+  // По умолчанию фильтруем по текущему месяцу из календаря
+  const y = calendarStore.currentYear;
+  const m = calendarStore.currentMonth;
+  if (y && m) {
+    const start = dayjs(`${y}-${m}-01`);
+    filters.dateRange = [start.toDate(), start.endOf('month').toDate()];
+  }
+  loadAbsences();
 });
 
 const createDialogVisible = ref(false);

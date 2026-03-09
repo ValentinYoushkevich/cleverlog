@@ -19,6 +19,7 @@
         <DatePicker
           v-model="filters.dateRange"
           selectionMode="range"
+          dateFormat="dd.mm.yy"
           placeholder="Период"
           class="w-full"
           showIcon
@@ -130,6 +131,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import WorkLogFormDialog from '@/components/WorkLogFormDialog.vue';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';
+import { useCalendarStore } from '@/stores/calendar.js';
 import { useMonthClosuresStore } from '@/stores/monthClosures.js';
 import { useProjectsStore } from '@/stores/projects.js';
 import { useUiStore } from '@/stores/ui.js';
@@ -143,6 +145,7 @@ const monthClosuresStore = useMonthClosuresStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 const absencesStore = useAbsencesStore();
+const calendarStore = useCalendarStore();
 
 const workLogUserOptions = computed(() =>
   absencesStore.users.map((u) => ({
@@ -158,6 +161,13 @@ const currentUserLabel = computed(() => {
 
 onMounted(() => {
   uiStore.setPageTitle('Рабочие логи');
+  // По умолчанию фильтруем по текущему месяцу из календаря
+  const y = calendarStore.currentYear;
+  const m = calendarStore.currentMonth;
+  if (y && m) {
+    const start = dayjs(`${y}-${m}-01`);
+    filters.dateRange = [start.toDate(), start.endOf('month').toDate()];
+  }
   loadLogs();
   if (authStore.isAdmin) { absencesStore.fetchUsers(); }
 });

@@ -45,6 +45,7 @@
         <DatePicker
           v-model="filters.dateRange"
           selectionMode="range"
+          dateFormat="dd.mm.yy"
           placeholder="Период"
           class="w-full"
           showIcon
@@ -164,6 +165,7 @@ import { useRoute } from 'vue-router';
 import { ABSENCE_LABEL } from '@/constants/absences.js';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';
+import { useCalendarStore } from '@/stores/calendar.js';
 import { useProjectsStore } from '@/stores/projects.js';
 import { useReportsStore } from '@/stores/reports.js';
 import { useUiStore } from '@/stores/ui.js';
@@ -177,6 +179,7 @@ const reportsStore = useReportsStore();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 const absencesStore = useAbsencesStore();
+const calendarStore = useCalendarStore();
 
 const isAdmin = computed(() => authStore.isAdmin);
 
@@ -283,6 +286,14 @@ onMounted(async () => {
     const y = Number(q.year);
     const m = Number(q.month);
     if (!Number.isNaN(y) && !Number.isNaN(m)) {
+      const start = dayjs(`${y}-${m}-01`);
+      filters.dateRange = [start.toDate(), start.endOf('month').toDate()];
+    }
+  } else {
+    // По умолчанию используем текущий месяц из календаря
+    const y = calendarStore.currentYear;
+    const m = calendarStore.currentMonth;
+    if (y && m) {
       const start = dayjs(`${y}-${m}-01`);
       filters.dateRange = [start.toDate(), start.endOf('month').toDate()];
     }
