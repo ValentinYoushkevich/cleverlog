@@ -6,9 +6,34 @@ const axiosInstance = axios.create({
   withCredentials: true, // для HttpOnly cookie
 });
 
+let logAxiosErrorFn = null;
+
+async function ensureErrorLoggerLoaded() {
+  if (logAxiosErrorFn) { return; }
+  try {
+    const mod = await import('@/utils/errorLogger.js');
+    logAxiosErrorFn = mod.logAxiosError ?? null;
+  } catch {
+    logAxiosErrorFn = null;
+  }
+}
+
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    try {
+      const config = error.config ?? {};
+      const skipLogging = config.skipJsErrorLogging || config.url === '/log-js-error';
+      if (!skipLogging) {
+        await ensureErrorLoggerLoaded();
+        if (typeof logAxiosErrorFn === 'function') {
+          logAxiosErrorFn(error);
+        }
+      }
+    } catch {
+      // не даём логированию уронить основной запрос
+    }
+
     const status = error.response?.status;
     const skipAuthRedirect = Boolean(error.config?.skipAuthRedirect);
 

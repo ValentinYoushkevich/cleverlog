@@ -32,9 +32,34 @@
           <span class="text-xs text-surface-600">{{ formatDateTime(data.created_at) }}</span>
         </template>
       </Column>
+      <Column field="user" header="Пользователь" style="width: 200px">
+        <template #body="{ data }">
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-surface-800 truncate max-w-48">
+              {{ data.user_name || '—' }}
+            </p>
+            <p class="text-xs text-surface-500 truncate max-w-48">
+              {{ data.user_email || data.user_id || '' }}
+            </p>
+          </div>
+        </template>
+      </Column>
       <Column field="message" header="Сообщение">
         <template #body="{ data }">
           <span class="text-sm text-surface-800 line-clamp-2" :title="data.message">{{ data.message }}</span>
+        </template>
+      </Column>
+      <Column field="request" header="Запрос" style="width: 220px">
+        <template #body="{ data }">
+          <div class="min-w-0">
+            <p class="text-xs font-mono text-surface-700 truncate max-w-52">
+              <span v-if="data.request_method">[{{ (data.request_method || '').toUpperCase() }}] </span>
+              <span>{{ shortUrl(data.request_url || data.url) }}</span>
+            </p>
+            <p v-if="data.response_status" class="text-xs text-surface-500">
+              Статус: {{ data.response_status }}
+            </p>
+          </div>
         </template>
       </Column>
       <Column field="source" header="Файл" style="width: 180px">

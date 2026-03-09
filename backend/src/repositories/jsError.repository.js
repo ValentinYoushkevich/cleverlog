@@ -2,6 +2,10 @@ import db from '../config/knex.js';
 
 export const JsErrorRepository = {
   async create(data) {
+    const user = data.user ?? {};
+    const request = data.request ?? {};
+    const response = data.response ?? {};
+
     const [row] = await db('js_errors')
       .insert({
         message: data.message,
@@ -12,6 +16,14 @@ export const JsErrorRepository = {
         url: data.url ?? null,
         user_agent: data.userAgent ?? null,
         ip: data.ip ?? null,
+        user_id: user.id ?? null,
+        user_email: user.email ?? null,
+        user_name: user.name ?? null,
+        request_url: request.url ?? null,
+        request_method: request.method ?? null,
+        request_body: request.body ?? null,
+        response_status: response.status ?? null,
+        response_body: response.body ?? null,
       })
       .returning('*');
     return row;
