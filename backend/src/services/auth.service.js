@@ -39,8 +39,10 @@ export const AuthService = {
 
     const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
 
+    const finalEmail = user.email ?? normalizedEmail;
+
     await UserRepository.updateById(user.id, {
-      email: user.email ?? normalizedEmail,
+      email: finalEmail,
       password_hash: passwordHash,
       invite_token_hash: null,
       invite_expires_at: null,
@@ -57,8 +59,23 @@ export const AuthService = {
       ip,
       result: 'success',
     });
+    const tokenJwt = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+    );
 
-    return { message: 'Регистрация успешна' };
+    return {
+      message: 'Регистрация успешна',
+      token: tokenJwt,
+      user: {
+        id: user.id,
+        email: finalEmail,
+        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+    };
   },
 
   async login({ email, password, ip }) {

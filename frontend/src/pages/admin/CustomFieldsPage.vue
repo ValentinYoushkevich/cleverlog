@@ -75,12 +75,16 @@
     <Dialog v-model:visible="createDialogVisible" header="Новое поле" modal class="w-full max-w-md">
       <form class="space-y-4" @submit.prevent="onSubmitCreate">
         <div>
-          <label for="field-create-name" class="block text-sm font-medium text-surface-700 mb-1">Название *</label>
+          <label for="field-create-name" class="block text-sm font-medium text-surface-700 mb-1">
+            Название <span class="text-red-500">*</span>
+          </label>
           <InputText id="field-create-name" v-model="createForm.name" class="w-full" :class="{ 'p-invalid': createErrors.name }" />
           <small v-if="createErrors.name" class="p-error">{{ createErrors.name }}</small>
         </div>
         <div>
-          <label for="field-create-type" class="block text-sm font-medium text-surface-700 mb-1">Тип *</label>
+          <label for="field-create-type" class="block text-sm font-medium text-surface-700 mb-1">
+            Тип <span class="text-red-500">*</span>
+          </label>
           <Select id="field-create-type" v-model="createForm.type" :options="CUSTOM_FIELD_TYPES" optionLabel="label" optionValue="value" class="w-full" />
         </div>
 

@@ -106,6 +106,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 import http from '@/api/http.js';
 import { usePasswordStrength } from '@/composables/usePasswordStrength.js';
+import { useAuthStore } from '@/stores/auth.js';
 import { registerSchema } from '@/validators/auth.js';
 
 defineOptions({ name: 'RegisterPage' });
@@ -114,6 +115,7 @@ const registerRequest = (data) => http.post('/auth/register', data);
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const serverError = ref('');
 const loading = ref(false);
 
@@ -132,7 +134,10 @@ const onSubmit = handleSubmit(async (values) => {
   loading.value = true;
   try {
     await registerRequest({ token: route.params.token, email: values.email, password: values.password });
-    await router.push({ name: 'login' });
+    // После успешной регистрации сервер уже установил cookie с JWT.
+    // Обновляем текущего пользователя и отправляем на календарь.
+    await authStore.fetchMe();
+    await router.push({ name: 'calendar' });
   } catch (err) {
     const code = err.response?.data?.code;
     if (code === 'INVALID_TOKEN') { serverError.value = 'Ссылка недействительна или устарела.'; }

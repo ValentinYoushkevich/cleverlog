@@ -17,7 +17,9 @@ export const registerSchema = z
   .object({
     email: z.string().email('Введите корректный email'),
     password: passwordSchema,
-    confirmPassword: z.string(),
+    confirmPassword: z.string({
+      required_error: 'Подтвердите пароль',
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Пароли не совпадают',

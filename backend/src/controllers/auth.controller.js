@@ -22,7 +22,10 @@ export const AuthController = {
     try {
       const data = registerSchema.parse(req.body);
       const result = await AuthService.register({ ...data, ip: req.ip });
-      return res.json(result);
+      if (result.token) {
+        res.cookie(JWT_COOKIE_NAME, result.token, COOKIE_OPTIONS);
+      }
+      return res.json({ message: result.message, user: result.user });
     } catch (err) {
       return next(err);
     }

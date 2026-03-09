@@ -67,7 +67,9 @@
     <Dialog v-model:visible="createDialogVisible" header="Новый проект" modal class="w-full max-w-sm">
       <form class="space-y-4" @submit.prevent="onSubmitCreate">
         <div>
-          <label for="project-create-name" class="block text-sm font-medium text-surface-700 mb-1">Название *</label>
+          <label for="project-create-name" class="block text-sm font-medium text-surface-700 mb-1">
+            Название <span class="text-red-500">*</span>
+          </label>
           <InputText id="project-create-name" v-model="createForm.name" class="w-full" :class="{ 'p-invalid': createErrors.name }" />
           <small v-if="createErrors.name" class="p-error">{{ createErrors.name }}</small>
         </div>
@@ -82,7 +84,9 @@
     <Dialog v-model:visible="editDialogVisible" header="Редактировать проект" modal class="w-full max-w-sm">
       <form class="space-y-4" @submit.prevent="onSubmitEdit">
         <div>
-          <label for="project-edit-name" class="block text-sm font-medium text-surface-700 mb-1">Название *</label>
+          <label for="project-edit-name" class="block text-sm font-medium text-surface-700 mb-1">
+            Название <span class="text-red-500">*</span>
+          </label>
           <InputText id="project-edit-name" v-model="editForm.name" class="w-full" />
         </div>
         <div>

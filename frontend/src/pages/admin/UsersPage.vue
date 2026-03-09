@@ -128,7 +128,9 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="create-first-name" class="block text-sm font-medium text-surface-700 mb-1">Имя *</label>
+            <label for="create-first-name" class="block text-sm font-medium text-surface-700 mb-1">
+              Имя <span class="text-red-500">*</span>
+            </label>
             <InputText
               id="create-first-name"
               v-model="createForm.first_name"
@@ -138,7 +140,9 @@
             <small v-if="createErrors.first_name" class="p-error">{{ createErrors.first_name }}</small>
           </div>
           <div>
-            <label for="create-last-name" class="block text-sm font-medium text-surface-700 mb-1">Фамилия *</label>
+            <label for="create-last-name" class="block text-sm font-medium text-surface-700 mb-1">
+              Фамилия <span class="text-red-500">*</span>
+            </label>
             <InputText
               id="create-last-name"
               v-model="createForm.last_name"
@@ -149,7 +153,9 @@
           </div>
         </div>
         <div v-if="isEmailMode">
-          <label for="create-email" class="block text-sm font-medium text-surface-700 mb-1">Email *</label>
+          <label for="create-email" class="block text-sm font-medium text-surface-700 mb-1">
+            Email <span class="text-red-500">*</span>
+          </label>
           <InputText
             id="create-email"
             v-model="createForm.email"
@@ -169,7 +175,9 @@
           />
         </div>
         <div>
-          <label for="create-department" class="block text-sm font-medium text-surface-700 mb-1">Отдел *</label>
+          <label for="create-department" class="block text-sm font-medium text-surface-700 mb-1">
+            Отдел <span class="text-red-500">*</span>
+          </label>
           <Select
             v-model="createForm.department"
             inputId="create-department"
@@ -180,7 +188,9 @@
           />
         </div>
         <div>
-          <label for="create-role" class="block text-sm font-medium text-surface-700 mb-1">Роль *</label>
+          <label for="create-role" class="block text-sm font-medium text-surface-700 mb-1">
+            Роль <span class="text-red-500">*</span>
+          </label>
           <Select
             v-model="createForm.role"
             inputId="create-role"
@@ -318,7 +328,9 @@
           />
         </div>
         <div>
-          <label for="edit-department" class="block text-sm font-medium text-surface-700 mb-1">Отдел *</label>
+          <label for="edit-department" class="block text-sm font-medium text-surface-700 mb-1">
+            Отдел <span class="text-red-500">*</span>
+          </label>
           <Select
             v-model="editForm.department"
             inputId="edit-department"
