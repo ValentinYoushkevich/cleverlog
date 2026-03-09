@@ -224,7 +224,8 @@ const CHART_COLORS = [
 const hoursChartData = computed(() => {
   const items = summary.value?.charts?.hours_by_project ?? [];
   return {
-    labels: items.map(i => i.name),
+    // Показываем в легенде название проекта + количество часов
+    labels: items.map(i => `${i.name} — ${i.hours} ч`),
     datasets: [{
       data: items.map(i => i.hours),
       backgroundColor: CHART_COLORS.slice(0, items.length),
@@ -235,7 +236,8 @@ const hoursChartData = computed(() => {
 const usersChartData = computed(() => {
   const items = summary.value?.charts?.users_by_project ?? [];
   return {
-    labels: items.map(i => i.name),
+    // Показываем в легенде название проекта + количество сотрудников
+    labels: items.map(i => `${i.name} — ${i.user_count} сотрудн.`),
     datasets: [{
       data: items.map(i => i.user_count),
       backgroundColor: CHART_COLORS.slice(0, items.length),

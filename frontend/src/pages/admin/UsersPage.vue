@@ -196,7 +196,7 @@
         <Message v-if="createError" severity="error" :closable="false">{{ createError }}</Message>
         <div class="flex justify-end gap-2 pt-2">
           <Button label="Отмена" severity="secondary" @click="createDialogVisible = false" />
-          <Button type="submit" label="Создать и отправить инвайт" :loading="submitting" />
+          <Button type="submit" :label="createSubmitLabel" :loading="submitting" />
         </div>
       </form>
     </Dialog>
@@ -431,6 +431,8 @@ const isEmailMode = computed({
     createForm.invite_mode = val ? 'email' : 'link';
   },
 });
+
+const createSubmitLabel = computed(() => (isEmailMode.value ? 'Создать и отправить инвайт' : 'Создать ссылку'));
 
 const inviteLinkDialogVisible = ref(false);
 const inviteLink = ref('');
