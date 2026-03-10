@@ -25,5 +25,5 @@ export const changePasswordSchema = z.object({
 export const updateProfileSchema = z.object({
   first_name: z.string().min(1),
   last_name: z.string().min(1),
-  position: z.string().optional(),
+  position: z.string().min(1).nullable().optional(),
 });
