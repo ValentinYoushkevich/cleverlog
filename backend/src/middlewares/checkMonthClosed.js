@@ -4,10 +4,6 @@ import { WorkLogRepository } from '../repositories/workLog.repository.js';
 
 export async function checkMonthClosed(req, res, next) {
   try {
-    if (req.user.role === 'admin') {
-      return next();
-    }
-
     let date = req.body.date || req.workLogDate;
 
     if (!date && req.params.id) {
