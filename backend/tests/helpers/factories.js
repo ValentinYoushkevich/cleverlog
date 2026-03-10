@@ -47,3 +47,89 @@ export function createInvitedUser({
     ...overrides,
   });
 }
+
+export async function createProject(overrides = {}) {
+  const data = {
+    name: 'Test project',
+    status: 'active',
+    ...overrides,
+  };
+
+  const [project] = await db('projects').insert(data).returning('*');
+  return project;
+}
+
+export async function createWorkLog(overrides = {}) {
+  const data = {
+    user_id: overrides.user_id,
+    project_id: overrides.project_id,
+    date: overrides.date,
+    duration_days: overrides.duration_days ?? 1,
+    comment: overrides.comment ?? 'Test work log',
+    task_number: overrides.task_number ?? 'TASK-1',
+  };
+
+  const [log] = await db('work_logs').insert(data).returning('*');
+  return log;
+}
+
+export async function createAbsence(overrides = {}) {
+  const data = {
+    user_id: overrides.user_id,
+    type: overrides.type ?? 'vacation',
+    date: overrides.date,
+    duration_days: overrides.duration_days ?? 1,
+    comment: overrides.comment ?? null,
+  };
+
+  const [absence] = await db('absences').insert(data).returning('*');
+  return absence;
+}
+
+export async function createCalendarNorm({ year, month, norm_hours }) {
+  const [row] = await db('calendar_settings')
+    .insert({ year, month, norm_hours })
+    .onConflict(['year', 'month'])
+    .merge()
+    .returning('*');
+
+  return row;
+}
+
+export async function createCalendarOverride({ date, day_type }) {
+  const [row] = await db('calendar_days')
+    .insert({ date, day_type })
+    .onConflict(['date'])
+    .merge()
+    .returning('*');
+
+  return row;
+}
+
+export async function createCustomField(overrides = {}) {
+  const data = {
+    name: overrides.name ?? 'Custom field',
+    type: overrides.type ?? 'text',
+  };
+
+  const [field] = await db('custom_fields').insert(data).returning('*');
+  return field;
+}
+
+export async function createDropdownFieldWithOptions({ name = 'Dropdown', options = [] } = {}) {
+  const field = await createCustomField({ name, type: 'dropdown' });
+
+  const createdOptions = [];
+  for (let index = 0; index < options.length; index += 1) {
+    const [opt] = await db('custom_field_options')
+      .insert({
+        custom_field_id: field.id,
+        label: options[index],
+        sort_order: index,
+      })
+      .returning('*');
+    createdOptions.push(opt);
+  }
+
+  return { field, options: createdOptions };
+}
