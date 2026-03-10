@@ -8,7 +8,10 @@
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
     "seed": "knex seed:run",
-    "postgres_web_client": "docker run --name cleverlog_adminer --rm -p 8080:8080 adminer"
+    "postgres_web_client": "docker run --name cleverlog_adminer --rm -p 8080:8080 adminer",
+    "test": "dotenv -e .env.test -- vitest run",
+    "test:watch": "dotenv -e .env.test -- vitest",
+    "test:coverage": "dotenv -e .env.test -- vitest run --coverage"
   },
   "name": "backend",
   "version": "1.0.0",
@@ -38,7 +41,11 @@
   },
   "devDependencies": {
     "eslint": "^10.0.2",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "dotenv-cli": "^7.4.2",
+    "supertest": "^7.0.0",
+    "vitest": "^2.1.4",
+    "@vitest/coverage-v8": "^2.1.4"
   },
   "_moduleAliases": {
     "@": "./src"

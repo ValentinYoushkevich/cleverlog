@@ -114,8 +114,13 @@ export const WorkLogRepository = {
     .where('wcv.work_log_id', workLogId)
     .select('wcv.custom_field_id', 'wcv.value', 'cf.name', 'cf.type'),
 
-  async getCustomValuesForLogs(workLogIds) {
-    if (!workLogIds?.length) { return []; }
+  getCustomValuesForLogs(workLogIds) {
+    if (!workLogIds?.length) {
+      return db('work_log_custom_values as wcv')
+        .whereRaw('1 = 0')
+        .select('wcv.work_log_id', 'wcv.custom_field_id', 'wcv.value');
+    }
+
     return db('work_log_custom_values as wcv')
       .whereIn('wcv.work_log_id', workLogIds)
       .select('wcv.work_log_id', 'wcv.custom_field_id', 'wcv.value');
