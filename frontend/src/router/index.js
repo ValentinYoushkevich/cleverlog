@@ -140,18 +140,30 @@ router.beforeEach(async (to) => {
   const { useAuthStore } = await import('@/stores/auth.js');
   const authStore = useAuthStore();
 
+  // Всегда пробуем подтянуть /me один раз на старте,
+  // чтобы корректно обрабатывать редиректы даже для public-маршрутов (например, базовый '/')
+  if (!authStore.user) {
+    await authStore.fetchMe();
+  }
+
   const isPublic = to.matched.some((r) => r.meta?.public);
   const requiresAuth = to.matched.some((r) => r.meta?.requiresAuth) || !isPublic;
   const adminOnly = to.matched.some((r) => r.meta?.adminOnly);
 
-  // Если идём на public-страницу и уже авторизованы — отправляем в календарь
-  if (isPublic && authStore.isAuthenticated) {
-    return { name: 'calendar' };
-  }
+  // Public‑маршруты (Login / Register / базовый '/')
+  if (isPublic) {
+    // Если уже авторизованы — всегда уводим в календарь
+    if (authStore.isAuthenticated) {
+      return { name: 'calendar' };
+    }
 
-  // Для всех защищённых страниц пытаемся подтянуть /me, если ещё не знаем пользователя
-  if (requiresAuth && !authStore.user) {
-    await authStore.fetchMe();
+    // Если не авторизованы и зашли на пустой корень ('/'), уводим на логин
+    if (!authStore.isAuthenticated && (to.path === '/' || !to.name)) {
+      return { name: 'login' };
+    }
+
+    // Остальные public‑маршруты (login, register) пропускаем как есть
+    return;
   }
 
   // Если после /me всё равно не авторизованы — на логин
