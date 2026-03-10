@@ -76,11 +76,14 @@ export const ReportService = {
     const includeWork = !type || type === 'work';
     const includeAbsences = (!type || type !== 'work') && !projectId;
 
-    const filteredAbsences = includeAbsences
-      ? (type && type !== 'work'
-        ? absences.filter((absence) => absence.type === type)
-        : absences)
-      : [];
+    let filteredAbsences = [];
+    if (includeAbsences) {
+      if (type && type !== 'work') {
+        filteredAbsences = absences.filter((absence) => absence.type === type);
+      } else {
+        filteredAbsences = absences;
+      }
+    }
     const filteredWork = includeWork ? workLogs : [];
 
     const finalWork = filteredWork.filter((log) => {
@@ -98,9 +101,11 @@ export const ReportService = {
 
     const rows = [
       ...finalWork.map((log) => ({
+        user_id: log.user_id,
         user_name: `${log.last_name} ${log.first_name}`,
         type: 'work',
         date: toDateKey(log.date),
+        project_id: log.project_id,
         project_name: log.project_name,
         task_number: log.task_number,
         duration_hours: daysToHours(log.duration_days),
@@ -108,11 +113,13 @@ export const ReportService = {
         custom_fields: customByLog[log.id] || [],
       })),
       ...filteredAbsences.map((absence) => ({
+        user_id: absence.user_id,
         user_name: `${absence.last_name} ${absence.first_name}`,
         type: absence.type,
         date: toDateKey(absence.date),
         duration_hours: daysToHours(absence.duration_days),
         comment: absence.comment || '',
+        project_id: null,
         project_name: null,
         task_number: null,
         custom_fields: [],
@@ -183,6 +190,7 @@ export const ReportService = {
     const customByLog = groupBy(customValues, 'work_log_id');
 
     const rows = filtered.map((log) => ({
+      user_id: log.user_id,
       user: `${log.last_name} ${log.first_name}`,
       position: log.position,
       date: toDateKey(log.date),
