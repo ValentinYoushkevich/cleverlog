@@ -11,7 +11,6 @@
       />
     </div>
 
-    <!-- Фильтры -->
     <div class="bg-surface-0 rounded-xl p-4 border border-surface-200">
       <div class="grid grid-cols-4 gap-3">
         <Select
@@ -51,14 +50,26 @@
         />
       </div>
       <div class="mt-3 flex gap-2">
-        <InputText v-model="filters.search" placeholder="Поиск по событию / сущности" class="w-64" />
-        <InputText v-model="filters.ip" placeholder="IP адрес" class="w-40" />
+        <InputText
+          v-model="filters.search"
+          placeholder="Поиск по событию / сущности"
+          class="w-64"
+        />
+        <InputText
+          v-model="filters.ip"
+          placeholder="IP адрес"
+          class="w-40"
+        />
         <Button label="Применить" icon="pi pi-search" size="small" @click="loadLogs" />
-        <Button label="Сбросить" severity="secondary" size="small" @click="resetFilters" />
+        <Button
+          label="Сбросить"
+          severity="secondary"
+          size="small"
+          @click="resetFilters"
+        />
       </div>
     </div>
 
-    <!-- Таблица -->
     <DataTable
       :value="preparedLogs"
       :loading="loading"
@@ -74,7 +85,9 @@
     >
       <Column field="timestamp" header="Время" style="width: 170px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-600">{{ data.timestampText }}</span>
+          <span class="text-xs text-surface-600">
+            {{ data.timestampText }}
+          </span>
         </template>
       </Column>
       <Column field="actor" header="Актор" style="width: 180px">
@@ -83,7 +96,9 @@
             <p class="text-sm font-medium text-surface-800 truncate max-w-40">
               {{ data.actorNameText }}
             </p>
-            <p class="text-xs text-surface-400">{{ data.actor_role ?? '—' }}</p>
+            <p class="text-xs text-surface-400">
+              {{ data.actor_role ?? '—' }}
+            </p>
           </div>
         </template>
       </Column>
@@ -93,13 +108,19 @@
             <p class="text-sm font-medium text-surface-800 truncate max-w-56">
               {{ data.event?.name ?? '—' }}
             </p>
-            <p class="font-mono text-xs text-surface-400 truncate max-w-56">{{ data.event?.type ?? '—' }}</p>
+            <p class="font-mono text-xs text-surface-400 truncate max-w-56">
+              {{ data.event?.type ?? '—' }}
+            </p>
           </div>
         </template>
       </Column>
       <Column field="entity_type" header="Сущность" style="width: 130px">
         <template #body="{ data }">
-          <Tag :value="data.entity?.name ?? data.entity_type" severity="secondary" class="text-xs" />
+          <Tag
+            :value="data.entity?.name ?? data.entity_type"
+            severity="secondary"
+            class="text-xs"
+          />
         </template>
       </Column>
       <Column field="result" header="Результат" style="width: 110px">
@@ -112,7 +133,9 @@
       </Column>
       <Column field="ip" header="IP" style="width: 130px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-400 font-mono">{{ data.ip ?? '—' }}</span>
+          <span class="text-xs text-surface-400 font-mono">
+            {{ data.ip ?? '—' }}
+          </span>
         </template>
       </Column>
       <Column header="" style="width: 60px">
@@ -129,39 +152,26 @@
         </template>
       </Column>
       <template #empty>
-        <div class="text-center py-8 text-surface-400">Записей нет</div>
+        <div class="text-center py-8 text-surface-400">
+          Записей нет
+        </div>
       </template>
     </DataTable>
 
-    <!-- Dialog: детали записи -->
-    <Dialog v-model:visible="detailVisible" header="Детали записи" modal class="w-full max-w-2xl">
-      <div v-if="selectedLog" class="space-y-4">
-        <div class="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span class="text-surface-400">Событие:</span>
-            <span class="font-medium">{{ selectedLog.event?.name ?? '—' }}</span>
-            <span class="font-mono text-xs text-surface-400">({{ selectedLog.event?.type ?? '—' }})</span>
-          </div>
-          <div><span class="text-surface-400">Время:</span> {{ selectedLogTimestampText }}</div>
-          <div><span class="text-surface-400">Актор:</span> {{ selectedLogActorNameText }}</div>
-          <div><span class="text-surface-400">IP:</span> <span class="font-mono">{{ selectedLog.ip ?? '—' }}</span></div>
-        </div>
-
-        <div v-if="selectedLog.before" class="space-y-1">
-          <p class="text-sm font-medium text-surface-700">До:</p>
-          <pre class="text-xs bg-red-50 border border-red-100 rounded-lg p-3 overflow-auto max-h-48">{{ selectedLogBeforeText }}</pre>
-        </div>
-
-        <div v-if="selectedLog.after" class="space-y-1">
-          <p class="text-sm font-medium text-surface-700">После:</p>
-          <pre class="text-xs bg-green-50 border border-green-100 rounded-lg p-3 overflow-auto max-h-48">{{ selectedLogAfterText }}</pre>
-        </div>
-      </div>
-    </Dialog>
+    <AuditLogDetailDialog
+      v-model="detailVisible"
+      :selectedLog="selectedLog"
+      :timestampText="selectedLogTimestampText"
+      :actorNameText="selectedLogActorNameText"
+      :beforeText="selectedLogBeforeText"
+      :afterText="selectedLogAfterText"
+      @close="handleDetailClose"
+    />
   </div>
 </template>
 
 <script setup>
+import AuditLogDetailDialog from '@/pages/admin/audit-logs/AuditLogDetailDialog.vue';
 import { useAuditLogsStore } from '@/stores/auditLogs.js';
 import { useUiStore } from '@/stores/ui.js';
 import { downloadBlob } from '@/utils/download.js';
@@ -169,24 +179,34 @@ import dayjs from 'dayjs';
 
 defineOptions({ name: 'AuditLogsPage' });
 
-const resultOptions = [{ label: 'Успешно', value: 'success' }, { label: 'Ошибка', value: 'failure' }];
+const resultOptions = [
+  { label: 'Успешно', value: 'success' },
+  { label: 'Ошибка', value: 'failure' },
+];
 
 const uiStore = useUiStore();
 const auditLogsStore = useAuditLogsStore();
 const { logs, loading, exporting, totalRecords, filterOptions } = storeToRefs(auditLogsStore);
+
 const preparedLogs = computed(() =>
   (logs.value ?? []).map((l) => ({
     ...l,
     timestampText: formatDateTime(l.timestamp),
     actorNameText: getActorName(l),
-  }))
+  })),
 );
 
-const eventTypeOptions = computed(() => (Array.isArray(filterOptions.value?.event_types) ? filterOptions.value.event_types : []));
-const entityTypeOptions = computed(() => (Array.isArray(filterOptions.value?.entity_types) ? filterOptions.value.entity_types : []));
+const eventTypeOptions = computed(() =>
+  Array.isArray(filterOptions.value?.event_types) ? filterOptions.value.event_types : [],
+);
+const entityTypeOptions = computed(() =>
+  Array.isArray(filterOptions.value?.entity_types) ? filterOptions.value.entity_types : [],
+);
 
 function getActorName(log) {
-  if (!log?.last_name) { return 'Система'; }
+  if (!log?.last_name) {
+    return 'Система';
+  }
   return `${log.last_name} ${log.first_name ?? ''}`.trim();
 }
 
@@ -221,13 +241,27 @@ async function loadFilterOptions() {
 
 function buildParams() {
   const params = { page: currentPage.value, limit: pageSize.value };
-  if (filters.event_type) { params.event_type = filters.event_type; }
-  if (filters.entity_type) { params.entity_type = filters.entity_type; }
-  if (filters.result) { params.result = filters.result; }
-  if (filters.search) { params.search = filters.search; }
-  if (filters.ip) { params.ip = filters.ip; }
-  if (filters.dateRange?.[0]) { params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD'); }
-  if (filters.dateRange?.[1]) { params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD'); }
+  if (filters.event_type) {
+    params.event_type = filters.event_type;
+  }
+  if (filters.entity_type) {
+    params.entity_type = filters.entity_type;
+  }
+  if (filters.result) {
+    params.result = filters.result;
+  }
+  if (filters.search) {
+    params.search = filters.search;
+  }
+  if (filters.ip) {
+    params.ip = filters.ip;
+  }
+  if (filters.dateRange?.[0]) {
+    params.date_from = dayjs(filters.dateRange[0]).format('YYYY-MM-DD');
+  }
+  if (filters.dateRange?.[1]) {
+    params.date_to = dayjs(filters.dateRange[1]).format('YYYY-MM-DD');
+  }
   return params;
 }
 
@@ -258,16 +292,15 @@ function formatDateTime(ts) {
   return ts ? dayjs(ts).format('DD.MM.YYYY HH:mm:ss') : '—';
 }
 
-// Детали
 const detailVisible = ref(false);
 const selectedLog = ref(null);
 const selectedLogTimestampText = computed(() => formatDateTime(selectedLog.value?.timestamp));
 const selectedLogActorNameText = computed(() => getActorName(selectedLog.value));
 const selectedLogBeforeText = computed(() =>
-  selectedLog.value?.before ? JSON.stringify(selectedLog.value.before, null, 2) : ''
+  selectedLog.value?.before ? JSON.stringify(selectedLog.value.before, null, 2) : '',
 );
 const selectedLogAfterText = computed(() =>
-  selectedLog.value?.after ? JSON.stringify(selectedLog.value.after, null, 2) : ''
+  selectedLog.value?.after ? JSON.stringify(selectedLog.value.after, null, 2) : '',
 );
 
 function openDetail(log) {
@@ -275,12 +308,18 @@ function openDetail(log) {
   detailVisible.value = true;
 }
 
+function handleDetailClose() {
+  selectedLog.value = null;
+}
+
 async function doExport() {
   try {
     const blob = await auditLogsStore.exportExcel(buildParams());
-    if (blob) { downloadBlob(blob, 'audit_log.xlsx'); }
+    if (blob) {
+      downloadBlob(blob, 'audit_log.xlsx');
+    }
   } catch {
-    // showError уже вызван в сторе
+    // Ошибка уже обработана в сторе
   }
 }
 </script>

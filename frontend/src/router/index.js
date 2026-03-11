@@ -82,7 +82,7 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'dashboard',
-          component: () => import('@/pages/DashboardPage.vue'),
+          component: () => import('@/pages/dashboard/DashboardPage.vue'),
           meta: { adminOnly: true },
         },
         {
@@ -100,7 +100,7 @@ const router = createRouter({
         {
           path: 'admin/custom-fields',
           name: 'admin-custom-fields',
-          component: () => import('@/pages/admin/CustomFieldsPage.vue'),
+          component: () => import('@/pages/admin/custom-fields/CustomFieldsPage.vue'),
           meta: { adminOnly: true },
         },
         {
@@ -118,13 +118,13 @@ const router = createRouter({
         {
           path: 'admin/audit-logs',
           name: 'admin-audit-logs',
-          component: () => import('@/pages/admin/AuditLogsPage.vue'),
+          component: () => import('@/pages/admin/audit-logs/AuditLogsPage.vue'),
           meta: { adminOnly: true },
         },
         {
           path: 'admin/debug/js-errors',
           name: 'admin-js-errors',
-          component: () => import('@/pages/admin/JsErrorsPage.vue'),
+          component: () => import('@/pages/admin/js-errors/JsErrorsPage.vue'),
           meta: { adminOnly: true },
         },
       ],

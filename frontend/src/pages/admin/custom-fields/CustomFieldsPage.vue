@@ -71,86 +71,22 @@
       </template>
     </DataTable>
 
-    <!-- Dialog: создание -->
-    <Dialog v-model:visible="createDialogVisible" header="Новое поле" modal class="w-full max-w-md">
-      <form class="space-y-4" @submit.prevent="onSubmitCreate">
-        <div>
-          <label for="field-create-name" class="block text-sm font-medium text-surface-700 mb-1">
-            Название <span class="text-red-500">*</span>
-          </label>
-          <InputText id="field-create-name" v-model="createForm.name" class="w-full" :class="{ 'p-invalid': createErrors.name }" />
-          <small v-if="createErrors.name" class="p-error">{{ createErrors.name }}</small>
-        </div>
-        <div>
-          <label for="field-create-type" class="block text-sm font-medium text-surface-700 mb-1">
-            Тип <span class="text-red-500">*</span>
-          </label>
-          <Select id="field-create-type" v-model="createForm.type" :options="CUSTOM_FIELD_TYPES" optionLabel="label" optionValue="value" class="w-full" />
-        </div>
+    <CustomFieldCreateDialog
+      v-model="createDialogVisible"
+      :typeOptions="CUSTOM_FIELD_TYPES"
+      :submitting="submitting"
+      @submit="handleCreateSubmit"
+    />
 
-        <!-- Опции для dropdown -->
-        <div v-if="createForm.type === 'dropdown'">
-          <span class="block text-sm font-medium text-surface-700 mb-1">Варианты</span>
-          <div v-for="(option, index) in createForm.options" :key="index" class="flex gap-2 mb-2">
-            <InputText v-model="createForm.options[index]" class="flex-1" :placeholder="`Вариант ${index + 1}`" />
-            <Button icon="pi pi-times" text rounded severity="danger" @click="createForm.options.splice(index, 1)" />
-          </div>
-          <Button label="Добавить вариант" icon="pi pi-plus" text size="small" @click="createForm.options.push('')" />
-        </div>
-
-        <div class="flex justify-end gap-2">
-          <Button label="Отмена" severity="secondary" @click="createDialogVisible = false" />
-          <Button type="submit" label="Создать" :loading="submitting" />
-        </div>
-      </form>
-    </Dialog>
-
-    <!-- Dialog: редактирование (название + варианты для списка) -->
-    <Dialog v-model:visible="editDialogVisible" header="Редактировать поле" modal class="w-full max-w-md">
-      <form class="space-y-4" @submit.prevent="onSubmitEdit">
-        <div>
-          <label for="field-edit-name" class="block text-sm font-medium text-surface-700 mb-1">Название</label>
-          <InputText id="field-edit-name" v-model="editForm.name" class="w-full" />
-        </div>
-
-        <!-- Сохранённые варианты для типа «список» -->
-        <div v-if="editingField?.type === 'dropdown'" class="space-y-2">
-          <span class="block text-sm font-medium text-surface-700">Варианты</span>
-          <div v-if="loadingEditOptions" class="flex items-center gap-2 py-2 text-surface-500 text-sm">
-            <ProgressSpinner style="width: 20px; height: 20px" />
-            Загрузка…
-          </div>
-          <div v-else-if="editOptions.length" class="space-y-2">
-            <div
-              v-for="option in editOptions"
-              :key="option.id"
-              class="flex items-center gap-2"
-            >
-              <span class="flex-1 rounded border border-surface-200 bg-surface-50 px-3 py-2 text-sm text-surface-800">{{ option.label }}</span>
-              <Button
-                icon="pi pi-times"
-                text
-                rounded
-                severity="danger"
-                size="small"
-                aria-label="Удалить вариант"
-                @click="removeEditOption(opt)"
-              />
-            </div>
-            <p class="text-xs text-surface-400">Нажмите крестик, чтобы убрать вариант. Изменения сохранятся по кнопке «Сохранить».</p>
-          </div>
-          <p v-else class="text-sm text-surface-400 py-2">Нет сохранённых вариантов</p>
-        </div>
-
-        <Message severity="info" :closable="false" class="text-xs">
-          Тип поля нельзя изменить после создания
-        </Message>
-        <div class="flex justify-end gap-2">
-          <Button label="Отмена" severity="secondary" @click="editDialogVisible = false" />
-          <Button type="submit" label="Сохранить" :loading="submitting" />
-        </div>
-      </form>
-    </Dialog>
+    <CustomFieldEditDialog
+      v-model="editDialogVisible"
+      :field="editingField"
+      :options="editOptions"
+      :loadingOptions="loadingEditOptions"
+      :submitting="submitting"
+      @submit="handleEditSubmit"
+      @remove-option="handleRemoveEditOption"
+    />
   </div>
 </template>
 
@@ -161,6 +97,9 @@ import { useUiStore } from '@/stores/ui.js';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 
+import CustomFieldCreateDialog from './components/CustomFieldCreateDialog.vue';
+import CustomFieldEditDialog from './components/CustomFieldEditDialog.vue';
+
 defineOptions({ name: 'CustomFieldsPage' });
 
 const toast = useToast();
@@ -170,7 +109,10 @@ const { fields, loading } = storeToRefs(customFieldsStore);
 
 const TYPE_LABEL = { text: 'Текст', number: 'Число', dropdown: 'Список', checkbox: 'Флажок' };
 
-onMounted(() => { uiStore.setPageTitle('Кастомные поля'); loadFields(); });
+onMounted(() => {
+  uiStore.setPageTitle('Кастомные поля');
+  loadFields();
+});
 
 const submitting = ref(false);
 const showDeleted = ref(false);
@@ -192,46 +134,41 @@ function getFieldRowClass(data) {
   return data?.deleted_at ? '!bg-yellow-100' : '';
 }
 
-function toggleShowDeleted() { showDeleted.value = !showDeleted.value; loadFields(); }
+function toggleShowDeleted() {
+  showDeleted.value = !showDeleted.value;
+  loadFields();
+}
 
 // Создание
 const createDialogVisible = ref(false);
-const createForm = reactive({ name: '', type: 'text', options: [] });
-const createErrors = reactive({});
 
 function openCreateDialog() {
-  Object.assign(createForm, { name: '', type: 'text', options: [] });
-  Object.keys(createErrors).forEach(k => delete createErrors[k]);
   createDialogVisible.value = true;
 }
 
-async function onSubmitCreate() {
-  Object.keys(createErrors).forEach(k => delete createErrors[k]);
-  if (!createForm.name.trim()) { createErrors.name = 'Название обязательно'; return; }
+async function handleCreateSubmit(payload) {
   submitting.value = true;
   try {
-    const payload = { name: createForm.name, type: createForm.type };
-    if (createForm.type === 'dropdown') { payload.options = createForm.options.filter(o => o.trim()); }
     await customFieldsStore.create(payload);
     toast.add({ severity: 'success', summary: 'Поле создано', life: 3000 });
     createDialogVisible.value = false;
     await loadFields();
   } catch {
     toast.add({ severity: 'error', summary: 'Ошибка создания', life: 3000 });
-  } finally { submitting.value = false; }
+  } finally {
+    submitting.value = false;
+  }
 }
 
 // Редактирование
 const editDialogVisible = ref(false);
 const editingField = ref(null);
-const editForm = reactive({ name: '' });
 const editOptions = ref([]);
 const optionsToRemove = ref(new Set());
 const loadingEditOptions = ref(false);
 
 async function openEditDialog(field) {
   editingField.value = field;
-  editForm.name = field.name;
   editOptions.value = [];
   optionsToRemove.value = new Set();
   editDialogVisible.value = true;
@@ -247,16 +184,19 @@ async function openEditDialog(field) {
   }
 }
 
-function removeEditOption(opt) {
-  optionsToRemove.value.add(opt.id);
-  editOptions.value = editOptions.value.filter((o) => o.id !== opt.id);
+function handleRemoveEditOption(option) {
+  optionsToRemove.value.add(option.id);
+  editOptions.value = editOptions.value.filter((o) => o.id !== option.id);
 }
 
-async function onSubmitEdit() {
+async function handleEditSubmit(payload) {
+  if (!editingField.value) {
+    return;
+  }
   submitting.value = true;
   try {
     const fieldId = editingField.value.id;
-    await customFieldsStore.update(fieldId, { name: editForm.name });
+    await customFieldsStore.update(fieldId, { name: payload.name });
 
     const idsToRemove = [...optionsToRemove.value];
     for (const optionId of idsToRemove) {
