@@ -33,7 +33,7 @@
     <!-- Таблица -->
     <div class="border border-surface-200 rounded-xl overflow-hidden">
       <DataTable
-        :value="tableRows"
+        :value="preparedTableRows"
         :loading="loading"
         scrollable
         scrollHeight="600px"
@@ -54,8 +54,8 @@
           style="min-width: 120px; text-align: right;"
         >
           <template #body="{ data }">
-            <span :class="data[`proj_${proj.id}`] > 0 ? 'text-surface-800' : 'text-surface-300'">
-              {{ data[`proj_${proj.id}`] > 0 ? data[`proj_${proj.id}`] + ' ч' : '—' }}
+            <span :class="data.projectCells[proj.id].class">
+              {{ data.projectCells[proj.id].text }}
             </span>
           </template>
         </Column>
@@ -63,8 +63,8 @@
         <!-- Absence -->
         <Column field="absence_hours" header="Отсутствие (ч)" style="min-width: 140px; text-align: right;">
           <template #body="{ data }">
-            <span :class="data.absence_hours > 0 ? 'text-blue-600' : 'text-surface-300'">
-              {{ data.absence_hours > 0 ? data.absence_hours + ' ч' : '—' }}
+            <span :class="data.absenceHoursClass">
+              {{ data.absenceHoursText }}
             </span>
           </template>
         </Column>
@@ -72,7 +72,7 @@
         <!-- Факт -->
         <Column field="fact_hours" header="Факт (ч)" style="min-width: 100px; text-align: right; font-weight: 600;">
           <template #body="{ data }">
-            <span :class="data.is_total ? 'text-surface-800' : (data.is_on_norm ? 'text-green-700' : 'text-yellow-700')">
+            <span :class="data.factHoursClass">
               {{ data.fact_hours }} ч
             </span>
           </template>
@@ -113,6 +113,11 @@ const currentMonth = ref(dayjs().month() + 1);
 const monthLabel = computed(() =>
   dayjs(`${currentYear.value}-${currentMonth.value}-01`).format('MMMM YYYY')
 );
+
+function getFactHoursClass(row) {
+  if (row?.is_total) { return 'text-surface-800'; }
+  return row?.is_on_norm ? 'text-green-700' : 'text-yellow-700';
+}
 
 onMounted(() => {
   uiStore.setPageTitle('Свод по месяцу');
@@ -158,6 +163,29 @@ const tableRows = computed(() => {
 
   return dataRows;
 });
+
+const preparedTableRows = computed(() =>
+  (tableRows.value ?? []).map((row) => {
+    const projectCells = Object.fromEntries(
+      (projects.value ?? []).map((proj) => {
+        const v = row?.[`proj_${proj.id}`] ?? 0;
+        return [proj.id, { class: v > 0 ? 'text-surface-800' : 'text-surface-300', text: v > 0 ? `${v} ч` : '—' }];
+      })
+    );
+
+    const absenceHoursValue = row?.absence_hours ?? 0;
+    const absenceHoursText = absenceHoursValue > 0 ? `${absenceHoursValue} ч` : '—';
+    const absenceHoursClass = absenceHoursValue > 0 ? 'text-blue-600' : 'text-surface-300';
+
+    return {
+      ...row,
+      projectCells,
+      absenceHoursText,
+      absenceHoursClass,
+      factHoursClass: getFactHoursClass(row),
+    };
+  })
+);
 
 // Цвет строки (без stripedRows, чтобы не перекрывало). row может быть undefined при смене месяца/загрузке.
 function getRowClass(row) {

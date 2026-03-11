@@ -46,11 +46,10 @@
 </template>
 
 <script setup>
-import { toTypedSchema } from '@vee-validate/zod';
-import { useForm } from 'vee-validate';
-
 import { useAuthStore } from '@/stores/auth.js';
 import { loginSchema } from '@/validators/auth.js';
+import { toTypedSchema } from '@vee-validate/zod';
+import { useForm } from 'vee-validate';
 
 defineOptions({ name: 'LoginPage' });
 

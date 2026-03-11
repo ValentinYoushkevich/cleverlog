@@ -1,13 +1,13 @@
 <template>
   <Dialog
     :visible="modelValue"
-    :header="editingLog ? 'Редактировать лог' : 'Новый лог'"
+    :header="dialogHeader"
     modal
     class="w-full max-w-lg"
     @update:visible="emit('update:modelValue', $event)"
   >
     <form class="space-y-4" @submit.prevent="onSubmit">
-      <div v-if="isAdmin && !editingLog">
+      <div v-if="showAdminUserSelect">
         <label for="worklog-user" class="mb-1 block text-sm font-medium text-surface-700">
           Пользователь <span class="text-red-500">*</span>
         </label>
@@ -25,13 +25,13 @@
       </div>
       <div v-else-if="!editingLog">
         <label for="worklog-user-ro" class="mb-1 block text-sm font-medium text-surface-700">Пользователь</label>
-        <InputText id="worklog-user-ro" :model-value="currentUserLabel" class="w-full" disabled />
+        <InputText id="worklog-user-ro" :modelValue="currentUserLabel" class="w-full" disabled />
       </div>
       <div v-else>
         <label for="worklog-user-edit" class="mb-1 block text-sm font-medium text-surface-700">Пользователь</label>
         <InputText
           id="worklog-user-edit"
-          :model-value="editingLog ? [editingLog.first_name, editingLog.last_name].filter(Boolean).join(' ') || '—' : ''"
+          :modelValue="editingUserLabel"
           class="w-full"
           disabled
         />
@@ -115,34 +115,34 @@
 
       <template v-if="projectFields.length">
         <Divider />
-        <div v-for="field in projectFields" :key="field.custom_field_id" class="space-y-1">
+        <div v-for="field in preparedProjectFields" :key="field.custom_field_id" class="space-y-1">
           <span class="block text-sm font-medium text-surface-700">
             {{ field.name }}
             <span v-if="field.is_required" class="ml-0.5 text-red-500">*</span>
           </span>
           <InputText
-            v-if="field.type === 'text'"
+            v-if="field.isText"
             v-model="form.custom_fields[field.custom_field_id]"
             class="w-full"
             :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
           <InputNumber
-            v-else-if="field.type === 'number'"
+            v-else-if="field.isNumber"
             v-model="form.custom_fields[field.custom_field_id]"
             class="w-full"
             :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
           <Select
-            v-else-if="field.type === 'dropdown'"
+            v-else-if="field.isDropdown"
             v-model="form.custom_fields[field.custom_field_id]"
-            :options="field.options?.filter((opt) => !opt.is_deprecated)"
+            :options="field.activeOptions"
             optionLabel="label"
             optionValue="label"
             class="w-full"
             :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
           />
           <Checkbox
-            v-else-if="field.type === 'checkbox'"
+            v-else-if="field.isCheckbox"
             v-model="form.custom_fields[field.custom_field_id]"
             :binary="true"
             :class="{ 'p-invalid': formErrors['cf_' + field.custom_field_id] }"
@@ -155,7 +155,7 @@
 
       <div class="flex justify-end gap-2 pt-2">
         <Button type="button" label="Отмена" severity="secondary" @click="close" />
-        <Button type="submit" :label="editingLog ? 'Сохранить' : 'Создать'" :loading="submitting" />
+        <Button type="submit" :label="submitLabel" :loading="submitting" />
       </div>
     </form>
   </Dialog>
@@ -190,6 +190,24 @@ const { projectFields, loadProjectFields } = useWorkLogForm();
 const today = new Date();
 const submitting = ref(false);
 const formErrors = reactive({});
+const showAdminUserSelect = computed(() => props.isAdmin && !props.editingLog);
+const dialogHeader = computed(() => (props.editingLog ? 'Редактировать лог' : 'Новый лог'));
+const submitLabel = computed(() => (props.editingLog ? 'Сохранить' : 'Создать'));
+const editingUserLabel = computed(() => {
+  const log = props.editingLog;
+  if (!log) { return ''; }
+  return [log.first_name, log.last_name].filter(Boolean).join(' ') || '—';
+});
+const preparedProjectFields = computed(() =>
+  (projectFields.value ?? []).map((field) => ({
+    ...field,
+    isText: field.type === 'text',
+    isNumber: field.type === 'number',
+    isDropdown: field.type === 'dropdown',
+    isCheckbox: field.type === 'checkbox',
+    activeOptions: field.options?.filter((opt) => !opt.is_deprecated) ?? [],
+  }))
+);
 const form = reactive({
   user_id: null,
   date: null,

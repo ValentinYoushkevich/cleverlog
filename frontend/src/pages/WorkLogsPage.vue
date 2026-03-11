@@ -40,7 +40,7 @@
     </div>
 
     <DataTable
-      :value="logs"
+      :value="preparedLogs"
       :loading="loading"
       paginator
       :rows="20"
@@ -51,12 +51,12 @@
     >
       <Column field="user" header="Пользователь" sortable style="width: 12%">
         <template #body="{ data }">
-          {{ [data.first_name, data.last_name].filter(Boolean).join(' ') || '—' }}
+          {{ data.userNameText }}
         </template>
       </Column>
       <Column field="date" header="Дата" sortable style="width: 12%">
         <template #body="{ data }">
-          {{ dayjs(data.date).format('DD.MM.YYYY') }}
+          {{ data.dateText }}
         </template>
       </Column>
       <Column field="project_name" header="Проект" sortable style="width: 12%" />
@@ -73,22 +73,22 @@
         <template #body="{ data }">
           <div class="flex justify-end gap-1">
             <Button
-              v-tooltip.top="!isAdmin && isLogInClosedMonth(data) ? 'Месяц закрыт' : ''"
+              v-tooltip.top="data.closedMonthTooltip"
               icon="pi pi-pencil"
               text
               rounded
               size="small"
-              :disabled="!isAdmin && isLogInClosedMonth(data)"
+              :disabled="data.isActionDisabled"
               @click="openEditDialog(data)"
             />
             <Button
-              v-tooltip.top="!isAdmin && isLogInClosedMonth(data) ? 'Месяц закрыт' : ''"
+              v-tooltip.top="data.closedMonthTooltip"
               icon="pi pi-trash"
               text
               rounded
               size="small"
               severity="danger"
-              :disabled="!isAdmin && isLogInClosedMonth(data)"
+              :disabled="data.isActionDisabled"
               @click="confirmDelete(data)"
             />
           </div>
@@ -105,20 +105,16 @@
 
     <WorkLogFormDialog
       v-model="dialogVisible"
-      :editing-log="editingLog"
-      :is-admin="isAdmin"
-      :user-options="workLogUserOptions"
-      :current-user-label="currentUserLabel"
+      :editingLog="editingLog"
+      :isAdmin="isAdmin"
+      :userOptions="workLogUserOptions"
+      :currentUserLabel="currentUserLabel"
       @saved="loadLogs"
     />
   </div>
 </template>
 
 <script setup>
-import dayjs from 'dayjs';
-import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
-
 import http from '@/api/http.js';
 import EmptyState from '@/components/EmptyState.vue';
 import WorkLogFormDialog from '@/components/WorkLogFormDialog.vue';
@@ -128,6 +124,9 @@ import { useCalendarStore } from '@/stores/calendar.js';
 import { useMonthClosuresStore } from '@/stores/monthClosures.js';
 import { useProjectsStore } from '@/stores/projects.js';
 import { useUiStore } from '@/stores/ui.js';
+import dayjs from 'dayjs';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
 defineOptions({ name: 'WorkLogsPage' });
 
@@ -169,6 +168,20 @@ const isAdmin = computed(() => authStore.isAdmin);
 const closedMonths = reactive({});
 
 const logs = ref([]);
+const preparedLogs = computed(() =>
+  (logs.value ?? []).map((log) => {
+    const userNameText = [log.first_name, log.last_name].filter(Boolean).join(' ') || '—';
+    const dateText = log.date ? dayjs(log.date).format('DD.MM.YYYY') : '—';
+    const isActionDisabled = !isAdmin.value && isLogInClosedMonth(log);
+    return {
+      ...log,
+      userNameText,
+      dateText,
+      isActionDisabled,
+      closedMonthTooltip: isActionDisabled ? 'Месяц закрыт' : '',
+    };
+  })
+);
 const loading = ref(false);
 const filters = reactive({ project_id: null, dateRange: null, task_number: '', comment: '' });
 

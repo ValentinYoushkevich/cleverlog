@@ -22,9 +22,9 @@
       <div
         v-if="!loading"
         class="ml-4 rounded-lg px-3 py-1.5 text-sm"
-        :class="users.length ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'"
+        :class="summaryBadgeClass"
       >
-        {{ users.length ? `${users.length} сотрудников с незаполненными днями` : 'Все дни заполнены ✓' }}
+        {{ summaryBadgeText }}
       </div>
     </div>
 
@@ -107,6 +107,13 @@ const expandedRows = ref([]);
 const monthLabel = computed(() =>
   dayjs(`${currentYear.value}-${currentMonth.value}-01`).format('MMMM YYYY')
 );
+const summaryBadgeClass = computed(() =>
+  (users.value?.length ?? 0) > 0 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+);
+const summaryBadgeText = computed(() => {
+  const count = users.value?.length ?? 0;
+  return count > 0 ? `${count} сотрудников с незаполненными днями` : 'Все дни заполнены ✓';
+});
 
 onMounted(() => {
   uiStore.setPageTitle('Незаполнившие дни');

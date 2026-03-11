@@ -52,10 +52,7 @@
       </div>
     </div>
 
-    <div
-      v-if="totals?.by_user && Object.keys(totals.by_user).length"
-      class="rounded-xl border border-surface-200 bg-surface-0 p-4"
-    >
+    <div v-if="showTotalsByUser" class="rounded-xl border border-surface-200 bg-surface-0 p-4">
       <h3 class="mb-3 font-medium text-surface-700">Итоги по сотрудникам</h3>
       <div class="mb-3 flex flex-wrap gap-2">
         <div
@@ -74,7 +71,7 @@
     </div>
 
     <DataTable
-      :value="rows"
+      :value="preparedRows"
       :loading="loading"
       paginator
       :rows="50"
@@ -87,7 +84,7 @@
       <Column field="position" header="Должность" style="width: 150px" />
       <Column field="date" header="Дата" sortable style="width: 120px">
         <template #body="{ data }">
-          {{ formatDate(data.date) }}
+          {{ data.dateText }}
         </template>
       </Column>
       <Column field="project_name" header="Проект" sortable />
@@ -138,9 +135,19 @@ const filters = reactive({
 });
 
 const rows = ref([]);
+const preparedRows = computed(() =>
+  (rows.value ?? []).map((r) => ({
+    ...r,
+    dateText: formatDate(r.date),
+  }))
+);
 const totals = ref(null);
 const loading = ref(false);
 const exporting = ref(false);
+const showTotalsByUser = computed(() => {
+  const byUser = totals.value?.by_user;
+  return !!byUser && Object.keys(byUser).length > 0;
+});
 
 function buildParams() {
   const params = {};

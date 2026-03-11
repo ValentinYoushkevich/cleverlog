@@ -39,7 +39,7 @@
     </div>
 
     <DataTable
-      :value="absences"
+      :value="preparedAbsences"
       :loading="loading"
       paginator
       :rows="20"
@@ -48,12 +48,12 @@
     >
       <Column field="user" header="Пользователь" sortable style="width: 12%">
         <template #body="{ data }">
-          {{ [data.first_name, data.last_name].filter(Boolean).join(' ') || '—' }}
+          {{ data.userNameText }}
         </template>
       </Column>
       <Column field="date" header="Дата" sortable style="width: 12%">
         <template #body="{ data }">
-          {{ dayjs(data.date).format('DD.MM.YYYY') }}
+          {{ data.dateText }}
         </template>
       </Column>
       <Column field="type" header="Тип" style="width: 12%">
@@ -128,7 +128,7 @@
           <label for="absence-create-user-readonly" class="mb-1 block text-sm font-medium text-surface-700">
             Пользователь
           </label>
-          <InputText id="absence-create-user-readonly" :model-value="currentUserLabel" class="w-full" disabled />
+          <InputText id="absence-create-user-readonly" :modelValue="currentUserLabel" class="w-full" disabled />
         </div>
         <div>
           <label for="absence-create-type" class="mb-1 block text-sm font-medium text-surface-700">
@@ -200,7 +200,7 @@
           </label>
           <InputText
             id="absence-edit-user"
-            :model-value="editingAbsence ? [editingAbsence.first_name, editingAbsence.last_name].filter(Boolean).join(' ') || '—' : ''"
+            :modelValue="editingAbsenceUserLabel"
             class="w-full"
             disabled
           />
@@ -289,6 +289,13 @@ const uiStore = useUiStore();
 const filters = reactive({ type: null, dateRange: null });
 
 const absences = computed(() => absencesStore.list);
+const preparedAbsences = computed(() =>
+  (absences.value ?? []).map((a) => ({
+    ...a,
+    userNameText: [a.first_name, a.last_name].filter(Boolean).join(' ') || '—',
+    dateText: a.date ? dayjs(a.date).format('DD.MM.YYYY') : '—',
+  }))
+);
 const loading = computed(() => absencesStore.loading);
 const users = computed(() => absencesStore.users);
 const usersLoading = computed(() => absencesStore.usersLoading);
@@ -404,6 +411,11 @@ async function onSubmitCreate() {
 
 const editDialogVisible = ref(false);
 const editingAbsence = ref(null);
+const editingAbsenceUserLabel = computed(() => {
+  const a = editingAbsence.value;
+  if (!a) { return ''; }
+  return [a.first_name, a.last_name].filter(Boolean).join(' ') || '—';
+});
 const editForm = reactive({ type: null, date: null, duration: '', comment: '' });
 const editErrors = reactive({});
 

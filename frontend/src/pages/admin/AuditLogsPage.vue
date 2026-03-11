@@ -60,7 +60,7 @@
 
     <!-- Таблица -->
     <DataTable
-      :value="logs"
+      :value="preparedLogs"
       :loading="loading"
       paginator
       :first="(currentPage - 1) * pageSize"
@@ -74,14 +74,14 @@
     >
       <Column field="timestamp" header="Время" style="width: 170px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-600">{{ formatDateTime(data.timestamp) }}</span>
+          <span class="text-xs text-surface-600">{{ data.timestampText }}</span>
         </template>
       </Column>
       <Column field="actor" header="Актор" style="width: 180px">
         <template #body="{ data }">
           <div>
             <p class="text-sm font-medium text-surface-800 truncate max-w-40">
-              {{ data.last_name ? `${data.last_name} ${data.first_name}` : 'Система' }}
+              {{ data.actorNameText }}
             </p>
             <p class="text-xs text-surface-400">{{ data.actor_role ?? '—' }}</p>
           </div>
@@ -105,8 +105,8 @@
       <Column field="result" header="Результат" style="width: 110px">
         <template #body="{ data }">
           <Tag
-            :value="data.result === 'success' ? 'Успешно' : 'Ошибка'"
-            :severity="data.result === 'success' ? 'success' : 'danger'"
+            :value="getResultLabel(data)"
+            :severity="getResultSeverity(data)"
           />
         </template>
       </Column>
@@ -142,19 +142,19 @@
             <span class="font-medium">{{ selectedLog.event?.name ?? '—' }}</span>
             <span class="font-mono text-xs text-surface-400">({{ selectedLog.event?.type ?? '—' }})</span>
           </div>
-          <div><span class="text-surface-400">Время:</span> {{ formatDateTime(selectedLog.timestamp) }}</div>
-          <div><span class="text-surface-400">Актор:</span> {{ selectedLog.last_name ? `${selectedLog.last_name} ${selectedLog.first_name}` : 'Система' }}</div>
+          <div><span class="text-surface-400">Время:</span> {{ selectedLogTimestampText }}</div>
+          <div><span class="text-surface-400">Актор:</span> {{ selectedLogActorNameText }}</div>
           <div><span class="text-surface-400">IP:</span> <span class="font-mono">{{ selectedLog.ip ?? '—' }}</span></div>
         </div>
 
         <div v-if="selectedLog.before" class="space-y-1">
           <p class="text-sm font-medium text-surface-700">До:</p>
-          <pre class="text-xs bg-red-50 border border-red-100 rounded-lg p-3 overflow-auto max-h-48">{{ JSON.stringify(selectedLog.before, null, 2) }}</pre>
+          <pre class="text-xs bg-red-50 border border-red-100 rounded-lg p-3 overflow-auto max-h-48">{{ selectedLogBeforeText }}</pre>
         </div>
 
         <div v-if="selectedLog.after" class="space-y-1">
           <p class="text-sm font-medium text-surface-700">После:</p>
-          <pre class="text-xs bg-green-50 border border-green-100 rounded-lg p-3 overflow-auto max-h-48">{{ JSON.stringify(selectedLog.after, null, 2) }}</pre>
+          <pre class="text-xs bg-green-50 border border-green-100 rounded-lg p-3 overflow-auto max-h-48">{{ selectedLogAfterText }}</pre>
         </div>
       </div>
     </Dialog>
@@ -174,9 +174,29 @@ const resultOptions = [{ label: 'Успешно', value: 'success' }, { label: '
 const uiStore = useUiStore();
 const auditLogsStore = useAuditLogsStore();
 const { logs, loading, exporting, totalRecords, filterOptions } = storeToRefs(auditLogsStore);
+const preparedLogs = computed(() =>
+  (logs.value ?? []).map((l) => ({
+    ...l,
+    timestampText: formatDateTime(l.timestamp),
+    actorNameText: getActorName(l),
+  }))
+);
 
 const eventTypeOptions = computed(() => (Array.isArray(filterOptions.value?.event_types) ? filterOptions.value.event_types : []));
 const entityTypeOptions = computed(() => (Array.isArray(filterOptions.value?.entity_types) ? filterOptions.value.entity_types : []));
+
+function getActorName(log) {
+  if (!log?.last_name) { return 'Система'; }
+  return `${log.last_name} ${log.first_name ?? ''}`.trim();
+}
+
+function getResultLabel(log) {
+  return log?.result === 'success' ? 'Успешно' : 'Ошибка';
+}
+
+function getResultSeverity(log) {
+  return log?.result === 'success' ? 'success' : 'danger';
+}
 
 onMounted(() => {
   uiStore.setPageTitle('Журнал аудита');
@@ -241,6 +261,14 @@ function formatDateTime(ts) {
 // Детали
 const detailVisible = ref(false);
 const selectedLog = ref(null);
+const selectedLogTimestampText = computed(() => formatDateTime(selectedLog.value?.timestamp));
+const selectedLogActorNameText = computed(() => getActorName(selectedLog.value));
+const selectedLogBeforeText = computed(() =>
+  selectedLog.value?.before ? JSON.stringify(selectedLog.value.before, null, 2) : ''
+);
+const selectedLogAfterText = computed(() =>
+  selectedLog.value?.after ? JSON.stringify(selectedLog.value.after, null, 2) : ''
+);
 
 function openDetail(log) {
   selectedLog.value = log;

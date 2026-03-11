@@ -4,7 +4,7 @@
       <h1 class="text-2xl font-semibold text-surface-800">Кастомные поля</h1>
       <div class="flex gap-2">
         <Button
-          :label="showDeleted ? 'Скрыть удалённые' : 'Показать удалённые'"
+          :label="showDeletedToggleLabel"
           severity="secondary"
           size="small"
           @click="toggleShowDeleted"
@@ -28,7 +28,7 @@
       </Column>
       <Column field="deleted_at" header="Статус" style="width: 120px">
         <template #body="{ data }">
-          <Tag :value="data.deleted_at ? 'Удалено' : 'Активно'" :severity="data.deleted_at ? 'danger' : 'success'" />
+          <Tag :value="getFieldStatusLabel(data)" :severity="getFieldStatusSeverity(data)" />
         </template>
       </Column>
       <Column header="" style="width: 120px">
@@ -174,6 +174,15 @@ onMounted(() => { uiStore.setPageTitle('Кастомные поля'); loadField
 
 const submitting = ref(false);
 const showDeleted = ref(false);
+const showDeletedToggleLabel = computed(() => (showDeleted.value ? 'Скрыть удалённые' : 'Показать удалённые'));
+
+function getFieldStatusLabel(field) {
+  return field?.deleted_at ? 'Удалено' : 'Активно';
+}
+
+function getFieldStatusSeverity(field) {
+  return field?.deleted_at ? 'danger' : 'success';
+}
 
 function loadFields() {
   customFieldsStore.fetchList(showDeleted.value ? { include_deleted: true } : {});

@@ -48,9 +48,9 @@
             v-for="criterion in criteria"
             :key="criterion.label"
             class="flex items-center gap-2 text-xs"
-            :class="criterion.met ? 'text-green-600' : 'text-surface-400'"
+            :class="getCriterionTextClass(criterion)"
           >
-            <i :class="criterion.met ? 'pi pi-check-circle' : 'pi pi-circle'" class="text-xs" />
+            <i :class="getCriterionIconClass(criterion)" class="text-xs" />
             {{ criterion.label }}
           </li>
         </ul>
@@ -93,14 +93,13 @@
 </template>
 
 <script setup>
-import { toTypedSchema } from '@vee-validate/zod';
-import { useForm } from 'vee-validate';
-import { useRoute, useRouter } from 'vue-router';
-
 import http from '@/api/http.js';
 import { usePasswordStrength } from '@/composables/usePasswordStrength.js';
 import { useAuthStore } from '@/stores/auth.js';
 import { registerSchema } from '@/validators/auth.js';
+import { toTypedSchema } from '@vee-validate/zod';
+import { useForm } from 'vee-validate';
+import { useRoute, useRouter } from 'vue-router';
 
 defineOptions({ name: 'RegisterPage' });
 
@@ -121,6 +120,14 @@ const [password] = defineField('password');
 const [confirmPassword] = defineField('confirmPassword');
 
 const { criteria, strength, isStrong, strengthLabel } = usePasswordStrength(password);
+
+function getCriterionTextClass(criterion) {
+  return criterion?.met ? 'text-green-600' : 'text-surface-400';
+}
+
+function getCriterionIconClass(criterion) {
+  return criterion?.met ? 'pi pi-check-circle' : 'pi pi-circle';
+}
 
 const onSubmit = handleSubmit(async (values) => {
   serverError.value = '';

@@ -81,7 +81,7 @@
         >
           <span
             class="text-sm font-medium"
-            :class="day.isOverride ? 'text-primary font-bold' : 'text-surface-700'"
+            :class="getDayNumberTextClass(day)"
           >
             {{ day.dayNumber }}
           </span>
@@ -105,7 +105,7 @@
             v-for="opt in DAY_TYPE_OPTIONS"
             :key="opt.value"
             class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-surface-100 transition-colors text-left"
-            :class="selectedDay.day_type === opt.value ? 'bg-primary-50 text-primary font-medium' : 'text-surface-700'"
+            :class="getDayTypeOptionClass(opt.value)"
             @click="setDayType(opt.value)"
           >
             <span class="w-3 h-3 rounded block shrink-0" :class="opt.colorClass" />
@@ -143,6 +143,16 @@ const DAY_TYPE_OPTIONS = [
   { value: 'weekend', label: 'Выходной', colorClass: 'bg-gray-300' },
   { value: 'holiday', label: 'Праздник', colorClass: 'bg-red-200' },
 ];
+
+function getDayNumberTextClass(day) {
+  return day?.isOverride ? 'text-primary font-bold' : 'text-surface-700';
+}
+
+function getDayTypeOptionClass(dayType) {
+  return selectedDay.value?.day_type === dayType
+    ? 'bg-primary-50 text-primary font-medium'
+    : 'text-surface-700';
+}
 
 const normValue = ref(168);
 const originalNorm = ref(168);

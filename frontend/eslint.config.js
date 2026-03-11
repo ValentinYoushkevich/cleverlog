@@ -4,7 +4,10 @@ import pluginUnicorn from 'eslint-plugin-unicorn'
 import pluginVue from 'eslint-plugin-vue'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
-import autoImportConfig from './.eslintrc-auto-import.json' assert { type: 'json' }
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const autoImportConfig = require('./.eslintrc-auto-import.json')
 
 export default defineConfig([
   {
@@ -186,7 +189,7 @@ export default defineConfig([
       'unicorn/prevent-abbreviations': 'off',
       'unicorn/prefer-ternary': 'off',
       'consistent-return': 'off',
-      'vue/attribute-hyphenation': 'off',
+      'vue/attribute-hyphenation': ['error', 'never'],
       'no-multiple-empty-lines': [
         'error',
         {

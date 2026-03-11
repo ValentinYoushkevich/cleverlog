@@ -20,12 +20,17 @@
 - Сравнения: только `===` и `!==`. Фигурные скобки всегда (в т.ч. однострочный if/else).
 - Отступ 2 пробела. Строка ≤200 символов (исключения: HTML, строки, URL). Не более 1 пустой строки подряд, 0 в конце файла.
 - Пробелы: внутри `{ }`, после запятой/двоеточия, вокруг операторов. Пример: `{ a: 1, b: 2 }`, `a + b`, `a === b`.
+- Props: только camelCase (и в коде, и при передаче в шаблоне: `:currentUserLabel`, не `:current-user-label`).
 
 ## Структура проекта
 - Компоненты в `src/components/`
 - Страницы в `src/pages/`
+- Каждая страница/раздел в `src/pages/` лежит в своей папке. Пример: `src/pages/admin/` → `AdminPage.vue`, а `src/pages/admin/components/` создавать только если есть page-scoped компоненты.
+- Компоненты, которые используются только внутри конкретной страницы/раздела — хранить рядом со страницей в `src/pages/**` (например `src/pages/admin/components/`).
+- Компоненты, которые используются в 2+ местах (более чем в одной странице/разделе) — хранить на уровне проекта в `src/components/`.
 - Композаблы в `src/composables/`
 - Утилиты в `src/utils/`
+- Валидаторы, которые лежат вне компонентов — в `src/utils/validators/**` (например `src/utils/validators/createUser.validators.js`).
 - Константы в `src/constants/`
 - Стили в `src/assets/`
 
@@ -33,6 +38,7 @@
 - Компоненты/файлы компонентов: PascalCase. Утилиты: camelCase. Переменные и функции: camelCase. Константы: UPPER_SNAKE_CASE.
 - Неиспользуемое: префикс `_` (например `_unusedVar`).
 - Булевы для кнопок: `show[Что]Button` (например `showEditButton`), не `showButton[Действие]`.
+- Props: camelCase.
 
 ## Vue.js
 - `<script setup>`, `defineProps`/`defineEmits`, всегда `defineOptions({ name: '...' })`.

@@ -11,7 +11,7 @@
             <RouterLink
               :to="{ name: item.name }"
               class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
-              active-class="bg-primary-50 text-primary font-medium"
+              activeClass="bg-primary-50 text-primary font-medium"
             >
               <i :class="item.icon" />
               <span>{{ item.label }}</span>
@@ -28,7 +28,7 @@
               <RouterLink
                 :to="{ name: item.name }"
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
-                active-class="bg-primary-50 text-primary font-medium"
+                activeClass="bg-primary-50 text-primary font-medium"
               >
                 <i :class="item.icon" />
                 <span>{{ item.label }}</span>
@@ -43,7 +43,7 @@
               <RouterLink
                 :to="{ name: item.name }"
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
-                active-class="bg-primary-50 text-primary font-medium"
+                activeClass="bg-primary-50 text-primary font-medium"
               >
                 <i :class="item.icon" />
                 <span>{{ item.label }}</span>
@@ -83,10 +83,10 @@
         <div class="flex items-center gap-2">
           <Button
             v-if="isAdmin"
-            :label="isClosed ? 'Открыть месяц' : 'Закрыть месяц'"
-            :severity="isClosed ? 'secondary' : 'warning'"
+            :label="monthToggleLabel"
+            :severity="monthToggleSeverity"
             size="small"
-            :icon="isClosed ? 'pi pi-lock-open' : 'pi pi-lock'"
+            :icon="monthToggleIcon"
             @click="handleMonthToggle"
           />
         </div>
@@ -120,6 +120,9 @@ const userName = computed(() => authStore.userName);
 const userRole = computed(() => authStore.user?.role ?? '');
 const userInitials = computed(() => authStore.userInitials);
 const isClosed = computed(() => calendarStore.isClosed);
+const monthToggleLabel = computed(() => (isClosed.value ? 'Открыть месяц' : 'Закрыть месяц'));
+const monthToggleSeverity = computed(() => (isClosed.value ? 'secondary' : 'warning'));
+const monthToggleIcon = computed(() => (isClosed.value ? 'pi pi-lock-open' : 'pi pi-lock'));
 
 const navItems = [
   { name: 'calendar', label: 'Календарь', icon: 'pi pi-calendar' },

@@ -68,7 +68,7 @@
         <!-- Часы по проектам -->
         <div class="bg-surface-0 rounded-xl border border-surface-200 p-5">
           <h3 class="font-medium text-surface-700 mb-4">Часы по проектам</h3>
-          <div v-if="chartsReady && hoursChartData.labels?.length" class="relative h-64">
+          <div v-if="showHoursChart" class="relative h-64">
             <Chart key="hours" type="pie" :data="hoursChartData" :options="chartOptions" class="h-full" />
           </div>
           <p v-else class="text-sm text-surface-400 text-center py-8">Нет данных</p>
@@ -77,7 +77,7 @@
         <!-- Распределение сотрудников -->
         <div class="bg-surface-0 rounded-xl border border-surface-200 p-5">
           <h3 class="font-medium text-surface-700 mb-4">Сотрудники по проектам</h3>
-          <div v-if="chartsReady && usersChartData.labels?.length" class="relative h-64">
+          <div v-if="showUsersChart" class="relative h-64">
             <Chart key="users" type="pie" :data="usersChartData" :options="chartOptions" class="h-full" />
           </div>
           <p v-else class="text-sm text-surface-400 text-center py-8">Нет данных</p>
@@ -93,7 +93,7 @@
       class="w-full max-w-6xl"
     >
       <DataTable
-        :value="detailUsers"
+        :value="preparedDetailUsers"
         :loading="detailLoading"
         paginator
         :rows="20"
@@ -108,8 +108,8 @@
         </Column>
         <Column field="deviation" header="Отклонение" sortable style="width: 120px">
           <template #body="{ data }">
-            <span :class="data.deviation >= 0 ? 'text-blue-600' : 'text-red-600'">
-              {{ data.deviation >= 0 ? '+' : '' }}{{ data.deviation }} ч
+            <span :class="data.deviationTextClass">
+              {{ data.deviationPrefix }}{{ data.deviation }} ч
             </span>
           </template>
         </Column>
@@ -125,7 +125,7 @@
         </Column>
         <Column field="unlogged_count" header="Незапол. дней" style="width: 130px">
           <template #body="{ data }">
-            <span :class="data.unlogged_count > 0 ? 'text-orange-600 font-medium' : 'text-surface-400'">
+            <span :class="data.unloggedCountClass">
               {{ data.unlogged_count }}
             </span>
           </template>
@@ -237,6 +237,9 @@ const usersChartData = computed(() => {
   };
 });
 
+const showHoursChart = computed(() => chartsReady.value && (hoursChartData.value.labels?.length ?? 0) > 0);
+const showUsersChart = computed(() => chartsReady.value && (usersChartData.value.labels?.length ?? 0) > 0);
+
 const chartOptions = {
   plugins: { legend: { position: 'right' } },
   responsive: true,
@@ -247,6 +250,14 @@ const chartOptions = {
 const detailVisible = ref(false);
 const detailType = ref('');
 const { detailUsers, detailLoading } = storeToRefs(dashboardStore);
+const preparedDetailUsers = computed(() =>
+  (detailUsers.value ?? []).map((u) => ({
+    ...u,
+    deviationPrefix: u?.deviation >= 0 ? '+' : '',
+    deviationTextClass: u?.deviation >= 0 ? 'text-blue-600' : 'text-red-600',
+    unloggedCountClass: u?.unlogged_count > 0 ? 'text-orange-600 font-medium' : 'text-surface-400',
+  }))
+);
 
 const DETAIL_TITLES = {
   undertime: 'Сотрудники с недоработкой',

@@ -68,19 +68,16 @@
       </div>
       <div
         class="rounded-xl border p-4 text-center"
-        :class="normBlock.deviation >= 0 ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'"
+        :class="normDeviationClass"
       >
         <p class="mb-1 text-xs opacity-70">Отклонение</p>
         <p class="text-2xl font-bold">
-          {{ normBlock.deviation >= 0 ? '+' : '' }}{{ normBlock.deviation }} ч
+          {{ normDeviationPrefix }}{{ normBlock.deviation }} ч
         </p>
       </div>
     </div>
 
-    <div
-      v-if="totals && Object.keys(totals.by_project ?? {}).length"
-      class="rounded-xl border border-surface-200 bg-surface-0 p-4"
-    >
+    <div v-if="showTotalsByProject" class="rounded-xl border border-surface-200 bg-surface-0 p-4">
       <h3 class="mb-3 font-medium text-surface-700">Итоги по проектам</h3>
       <div class="flex flex-wrap gap-2">
         <div
@@ -99,7 +96,7 @@
     </div>
 
     <DataTable
-      :value="rows"
+      :value="preparedRows"
       :loading="loading"
       paginator
       :rows="50"
@@ -115,7 +112,7 @@
       </Column>
       <Column field="date" header="Дата" sortable style="width: 120px">
         <template #body="{ data }">
-          {{ formatDate(data.date) }}
+          {{ data.dateText }}
         </template>
       </Column>
       <Column field="type" header="Тип" style="width: 140px">
@@ -198,10 +195,27 @@ const filters = reactive({
 });
 
 const rows = ref([]);
+const preparedRows = computed(() =>
+  (rows.value ?? []).map((r) => ({
+    ...r,
+    dateText: formatDate(r.date),
+  }))
+);
 const totals = ref(null);
 const normBlock = ref(null);
 const loading = ref(false);
 const exporting = ref(false);
+const showTotalsByProject = computed(() => Object.keys(totals.value?.by_project ?? {}).length > 0);
+const normDeviationClass = computed(() => {
+  if (!normBlock.value) { return ''; }
+  return normBlock.value.deviation >= 0
+    ? 'bg-green-50 border-green-200 text-green-700'
+    : 'bg-red-50 border-red-200 text-red-700';
+});
+const normDeviationPrefix = computed(() => {
+  if (!normBlock.value) { return ''; }
+  return normBlock.value.deviation >= 0 ? '+' : '';
+});
 
 function buildParams() {
   const params = {};

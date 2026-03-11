@@ -36,7 +36,7 @@
 
     <!-- Таблица -->
     <DataTable
-      :value="filteredUsers"
+      :value="preparedFilteredUsers"
       :loading="loading"
       paginator
       :rows="20"
@@ -73,7 +73,7 @@
       </Column>
       <Column field="created_at" header="Добавлен" style="width: 140px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-400">{{ formatDate(data.created_at) }}</span>
+          <span class="text-xs text-surface-400">{{ data.createdAtText }}</span>
         </template>
       </Column>
       <Column header="" style="width: 120px" bodyClass="text-right">
@@ -113,14 +113,14 @@
           <div class="flex items-center gap-3">
             <span
               class="text-xs"
-              :class="!isEmailMode ? 'font-semibold text-surface-800' : 'text-surface-500'"
+              :class="chatInviteModeClass"
             >
               Ссылка в чат
             </span>
             <ToggleSwitch v-model="isEmailMode" />
             <span
               class="text-xs"
-              :class="isEmailMode ? 'font-semibold text-surface-800' : 'text-surface-500'"
+              :class="emailInviteModeClass"
             >
               Ссылка на email
             </span>
@@ -251,7 +251,7 @@
           </p>
           <div v-if="editingUser.invite_mode === 'link'" class="flex items-center gap-2 mt-2">
             <InputText
-              :model-value="editingUser.invite_link || 'Ссылка будет доступна после генерации'"
+              :modelValue="editingUser.invite_link || 'Ссылка будет доступна после генерации'"
               class="w-full flex-1"
               readonly
             />
@@ -352,12 +352,12 @@
 
 <script setup>
 import {
-    ROLE_LABEL,
-    ROLE_SEVERITY,
-    STATUS_LABEL,
-    STATUS_SEVERITY,
-    USER_ROLE_OPTIONS,
-    USER_STATUS_OPTIONS,
+  ROLE_LABEL,
+  ROLE_SEVERITY,
+  STATUS_LABEL,
+  STATUS_SEVERITY,
+  USER_ROLE_OPTIONS,
+  USER_STATUS_OPTIONS,
 } from '@/constants/users.js';
 import { useDirectoriesStore } from '@/stores/directories.js';
 import { useUiStore } from '@/stores/ui.js';
@@ -397,6 +397,13 @@ const filteredUsers = computed(() => {
   );
 });
 
+const preparedFilteredUsers = computed(() =>
+  (filteredUsers.value ?? []).map((u) => ({
+    ...u,
+    createdAtText: formatDate(u.created_at),
+  }))
+);
+
 function loadUsers() {
   const params = {};
   if (filters.status) { params.status = filters.status; }
@@ -435,6 +442,8 @@ const isEmailMode = computed({
 });
 
 const createSubmitLabel = computed(() => (isEmailMode.value ? 'Создать и отправить инвайт' : 'Создать ссылку'));
+const chatInviteModeClass = computed(() => (isEmailMode.value ? 'text-surface-500' : 'font-semibold text-surface-800'));
+const emailInviteModeClass = computed(() => (isEmailMode.value ? 'font-semibold text-surface-800' : 'text-surface-500'));
 
 const inviteLinkDialogVisible = ref(false);
 const inviteLink = ref('');

@@ -15,7 +15,7 @@
     </div>
 
     <DataTable
-      :value="list"
+      :value="preparedList"
       :loading="loading"
       paginator
       :first="(currentPage - 1) * pageSize"
@@ -29,7 +29,7 @@
     >
       <Column field="created_at" header="Время" style="width: 155px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-600">{{ formatDateTime(data.created_at) }}</span>
+          <span class="text-xs text-surface-600">{{ data.createdAtText }}</span>
         </template>
       </Column>
       <Column field="user" header="Пользователь" style="width: 200px">
@@ -53,8 +53,8 @@
         <template #body="{ data }">
           <div class="min-w-0">
             <p class="text-xs font-mono text-surface-700 truncate max-w-52">
-              <span v-if="data.request_method">[{{ (data.request_method || '').toUpperCase() }}] </span>
-              <span>{{ shortUrl(data.request_url || data.url) }}</span>
+              <span v-if="data.requestMethodUpper">[{{ data.requestMethodUpper }}] </span>
+              <span>{{ data.requestUrlShort }}</span>
             </p>
             <p v-if="data.response_status" class="text-xs text-surface-500">
               Статус: {{ data.response_status }}
@@ -69,7 +69,7 @@
       </Column>
       <Column field="url" header="Страница" style="width: 160px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-500 truncate block max-w-36" :title="data.url">{{ shortUrl(data.url) }}</span>
+          <span class="text-xs text-surface-500 truncate block max-w-36" :title="data.url">{{ data.urlShort }}</span>
         </template>
       </Column>
       <Column field="ip" header="IP" style="width: 110px">
@@ -97,7 +97,7 @@
     <Dialog v-model:visible="detailVisible" header="Детали ошибки" modal class="w-full max-w-2xl">
       <div v-if="selected" class="space-y-4 text-sm">
         <div class="grid grid-cols-2 gap-3">
-          <div><span class="text-surface-400">Время:</span> {{ formatDateTime(selected.created_at) }}</div>
+          <div><span class="text-surface-400">Время:</span> {{ selectedCreatedAtText }}</div>
           <div><span class="text-surface-400">IP:</span> <span class="font-mono">{{ selected.ip || '—' }}</span></div>
         </div>
         <div>
@@ -108,7 +108,7 @@
           <p class="text-surface-400 mb-1">Источник (файл)</p>
           <p class="font-mono text-xs break-all">{{ selected.source }}</p>
         </div>
-        <div v-if="selected.lineno !== null || selected.colno !== null" class="flex gap-4">
+        <div v-if="showSelectedLocation" class="flex gap-4">
           <span v-if="selected.lineno !== null"><span class="text-surface-400">Строка:</span> {{ selected.lineno }}</span>
           <span v-if="selected.colno !== null"><span class="text-surface-400">Колонка:</span> {{ selected.colno }}</span>
         </div>
@@ -139,6 +139,19 @@ defineOptions({ name: 'JsErrorsPage' });
 const uiStore = useUiStore();
 const jsErrorsStore = useJsErrorsStore();
 const { list, loading, totalRecords } = storeToRefs(jsErrorsStore);
+const preparedList = computed(() =>
+  (list.value ?? []).map((row) => {
+    const requestMethodUpper = row.request_method ? String(row.request_method).toUpperCase() : '';
+    const requestUrlShort = shortUrl(row.request_url || row.url);
+    return {
+      ...row,
+      createdAtText: formatDateTime(row.created_at),
+      requestMethodUpper,
+      requestUrlShort,
+      urlShort: shortUrl(row.url),
+    };
+  })
+);
 
 onMounted(() => {
   uiStore.setPageTitle('Ошибки фронта');
@@ -149,6 +162,10 @@ const currentPage = ref(1);
 const pageSize = ref(50);
 const detailVisible = ref(false);
 const selected = ref(null);
+const showSelectedLocation = computed(
+  () => !!selected.value && (selected.value.lineno !== null || selected.value.colno !== null)
+);
+const selectedCreatedAtText = computed(() => formatDateTime(selected.value?.created_at));
 const filters = reactive({
   url: '',
 });

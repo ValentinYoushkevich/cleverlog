@@ -19,12 +19,12 @@
         </div>
         <div class="rounded-lg bg-surface-50 p-3 text-center">
           <p class="mb-1 text-xs text-surface-400">Факт</p>
-          <p class="text-lg font-semibold text-surface-700">{{ factHours.toFixed(1) }} ч</p>
+          <p class="text-lg font-semibold text-surface-700">{{ factHoursText }}</p>
         </div>
         <div class="rounded-lg p-3 text-center" :class="deviationClass">
           <p class="mb-1 text-xs opacity-70">Отклонение</p>
           <p class="text-lg font-semibold">
-            {{ deviation >= 0 ? '+' : '' }}{{ deviation.toFixed(1) }} ч
+            {{ deviationText }}
           </p>
         </div>
       </div>
@@ -60,12 +60,12 @@
             <span class="text-sm font-medium" :class="getDayNumberClass(day)">
               {{ day.dayNumber }}
             </span>
-            <span v-if="dayMap[day.date]" class="text-right text-xs opacity-75">
+            <span v-if="preparedDayMap[day.date]" class="text-right text-xs opacity-75">
               <span v-if="dayMap[day.date].workLogs.length">
                 {{ dayMap[day.date].workLogs.length }} лог(ов)
               </span>
-              <span v-if="dayMap[day.date].totalHours" class="block">
-                {{ dayMap[day.date].totalHours.toFixed(1) }}ч
+              <span v-if="preparedDayMap[day.date].totalHours" class="block">
+                {{ preparedDayMap[day.date].totalHoursText }}
               </span>
             </span>
           </div>
@@ -118,16 +118,16 @@
       <div v-if="selectedDay" class="space-y-4">
         <Tag
           v-if="selectedDay.day_type !== 'working'"
-          :value="selectedDay.day_type === 'weekend' ? 'Выходной' : 'Праздник'"
+          :value="selectedDayNonWorkingLabel"
           severity="secondary"
         />
-        <Tag v-if="isClosed && !isAdmin" value="Месяц закрыт" severity="danger" />
+        <Tag v-if="showClosedTagForNonAdmin" value="Месяц закрыт" severity="danger" />
 
         <div>
           <div class="mb-2 flex items-center justify-between">
             <h3 class="font-medium text-surface-700">Рабочие логи</h3>
             <Button
-              v-if="canEdit && selectedDay.day_type === 'working'"
+              v-if="showAddWorkLogButton"
               label="Добавить"
               icon="pi pi-plus"
               size="small"
@@ -164,7 +164,7 @@
           <div class="mb-2 flex items-center justify-between">
             <h3 class="font-medium text-surface-700">Отсутствия</h3>
             <Button
-              v-if="canEdit && selectedDay.day_type === 'working'"
+              v-if="showAddAbsenceButton"
               label="Добавить"
               icon="pi pi-plus"
               size="small"
@@ -200,10 +200,10 @@
 
     <WorkLogFormDialog
       v-model="workLogDialogVisible"
-      :initial-date="selectedDay?.date ?? null"
-      :is-admin="isAdmin"
-      :user-options="workLogUserOptions"
-      :current-user-label="currentUserLabel"
+      :initialDate="selectedDay?.date ?? null"
+      :isAdmin="isAdmin"
+      :userOptions="workLogUserOptions"
+      :currentUserLabel="currentUserLabel"
       @saved="onWorkLogSaved"
     />
 
@@ -236,7 +236,7 @@
           </label>
           <InputText
             id="calendar-absence-user-readonly"
-            :model-value="currentUserLabel"
+            :modelValue="currentUserLabel"
             class="w-full"
             disabled
           />
@@ -333,6 +333,10 @@ const { dayMap, factHours, fetchData } = useCalendarData();
 const isClosed = computed(() => calendarStore.isClosed);
 const isAdmin = computed(() => authStore.isAdmin);
 const canEdit = computed(() => isAdmin.value || !isClosed.value);
+const showClosedTagForNonAdmin = computed(() => isClosed.value && !isAdmin.value);
+const deviationPrefix = computed(() => (deviation.value >= 0 ? '+' : ''));
+const factHoursText = computed(() => `${(factHours.value ?? 0).toFixed(1)} ч`);
+const deviationText = computed(() => `${deviationPrefix.value}${deviation.value.toFixed(1)} ч`);
 
 const workLogUserOptions = computed(() =>
   absencesStore.users.map((u) => ({
@@ -347,6 +351,18 @@ const currentUserLabel = computed(() => {
 });
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+const preparedDayMap = computed(() =>
+  Object.fromEntries(
+    Object.entries(dayMap.value ?? {}).map(([date, data]) => [
+      date,
+      {
+        ...data,
+        totalHoursText: data?.totalHours ? `${data.totalHours.toFixed(1)}ч` : '',
+      },
+    ])
+  )
+);
 
 onMounted(async () => {
   uiStore.setPageTitle('Календарь');
@@ -431,6 +447,13 @@ function getDayNumberClass(day) {
 
 const drawerVisible = ref(false);
 const selectedDay = ref(null);
+const selectedDayNonWorkingLabel = computed(() => {
+  const type = selectedDay.value?.day_type;
+  if (!type || type === 'working') { return ''; }
+  return type === 'weekend' ? 'Выходной' : 'Праздник';
+});
+const showAddWorkLogButton = computed(() => canEdit.value && selectedDay.value?.day_type === 'working');
+const showAddAbsenceButton = computed(() => canEdit.value && selectedDay.value?.day_type === 'working');
 const workLogDialogVisible = ref(false);
 const absenceDialogVisible = ref(false);
 const absenceForm = reactive({ user_id: null, type: null, date: null, comment: '' });

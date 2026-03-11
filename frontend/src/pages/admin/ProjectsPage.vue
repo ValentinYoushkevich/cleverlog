@@ -11,14 +11,14 @@
         v-for="opt in [{ value: null, label: 'Все' }, ...PROJECT_STATUS_OPTIONS]"
         :key="String(opt.value)"
         :label="opt.label"
-        :severity="filters.status === opt.value ? 'primary' : 'secondary'"
+        :severity="getStatusFilterSeverity(opt.value)"
         size="small"
         @click="setStatusFilter(opt.value)"
       />
     </div>
 
     <DataTable
-      :value="projects"
+      :value="preparedProjects"
       :loading="loading"
       stripedRows
       class="border border-surface-200 rounded-xl overflow-hidden"
@@ -31,7 +31,7 @@
       </Column>
       <Column field="created_at" header="Создан" style="width: 130px">
         <template #body="{ data }">
-          <span class="text-xs text-surface-400">{{ dayjs(data.created_at).format('DD.MM.YYYY') }}</span>
+          <span class="text-xs text-surface-400">{{ data.createdAtText }}</span>
         </template>
       </Column>
       <Column header="Поля" style="width: 100px">
@@ -223,6 +223,12 @@ const projectsStore = useProjectsStore();
 const customFieldsStore = useCustomFieldsStore();
 const uiStore = useUiStore();
 const { projects, loading } = storeToRefs(projectsStore);
+const preparedProjects = computed(() =>
+  (projects.value ?? []).map((p) => ({
+    ...p,
+    createdAtText: p.created_at ? dayjs(p.created_at).format('DD.MM.YYYY') : '—',
+  }))
+);
 
 const TYPE_LABEL = { text: 'Текст', number: 'Число', dropdown: 'Список', checkbox: 'Флажок' };
 
@@ -315,6 +321,10 @@ onMounted(() => { uiStore.setPageTitle('Проекты'); loadProjects(); });
 
 const submitting = ref(false);
 const filters = reactive({ status: null });
+
+function getStatusFilterSeverity(status) {
+  return filters.status === status ? 'primary' : 'secondary';
+}
 
 function loadProjects() {
   const params = filters.status ? { status: filters.status } : {};
