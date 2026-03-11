@@ -64,41 +64,20 @@
     </DataTable>
 
     <!-- Dialog: создание -->
-    <Dialog v-model:visible="createDialogVisible" header="Новый проект" modal class="w-full max-w-sm">
-      <form class="space-y-4" @submit.prevent="onSubmitCreate">
-        <div>
-          <label for="project-create-name" class="block text-sm font-medium text-surface-700 mb-1">
-            Название <span class="text-red-500">*</span>
-          </label>
-          <InputText id="project-create-name" v-model="createForm.name" class="w-full" :class="{ 'p-invalid': createErrors.name }" />
-          <small v-if="createErrors.name" class="p-error">{{ createErrors.name }}</small>
-        </div>
-        <div class="flex justify-end gap-2">
-          <Button label="Отмена" severity="secondary" @click="createDialogVisible = false" />
-          <Button type="submit" label="Создать" :loading="submitting" />
-        </div>
-      </form>
-    </Dialog>
+    <ProjectCreateDialog
+      v-model="createDialogVisible"
+      :submitting="submitting"
+      @submit="handleCreateSubmit"
+    />
 
     <!-- Dialog: редактирование -->
-    <Dialog v-model:visible="editDialogVisible" header="Редактировать проект" modal class="w-full max-w-sm">
-      <form class="space-y-4" @submit.prevent="onSubmitEdit">
-        <div>
-          <label for="project-edit-name" class="block text-sm font-medium text-surface-700 mb-1">
-            Название <span class="text-red-500">*</span>
-          </label>
-          <InputText id="project-edit-name" v-model="editForm.name" class="w-full" />
-        </div>
-        <div>
-          <label for="project-edit-status" class="block text-sm font-medium text-surface-700 mb-1">Статус</label>
-          <Select id="project-edit-status" v-model="editForm.status" :options="PROJECT_STATUS_OPTIONS" optionLabel="label" optionValue="value" class="w-full" />
-        </div>
-        <div class="flex justify-end gap-2">
-          <Button label="Отмена" severity="secondary" @click="editDialogVisible = false" />
-          <Button type="submit" label="Сохранить" :loading="submitting" />
-        </div>
-      </form>
-    </Dialog>
+    <ProjectEditDialog
+      v-model="editDialogVisible"
+      :project="editingProject"
+      :statusOptions="PROJECT_STATUS_OPTIONS"
+      :submitting="submitting"
+      @submit="handleEditSubmit"
+    />
 
     <!-- Drawer: кастомные поля проекта -->
     <Drawer
@@ -116,94 +95,73 @@
           <ProgressSpinner style="width: 40px; height: 40px" />
         </div>
         <div class="space-y-4">
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-medium text-surface-700">Привязанные поля</h3>
-            <Button label="Привязать поле" icon="pi pi-plus" size="small" text @click="openAttachDialog" />
-          </div>
-
-          <div v-if="loadingFields" class="flex justify-center py-4">
-            <ProgressSpinner style="width: 28px; height: 28px" />
-          </div>
-
-          <div v-else-if="projectFields.length" class="space-y-2">
-            <div
-              v-for="field in projectFields"
-              :key="field.custom_field_id"
-              class="flex items-center gap-3 p-3 bg-surface-50 rounded-lg border border-surface-200"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-surface-800">{{ field.name }}</p>
-                <p class="text-xs text-surface-400">{{ TYPE_LABEL[field.type] }}</p>
-              </div>
-
-              <div class="flex items-center gap-4 text-xs text-surface-500">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <ToggleSwitch
-                    v-model="field.is_enabled"
-                    size="small"
-                    @change="updateField(field, 'is_enabled')"
-                  />
-                  Включено
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <ToggleSwitch
-                    v-model="field.is_required"
-                    size="small"
-                    @change="updateField(field, 'is_required')"
-                  />
-                  Обязательное
-                </label>
-              </div>
-
-              <Button
-                v-tooltip="'Отвязать'"
-                icon="pi pi-times"
-                text
-                rounded
-                size="small"
-                severity="danger"
-                @click="detachField(field)"
-              />
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-medium text-surface-700">Привязанные поля</h3>
+              <Button label="Привязать поле" icon="pi pi-plus" size="small" text @click="openAttachDialog" />
             </div>
-          </div>
 
-          <p v-else class="text-sm text-surface-400 py-4 text-center">
-            Нет привязанных полей
-          </p>
-        </div>
+            <div v-if="loadingFields" class="flex justify-center py-4">
+              <ProgressSpinner style="width: 28px; height: 28px" />
+            </div>
+
+            <div v-else-if="projectFields.length" class="space-y-2">
+              <div
+                v-for="field in projectFields"
+                :key="field.custom_field_id"
+                class="flex items-center gap-3 p-3 bg-surface-50 rounded-lg border border-surface-200"
+              >
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-surface-800">{{ field.name }}</p>
+                  <p class="text-xs text-surface-400">{{ TYPE_LABEL[field.type] }}</p>
+                </div>
+
+                <div class="flex items-center gap-4 text-xs text-surface-500">
+                  <span class="flex items-center gap-1.5 cursor-pointer">
+                    <ToggleSwitch
+                      v-model="field.is_enabled"
+                      size="small"
+                      @change="updateField(field, 'is_enabled')"
+                    />
+                    Включено
+                  </span>
+                  <span class="flex items-center gap-1.5 cursor-pointer">
+                    <ToggleSwitch
+                      v-model="field.is_required"
+                      size="small"
+                      @change="updateField(field, 'is_required')"
+                    />
+                    Обязательное
+                  </span>
+                </div>
+
+                <Button
+                  v-tooltip="'Отвязать'"
+                  icon="pi pi-times"
+                  text
+                  rounded
+                  size="small"
+                  severity="danger"
+                  @click="detachField(field)"
+                />
+              </div>
+            </div>
+
+            <p v-else class="text-sm text-surface-400 py-4 text-center">
+              Нет привязанных полей
+            </p>
+          </div>
         </div>
       </div>
     </Drawer>
 
     <!-- Dialog: привязка поля -->
-    <Dialog v-model:visible="attachDialogVisible" header="Привязать поле" modal class="w-full max-w-sm">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-surface-700 mb-1">Поле</label>
-          <Select
-            v-model="attachForm.field_id"
-            :options="availableFields"
-            optionLabel="name"
-            optionValue="id"
-            placeholder="Выберите поле"
-            class="w-full"
-          />
-        </div>
-        <div class="flex items-center gap-3">
-          <ToggleSwitch v-model="attachForm.is_required" />
-          <span class="text-sm text-surface-700">Обязательное</span>
-        </div>
-        <div class="flex items-center gap-3">
-          <ToggleSwitch v-model="attachForm.is_enabled" />
-          <span class="text-sm text-surface-700">Включено</span>
-        </div>
-        <div class="flex justify-end gap-2">
-          <Button label="Отмена" severity="secondary" @click="attachDialogVisible = false" />
-          <Button label="Привязать" :loading="submitting" @click="attachField" />
-        </div>
-      </div>
-    </Dialog>
+    <ProjectAttachFieldDialog
+      v-model="attachDialogVisible"
+      :fields="availableFields"
+      :submitting="submitting"
+      @submit="handleAttachSubmit"
+    />
   </div>
 </template>
 
@@ -216,6 +174,10 @@ import dayjs from 'dayjs';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 
+import ProjectAttachFieldDialog from './components/ProjectAttachFieldDialog.vue';
+import ProjectCreateDialog from './components/ProjectCreateDialog.vue';
+import ProjectEditDialog from './components/ProjectEditDialog.vue';
+
 defineOptions({ name: 'ProjectsPage' });
 
 const toast = useToast();
@@ -227,7 +189,7 @@ const preparedProjects = computed(() =>
   (projects.value ?? []).map((p) => ({
     ...p,
     createdAtText: p.created_at ? dayjs(p.created_at).format('DD.MM.YYYY') : '—',
-  }))
+  })),
 );
 
 const TYPE_LABEL = { text: 'Текст', number: 'Число', dropdown: 'Список', checkbox: 'Флажок' };
@@ -284,7 +246,6 @@ async function detachField(field) {
 // --- Dialog: привязка ---
 const attachDialogVisible = ref(false);
 const allFields = ref([]);
-const attachForm = reactive({ field_id: null, is_required: false, is_enabled: true });
 
 const availableFields = computed(() => {
   const attached = new Set(projectFields.value.map((f) => f.custom_field_id));
@@ -294,19 +255,16 @@ const availableFields = computed(() => {
 async function openAttachDialog() {
   await customFieldsStore.fetchList();
   allFields.value = customFieldsStore.fields ?? [];
-  Object.assign(attachForm, { field_id: null, is_required: false, is_enabled: true });
   attachDialogVisible.value = true;
 }
 
-async function attachField() {
-  if (!attachForm.field_id) { return; }
+async function handleAttachSubmit(payload) {
+  if (!drawerProject.value) {
+    return;
+  }
   submitting.value = true;
   try {
-    await projectsStore.attachFieldToProject(drawerProject.value.id, {
-      custom_field_id: attachForm.field_id,
-      is_required: attachForm.is_required,
-      is_enabled: attachForm.is_enabled,
-    });
+    await projectsStore.attachFieldToProject(drawerProject.value.id, payload);
     toast.add({ severity: 'success', summary: 'Поле привязано', life: 2000 });
     attachDialogVisible.value = false;
     await loadProjectFields();
@@ -317,7 +275,10 @@ async function attachField() {
   }
 }
 
-onMounted(() => { uiStore.setPageTitle('Проекты'); loadProjects(); });
+onMounted(() => {
+  uiStore.setPageTitle('Проекты');
+  loadProjects();
+});
 
 const submitting = ref(false);
 const filters = reactive({ status: null });
@@ -338,25 +299,18 @@ function setStatusFilter(val) {
 
 // Создание
 const createDialogVisible = ref(false);
-const createForm = reactive({ name: '' });
-const createErrors = reactive({});
 
 function openCreateDialog() {
-  createForm.name = '';
-  Object.keys(createErrors).forEach(k => delete createErrors[k]);
   createDialogVisible.value = true;
 }
 
-async function onSubmitCreate() {
-  Object.keys(createErrors).forEach(k => delete createErrors[k]);
-  if (!createForm.name.trim()) { createErrors.name = 'Название обязательно'; return; }
+async function handleCreateSubmit(payload) {
   submitting.value = true;
   try {
-    await projectsStore.createProject({ name: createForm.name });
+    await projectsStore.createProject(payload);
     toast.add({ severity: 'success', summary: 'Проект создан', life: 3000 });
     createDialogVisible.value = false;
     await loadProjects();
-    await projectsStore.fetchProjects();
   } catch {
     toast.add({ severity: 'error', summary: 'Ошибка создания', life: 3000 });
   } finally {
@@ -367,22 +321,22 @@ async function onSubmitCreate() {
 // Редактирование
 const editDialogVisible = ref(false);
 const editingProject = ref(null);
-const editForm = reactive({ name: '', status: 'active' });
 
 function openEditDialog(project) {
   editingProject.value = project;
-  Object.assign(editForm, { name: project.name, status: project.status });
   editDialogVisible.value = true;
 }
 
-async function onSubmitEdit() {
+async function handleEditSubmit(payload) {
+  if (!editingProject.value) {
+    return;
+  }
   submitting.value = true;
   try {
-    await projectsStore.updateProject(editingProject.value.id, editForm);
+    await projectsStore.updateProject(editingProject.value.id, payload);
     toast.add({ severity: 'success', summary: 'Сохранено', life: 3000 });
     editDialogVisible.value = false;
     await loadProjects();
-    await projectsStore.fetchProjects();
   } catch {
     toast.add({ severity: 'error', summary: 'Ошибка сохранения', life: 3000 });
   } finally {

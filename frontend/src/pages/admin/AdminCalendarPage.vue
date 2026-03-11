@@ -67,8 +67,8 @@
 
       <div class="grid grid-cols-7">
         <div
-          v-for="_ in firstDayOffset"
-          :key="'e' + _"
+          v-for="offset in firstDayOffset"
+          :key="'e' + offset"
           class="min-h-16 border-b border-r border-surface-100"
         />
 

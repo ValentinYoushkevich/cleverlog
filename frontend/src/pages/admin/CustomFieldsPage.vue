@@ -91,9 +91,9 @@
         <!-- Опции для dropdown -->
         <div v-if="createForm.type === 'dropdown'">
           <span class="block text-sm font-medium text-surface-700 mb-1">Варианты</span>
-          <div v-for="(opt, i) in createForm.options" :key="i" class="flex gap-2 mb-2">
-            <InputText v-model="createForm.options[i]" class="flex-1" :placeholder="`Вариант ${i + 1}`" />
-            <Button icon="pi pi-times" text rounded severity="danger" @click="createForm.options.splice(i, 1)" />
+          <div v-for="(option, index) in createForm.options" :key="index" class="flex gap-2 mb-2">
+            <InputText v-model="createForm.options[index]" class="flex-1" :placeholder="`Вариант ${index + 1}`" />
+            <Button icon="pi pi-times" text rounded severity="danger" @click="createForm.options.splice(index, 1)" />
           </div>
           <Button label="Добавить вариант" icon="pi pi-plus" text size="small" @click="createForm.options.push('')" />
         </div>
@@ -122,11 +122,11 @@
           </div>
           <div v-else-if="editOptions.length" class="space-y-2">
             <div
-              v-for="opt in editOptions"
-              :key="opt.id"
+              v-for="option in editOptions"
+              :key="option.id"
               class="flex items-center gap-2"
             >
-              <span class="flex-1 rounded border border-surface-200 bg-surface-50 px-3 py-2 text-sm text-surface-800">{{ opt.label }}</span>
+              <span class="flex-1 rounded border border-surface-200 bg-surface-50 px-3 py-2 text-sm text-surface-800">{{ option.label }}</span>
               <Button
                 icon="pi pi-times"
                 text

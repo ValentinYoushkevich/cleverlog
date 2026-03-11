@@ -116,9 +116,9 @@
         <Column field="top2_projects" header="TOP-2 проектов" style="min-width: 180px">
           <template #body="{ data }">
             <div class="space-y-0.5">
-              <div v-for="p in data.top2_projects" :key="p.name" class="text-xs">
-                <span class="font-medium">{{ p.name }}</span>
-                <span class="text-surface-400 ml-1">{{ p.hours }}ч</span>
+              <div v-for="projectItem in data.top2_projects" :key="projectItem.name" class="text-xs">
+                <span class="font-medium">{{ projectItem.name }}</span>
+                <span class="text-surface-400 ml-1">{{ projectItem.hours }}ч</span>
               </div>
             </div>
           </template>

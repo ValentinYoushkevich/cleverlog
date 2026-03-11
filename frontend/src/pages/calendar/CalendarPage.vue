@@ -43,8 +43,8 @@
 
       <div class="grid grid-cols-7">
         <div
-          v-for="_ in firstDayOffset"
-          :key="'empty-' + _"
+          v-for="offset in firstDayOffset"
+          :key="'empty-' + offset"
           class="min-h-16 border-b border-r border-surface-100"
         />
 
@@ -72,18 +72,18 @@
 
           <div class="mt-1 space-y-0.5">
             <div
-              v-for="log in (dayMap[day.date]?.workLogs ?? []).slice(0, 2)"
-              :key="log.id"
+              v-for="workLog in dayPreviewWorkLogs[day.date]"
+              :key="workLog.id"
               class="truncate rounded bg-green-100 px-1 text-xs text-green-700"
             >
-              {{ log.project_name }}
+              {{ workLog.project_name }}
             </div>
             <div
-              v-for="abs in (dayMap[day.date]?.absences ?? []).slice(0, 1)"
-              :key="abs.id"
+              v-for="absence in dayPreviewAbsences[day.date]"
+              :key="absence.id"
               class="truncate rounded bg-blue-100 px-1 text-xs text-blue-700"
             >
-              {{ ABSENCE_LABEL[abs.type] }}
+              {{ ABSENCE_LABEL[absence.type] }}
             </div>
           </div>
         </div>
@@ -174,13 +174,13 @@
           </div>
           <div v-if="dayMap[selectedDay.date]?.absences?.length" class="space-y-2">
             <div
-              v-for="abs in dayMap[selectedDay.date].absences"
-              :key="abs.id"
+              v-for="absence in dayMap[selectedDay.date].absences"
+              :key="absence.id"
               class="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 p-3"
             >
               <div>
-                <Tag :value="ABSENCE_LABEL[abs.type]" :severity="ABSENCE_SEVERITY[abs.type]" />
-                <span class="ml-2 text-xs text-surface-500">{{ abs.duration_hours }}ч</span>
+                <Tag :value="ABSENCE_LABEL[absence.type]" :severity="ABSENCE_SEVERITY[absence.type]" />
+                <span class="ml-2 text-xs text-surface-500">{{ absence.duration_hours }}ч</span>
               </div>
               <Button
                 v-if="canEdit"
@@ -189,7 +189,7 @@
                 rounded
                 size="small"
                 severity="danger"
-                @click="confirmDeleteAbsence(abs)"
+                @click="confirmDeleteAbsence(absence)"
               />
             </div>
           </div>
@@ -207,97 +207,16 @@
       @saved="onWorkLogSaved"
     />
 
-    <Dialog
-      v-model:visible="absenceDialogVisible"
-      header="Добавить отсутствие"
-      modal
-      class="w-full max-w-md"
-    >
-      <form class="space-y-4" @submit.prevent="onSubmitAbsence">
-        <div v-if="isAdmin">
-          <label for="calendar-absence-user" class="mb-1 block text-sm font-medium text-surface-700">
-            Пользователь <span class="text-red-500">*</span>
-          </label>
-          <Select
-            id="calendar-absence-user"
-            v-model="absenceForm.user_id"
-            :options="workLogUserOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Выберите пользователя"
-            class="w-full"
-            :class="{ 'p-invalid': absenceErrors.user_id }"
-          />
-          <small v-if="absenceErrors.user_id" class="p-error">{{ absenceErrors.user_id }}</small>
-        </div>
-        <div v-else>
-          <label for="calendar-absence-user-readonly" class="mb-1 block text-sm font-medium text-surface-700">
-            Пользователь
-          </label>
-          <InputText
-            id="calendar-absence-user-readonly"
-            :modelValue="currentUserLabel"
-            class="w-full"
-            disabled
-          />
-        </div>
-
-        <div>
-          <label for="calendar-absence-type" class="mb-1 block text-sm font-medium text-surface-700">
-            Тип <span class="text-red-500">*</span>
-          </label>
-          <Select
-            id="calendar-absence-type"
-            v-model="absenceForm.type"
-            :options="ABSENCE_TYPES"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Выберите тип"
-            class="w-full"
-            :class="{ 'p-invalid': absenceErrors.type }"
-          />
-          <small v-if="absenceErrors.type" class="p-error">{{ absenceErrors.type }}</small>
-        </div>
-
-        <div>
-          <label for="calendar-absence-date" class="mb-1 block text-sm font-medium text-surface-700">
-            Дата <span class="text-red-500">*</span>
-          </label>
-          <DatePicker
-            id="calendar-absence-date"
-            v-model="absenceForm.date"
-            class="w-full"
-            dateFormat="dd.mm.yy"
-            :class="{ 'p-invalid': absenceErrors.date }"
-            placeholder="Выберите дату"
-            showIcon
-          />
-          <small v-if="absenceErrors.date" class="p-error">{{ absenceErrors.date }}</small>
-        </div>
-
-        <div>
-          <label for="calendar-absence-comment" class="mb-1 block text-sm font-medium text-surface-700">
-            Комментарий
-          </label>
-          <Textarea
-            id="calendar-absence-comment"
-            v-model="absenceForm.comment"
-            rows="2"
-            class="w-full"
-            placeholder="Необязательно"
-          />
-        </div>
-
-        <Message v-if="absenceErrors.submit" severity="error" :closable="false" class="w-full">
-          {{ absenceErrors.submit }}
-        </Message>
-
-        <div class="flex justify-end gap-2 pt-2">
-          <Button label="Отмена" severity="secondary" @click="absenceDialogVisible = false" />
-          <Button type="submit" label="Создать" :loading="absenceSubmitting" />
-        </div>
-      </form>
-    </Dialog>
+    <CalendarAbsenceDialog
+      v-model="absenceDialogVisible"
+      :isAdmin="isAdmin"
+      :workLogUserOptions="workLogUserOptions"
+      :currentUserLabel="currentUserLabel"
+      :initialDate="selectedDay?.date ?? null"
+      :submitting="absenceSubmitting"
+      @submit="handleCalendarAbsenceSubmit"
+      @cancel="handleCalendarAbsenceCancel"
+    />
   </div>
 </template>
 
@@ -305,7 +224,8 @@
 import http from '@/api/http.js';
 import WorkLogFormDialog from '@/components/WorkLogFormDialog.vue';
 import { useCalendarData } from '@/composables/useCalendarData.js';
-import { ABSENCE_LABEL, ABSENCE_SEVERITY, ABSENCE_TYPES } from '@/constants/absences.js';
+import { ABSENCE_LABEL, ABSENCE_SEVERITY } from '@/constants/absences.js';
+import CalendarAbsenceDialog from '@/pages/calendar/components/CalendarAbsenceDialog.vue';
 import { useAbsencesStore } from '@/stores/absences.js';
 import { useAuthStore } from '@/stores/auth.js';
 import { useCalendarStore } from '@/stores/calendar.js';
@@ -342,7 +262,7 @@ const workLogUserOptions = computed(() =>
   absencesStore.users.map((u) => ({
     value: u.id,
     label: [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || u.id,
-  }))
+  })),
 );
 const currentUserLabel = computed(() => {
   const me = authStore.user;
@@ -360,15 +280,33 @@ const preparedDayMap = computed(() =>
         ...data,
         totalHoursText: data?.totalHours ? `${data.totalHours.toFixed(1)}ч` : '',
       },
-    ])
-  )
+    ]),
+  ),
+);
+
+const dayPreviewWorkLogs = computed(() =>
+  Object.fromEntries(
+    Object.entries(dayMap.value ?? {}).map(([date, data]) => [
+      date,
+      (data?.workLogs ?? []).slice(0, 2),
+    ]),
+  ),
+);
+
+const dayPreviewAbsences = computed(() =>
+  Object.fromEntries(
+    Object.entries(dayMap.value ?? {}).map(([date, data]) => [
+      date,
+      (data?.absences ?? []).slice(0, 1),
+    ]),
+  ),
 );
 
 onMounted(async () => {
   uiStore.setPageTitle('Календарь');
-  const y = calendarStore.currentYear;
-  const m = calendarStore.currentMonth;
-  await Promise.all([calendarStore.fetchMonth(y, m), fetchData(y, m)]);
+  const year = calendarStore.currentYear;
+  const month = calendarStore.currentMonth;
+  await Promise.all([calendarStore.fetchMonth(year, month), fetchData(year, month)]);
   if (authStore.isAdmin) { absencesStore.fetchUsers(); }
 });
 
@@ -387,14 +325,14 @@ const calendarDays = computed(() => {
   const month = calendarStore.currentMonth;
   const start = dayjs(`${year}-${month}-01`);
   const total = start.daysInMonth();
-  const dayTypeMap = Object.fromEntries(calendarStore.days.map((d) => [d.date, d.day_type]));
+  const dayTypeMap = Object.fromEntries(calendarStore.days.map((day) => [day.date, day.day_type]));
 
-  return Array.from({ length: total }, (_, i) => {
-    const date = start.date(i + 1);
+  return Array.from({ length: total }, (_, index) => {
+    const date = start.date(index + 1);
     const dateStr = date.format('YYYY-MM-DD');
     return {
       date: dateStr,
-      dayNumber: i + 1,
+      dayNumber: index + 1,
       day_type: dayTypeMap[dateStr] ?? (date.isoWeekday() >= 6 ? 'weekend' : 'working'),
       isToday: dateStr === dayjs().format('YYYY-MM-DD'),
       isFuture: date.isAfter(dayjs(), 'day'),
@@ -421,10 +359,10 @@ function getDayClass(day) {
     return day.isFuture ? '' : 'bg-red-50';
   }
   if (data.absences.length > 0 && data.workLogs.length === 0) { return 'bg-blue-50'; }
-  const h = data.totalHours ?? 0;
-  if (h < 8) { return 'bg-yellow-50'; }
-  if (Math.abs(h - 8) < 0.05) { return 'bg-green-50'; }
-  if (h <= 12) { return 'bg-orange-200'; }
+  const hours = data.totalHours ?? 0;
+  if (hours < 8) { return 'bg-yellow-50'; }
+  if (Math.abs(hours - 8) < 0.05) { return 'bg-green-50'; }
+  if (hours <= 12) { return 'bg-orange-200'; }
   return 'bg-red-200';
 }
 
@@ -433,9 +371,9 @@ function getDayTooltip(day) {
   const data = dayMap.value[day.date];
   if (!data) { return 'Логи не добавлены'; }
   if (data.absences.length > 0 && data.workLogs.length === 0) { return 'Отсутствие'; }
-  const h = data.totalHours ?? 0;
-  if (h < 8) { return `Залогировано ${h.toFixed(1)} ч`; }
-  if (h <= 12) { return `Превышение ${(h - 8).toFixed(1)} ч`; }
+  const hours = data.totalHours ?? 0;
+  if (hours < 8) { return `Залогировано ${hours.toFixed(1)} ч`; }
+  if (hours <= 12) { return `Превышение ${(hours - 8).toFixed(1)} ч`; }
   return 'Проверьте логи, у вас залогировано много часов';
 }
 
@@ -456,8 +394,6 @@ const showAddWorkLogButton = computed(() => canEdit.value && selectedDay.value?.
 const showAddAbsenceButton = computed(() => canEdit.value && selectedDay.value?.day_type === 'working');
 const workLogDialogVisible = ref(false);
 const absenceDialogVisible = ref(false);
-const absenceForm = reactive({ user_id: null, type: null, date: null, comment: '' });
-const absenceErrors = reactive({});
 const absenceSubmitting = ref(false);
 
 function openDayDrawer(day) {
@@ -470,14 +406,9 @@ function openAddWorkLog() {
 }
 
 function openAddAbsence() {
-  Object.assign(absenceForm, { user_id: null, type: null, date: null, comment: '' });
-  if (selectedDay.value) {
-    absenceForm.date = new Date(selectedDay.value.date);
-  }
   if (isAdmin.value && absencesStore.users.length === 0) {
     absencesStore.fetchUsers();
   }
-  Object.keys(absenceErrors).forEach((key) => delete absenceErrors[key]);
   absenceDialogVisible.value = true;
 }
 
@@ -485,45 +416,23 @@ async function onWorkLogSaved() {
   await fetchData(calendarStore.currentYear, calendarStore.currentMonth);
 }
 
-async function onSubmitAbsence() {
-  Object.keys(absenceErrors).forEach((key) => delete absenceErrors[key]);
-
-  if (isAdmin.value && !absenceForm.user_id) {
-    absenceErrors.user_id = 'Выберите пользователя';
-    return;
-  }
-  if (!absenceForm.type) {
-    absenceErrors.type = 'Выберите тип';
-    return;
-  }
-  if (!absenceForm.date) {
-    absenceErrors.date = 'Выберите дату';
-    return;
-  }
-
+async function handleCalendarAbsenceSubmit(payload) {
   absenceSubmitting.value = true;
-  delete absenceErrors.submit;
-
   try {
-    const dateStr = dayjs(absenceForm.date).format('YYYY-MM-DD');
-    const body = {
-      type: absenceForm.type,
-      date_from: dateStr,
-      date_to: dateStr,
-      comment: absenceForm.comment || undefined,
-    };
-    if (isAdmin.value && absenceForm.user_id) {
-      body.user_id = absenceForm.user_id;
-    }
-    await absencesStore.create(body);
+    await absencesStore.create(payload);
     absenceDialogVisible.value = false;
     await fetchData(calendarStore.currentYear, calendarStore.currentMonth);
     toast.add({ severity: 'success', summary: 'Создано', life: 3000 });
-  } catch (err) {
-    absenceErrors.submit = err.response?.data?.message ?? 'Ошибка создания';
+  } catch (error) {
+    const message = error.response?.data?.message ?? 'Ошибка создания';
+    toast.add({ severity: 'error', summary: 'Ошибка', detail: message, life: 5000 });
   } finally {
     absenceSubmitting.value = false;
   }
+}
+
+function handleCalendarAbsenceCancel() {
+  absenceDialogVisible.value = false;
 }
 
 function confirmDelete(log) {
@@ -546,7 +455,7 @@ function confirmDelete(log) {
   });
 }
 
-function confirmDeleteAbsence(abs) {
+function confirmDeleteAbsence(absence) {
   confirm.require({
     message: 'Удалить запись об отсутствии?',
     header: 'Подтверждение',
@@ -556,7 +465,7 @@ function confirmDeleteAbsence(abs) {
     rejectLabel: 'Отмена',
     accept: async () => {
       try {
-        await absencesStore.remove(abs.id);
+        await absencesStore.remove(absence.id);
         await fetchData(calendarStore.currentYear, calendarStore.currentMonth);
         toast.add({ severity: 'success', summary: 'Удалено', life: 3000 });
       } catch {

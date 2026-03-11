@@ -47,9 +47,9 @@
           </div>
 
           <div v-if="filteredUsers.length" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div v-for="(col, idx) in userColumns" :key="idx" class="space-y-2">
+            <div v-for="(userColumn, columnIndex) in userColumns" :key="columnIndex" class="space-y-2">
               <div
-                v-for="user in col"
+                v-for="user in userColumn"
                 :key="user.id"
                 class="flex items-center justify-between gap-3 rounded-lg border border-surface-100 bg-surface-0 px-3 py-2"
               >

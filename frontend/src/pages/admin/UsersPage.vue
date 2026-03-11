@@ -458,57 +458,79 @@ function openCreateDialog() {
     department: '',
     invite_mode: 'link',
   });
-  Object.keys(createErrors).forEach((k) => delete createErrors[k]);
+  Object.keys(createErrors).forEach((key) => delete createErrors[key]);
   createError.value = '';
   createDialogVisible.value = true;
 }
 
-async function onSubmitCreate() {
-  Object.keys(createErrors).forEach((k) => delete createErrors[k]);
+function clearCreateErrors() {
+  Object.keys(createErrors).forEach((key) => delete createErrors[key]);
+}
+
+function validateCreateFormForEmailMode() {
+  const result = createUserSchema.safeParse(createForm);
+  if (!result.success) {
+    result.error.errors.forEach((error) => {
+      createErrors[error.path[0]] = error.message;
+    });
+    return false;
+  }
+  return true;
+}
+
+function validateCreateFormForLinkMode() {
+  if (!createForm.first_name.trim()) {
+    createErrors.first_name = 'Имя обязательно';
+  }
+  if (!createForm.last_name.trim()) {
+    createErrors.last_name = 'Фамилия обязательна';
+  }
+  return Object.keys(createErrors).length === 0;
+}
+
+function validateCreateForm() {
+  clearCreateErrors();
   if (isEmailMode.value) {
-    const result = createUserSchema.safeParse(createForm);
-    if (!result.success) {
-      result.error.errors.forEach((e) => {
-        createErrors[e.path[0]] = e.message;
-      });
-      return;
-    }
+    return validateCreateFormForEmailMode();
+  }
+  return validateCreateFormForLinkMode();
+}
+
+function handleCreateSuccess(result) {
+  if (createForm.invite_mode === 'email') {
+    toast.add({
+      severity: 'success',
+      summary: 'Пользователь создан',
+      detail: 'Инвайт отправлен на email',
+      life: 4000,
+    });
+    createDialogVisible.value = false;
+    return;
+  }
+  inviteLink.value = result?.invite_link ?? '';
+  inviteLinkDialogVisible.value = true;
+}
+
+function handleCreateError(err) {
+  if (err.response?.data?.code === 'EMAIL_EXISTS') {
+    createError.value = 'Пользователь с таким email уже существует';
   } else {
-    // Простая валидация для режима «ссылка в чат»
-    if (!createForm.first_name.trim()) {
-      createErrors.first_name = 'Имя обязательно';
-    }
-    if (!createForm.last_name.trim()) {
-      createErrors.last_name = 'Фамилия обязательна';
-    }
-    if (Object.keys(createErrors).length > 0) {
-      return;
-    }
+    createError.value = 'Не удалось создать пользователя';
+  }
+}
+
+async function onSubmitCreate() {
+  if (!validateCreateForm()) {
+    return;
   }
   submitting.value = true;
   createError.value = '';
   try {
     const result = await usersStore.create(createForm);
-    if (createForm.invite_mode === 'email') {
-      toast.add({
-        severity: 'success',
-        summary: 'Пользователь создан',
-        detail: 'Инвайт отправлен на email',
-        life: 4000,
-      });
-      createDialogVisible.value = false;
-    } else {
-      // ссылка для отправки в чат
-      inviteLink.value = result?.invite_link ?? '';
-      inviteLinkDialogVisible.value = true;
-    }
+    handleCreateSuccess(result);
     await loadUsers();
   } catch (err) {
-    if (err.response?.data?.code === 'EMAIL_EXISTS') {
-      createError.value = 'Пользователь с таким email уже существует';
-    } else {
-      createError.value = 'Не удалось создать пользователя';
-    }
+    handleCreateError(err);
   } finally {
     submitting.value = false;
   }

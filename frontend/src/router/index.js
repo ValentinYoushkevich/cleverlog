@@ -39,7 +39,7 @@ const router = createRouter({
         {
           path: 'calendar',
           name: 'calendar',
-          component: () => import('@/pages/CalendarPage.vue'),
+          component: () => import('@/pages/calendar/CalendarPage.vue'),
         },
         {
           path: 'work-logs',
@@ -49,7 +49,7 @@ const router = createRouter({
         {
           path: 'absences',
           name: 'absences',
-          component: () => import('@/pages/AbsencesPage.vue'),
+          component: () => import('@/pages/absences/AbsencesPage.vue'),
         },
         {
           path: 'profile',
@@ -94,7 +94,7 @@ const router = createRouter({
         {
           path: 'admin/projects',
           name: 'admin-projects',
-          component: () => import('@/pages/admin/ProjectsPage.vue'),
+          component: () => import('@/pages/admin/projects/ProjectsPage.vue'),
           meta: { adminOnly: true },
         },
         {

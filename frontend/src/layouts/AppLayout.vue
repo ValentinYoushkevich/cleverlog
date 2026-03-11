@@ -7,14 +7,14 @@
 
       <nav class="flex-1 overflow-y-auto px-3 py-4">
         <ul class="space-y-1">
-          <li v-for="item in navItems" :key="item.name">
+          <li v-for="navigationItem in navItems" :key="navigationItem.name">
             <RouterLink
-              :to="{ name: item.name }"
+              :to="{ name: navigationItem.name }"
               class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
               activeClass="bg-primary-50 text-primary font-medium"
             >
-              <i :class="item.icon" />
-              <span>{{ item.label }}</span>
+              <i :class="navigationItem.icon" />
+              <span>{{ navigationItem.label }}</span>
             </RouterLink>
           </li>
         </ul>
@@ -24,14 +24,14 @@
             Администрирование
           </div>
           <ul class="space-y-1">
-            <li v-for="item in adminNavItems" :key="item.name">
+            <li v-for="adminNavItem in adminNavItems" :key="adminNavItem.name">
               <RouterLink
-                :to="{ name: item.name }"
+                :to="{ name: adminNavItem.name }"
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
                 activeClass="bg-primary-50 text-primary font-medium"
               >
-                <i :class="item.icon" />
-                <span>{{ item.label }}</span>
+                <i :class="adminNavItem.icon" />
+                <span>{{ adminNavItem.label }}</span>
               </RouterLink>
             </li>
           </ul>
@@ -39,14 +39,14 @@
             Отладка
           </div>
           <ul class="space-y-1">
-            <li v-for="item in debugNavItems" :key="item.name">
+            <li v-for="debugNavItem in debugNavItems" :key="debugNavItem.name">
               <RouterLink
-                :to="{ name: item.name }"
+                :to="{ name: debugNavItem.name }"
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-surface-700 transition-colors hover:bg-surface-100"
                 activeClass="bg-primary-50 text-primary font-medium"
               >
-                <i :class="item.icon" />
-                <span>{{ item.label }}</span>
+                <i :class="debugNavItem.icon" />
+                <span>{{ debugNavItem.label }}</span>
               </RouterLink>
             </li>
           </ul>
