@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createAbsence,
@@ -60,7 +61,7 @@ describe('Report module', () => {
     });
 
     it('3. Админ может получить отчёт по конкретному пользователю', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-admin@test.local' });
       const target = await createUserWithPassword({ email: 'report-target@test.local' });
       const project = await createProject();
 
@@ -254,7 +255,7 @@ describe('Report module', () => {
 
   describe('GET /api/reports/project', () => {
     it('16. Успешно возвращает отчёт по проекту', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-project@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-project@test.local' });
       const user1 = await createUserWithPassword({ email: 'report-project-u1@test.local' });
       const user2 = await createUserWithPassword({ email: 'report-project-u2@test.local' });
       const project = await createProject();
@@ -278,7 +279,7 @@ describe('Report module', () => {
     });
 
     it('17. Фильтрация по user_id внутри проекта', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-project-filter-user@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-project-filter-user@test.local' });
       const user1 = await createUserWithPassword({ email: 'report-project-fu1@test.local' });
       const user2 = await createUserWithPassword({ email: 'report-project-fu2@test.local' });
       const project = await createProject();
@@ -301,7 +302,7 @@ describe('Report module', () => {
     });
 
     it('18. totals.by_user содержит корректные суммы', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-project-totals@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-project-totals@test.local' });
       const user1 = await createUserWithPassword({ email: 'report-project-t1@test.local' });
       const user2 = await createUserWithPassword({ email: 'report-project-t2@test.local' });
       const project = await createProject();
@@ -333,7 +334,7 @@ describe('Report module', () => {
 
   describe('GET /api/reports/monthly-summary', () => {
     it('20. Успешно возвращает сводный отчёт за месяц', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'report-monthly@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'report-monthly@test.local' });
       const project = await createProject();
 
       await createWorkLog({
@@ -352,7 +353,7 @@ describe('Report module', () => {
     });
 
     it('21. Каждая строка содержит обязательные поля', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-monthly-fields@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-monthly-fields@test.local' });
 
       const res = await agent.get(`/api/reports/monthly-summary?year=${YEAR}&month=${MONTH}`);
       expect(res.status).toBe(200);
@@ -366,7 +367,7 @@ describe('Report module', () => {
     });
 
     it('22. totals суммирует данные всех пользователей', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-monthly-totals@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-monthly-totals@test.local' });
 
       const res = await agent.get(`/api/reports/monthly-summary?year=${YEAR}&month=${MONTH}`);
       expect(res.status).toBe(200);
@@ -375,7 +376,7 @@ describe('Report module', () => {
     });
 
     it('23. Неактивные пользователи не попадают в отчёт', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-monthly-inactive@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-monthly-inactive@test.local' });
       const inactive = await createUserWithPassword({ email: 'report-inactive@test.local', status: 'inactive' });
       const project = await createProject();
 
@@ -399,7 +400,7 @@ describe('Report module', () => {
 
   describe('GET /api/reports/unlogged', () => {
     it('25. Возвращает только пользователей с незаполненными днями', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-unlogged@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-unlogged@test.local' });
 
       const res = await agent.get(`/api/reports/unlogged?year=${YEAR}&month=${MONTH}`);
       expect(res.status).toBe(200);
@@ -407,7 +408,7 @@ describe('Report module', () => {
     });
 
     it('26. Пользователь с полностью заполненным месяцем не попадает в список', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'report-unlogged-full@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'report-unlogged-full@test.local' });
       const project = await createProject();
 
       for (let day = 1; day <= 31; day += 1) {
@@ -426,7 +427,7 @@ describe('Report module', () => {
     });
 
     it('27. Каждая запись содержит unlogged_count, unlogged_dates, last_log_date', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-unlogged-fields@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-unlogged-fields@test.local' });
 
       const res = await agent.get(`/api/reports/unlogged?year=${YEAR}&month=${MONTH}`);
       expect(res.status).toBe(200);
@@ -439,7 +440,7 @@ describe('Report module', () => {
     });
 
     it('28. count соответствует количеству элементов в users', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-unlogged-count@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-unlogged-count@test.local' });
 
       const res = await agent.get(`/api/reports/unlogged?year=${YEAR}&month=${MONTH}`);
       expect(res.status).toBe(200);
@@ -455,7 +456,7 @@ describe('Report module', () => {
 
   describe('Export роуты', () => {
     it('30. Каждый export-роут возвращает xlsx файл', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'report-export-all@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'report-export-all@test.local' });
       const project = await createProject();
 
       const resUser = await agent.get('/api/reports/user/export?date_from=2025-01-01&date_to=2025-01-31');

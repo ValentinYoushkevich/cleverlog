@@ -1,11 +1,12 @@
 import argon2 from 'argon2';
+import { ROLES } from '../../src/constants/roles.js';
 
 export async function up(knex) {
   // Не трогаем существующего администратора admin@cleverlog.local
   const usersToEnsure = [
     {
       email: 'demo-admin@cleverlog.local',
-      role: 'admin',
+      role: ROLES.ADMIN,
       first_name: 'Demo',
       last_name: 'Admin',
       position: 'Demo Administrator',
@@ -13,7 +14,7 @@ export async function up(knex) {
     },
     {
       email: 'demo-user@cleverlog.local',
-      role: 'user',
+      role: ROLES.USER,
       first_name: 'Demo',
       last_name: 'User',
       position: 'Demo User',
@@ -24,14 +25,12 @@ export async function up(knex) {
   for (const u of usersToEnsure) {
     // Если пользователь с таким email уже есть, не создаём дубль
     // (это позволяет безопасно прогонять миграцию на разных стендах)
-    // eslint-disable-next-line no-await-in-loop
+     
     const existing = await knex('users').where({ email: u.email }).first();
-    if (existing) continue;
-
-    // eslint-disable-next-line no-await-in-loop
+    if (existing) { continue; }
+     
     const hash = await argon2.hash(u.passwordPlain);
-
-    // eslint-disable-next-line no-await-in-loop
+     
     await knex('users').insert({
       first_name: u.first_name,
       last_name: u.last_name,
@@ -53,4 +52,3 @@ export async function down(knex) {
     ])
     .del();
 }
-

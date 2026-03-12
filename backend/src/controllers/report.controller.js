@@ -1,3 +1,4 @@
+import { ROLES } from '../constants/roles.js';
 import { ExportService } from '../services/export.service.js';
 import { ReportService } from '../services/report.service.js';
 
@@ -13,7 +14,7 @@ export const ReportController = {
     try {
       const result = await ReportService.userReport({
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         targetUserId: req.query.user_id,
         dateFrom: req.query.date_from,
         dateTo: req.query.date_to,
@@ -33,7 +34,7 @@ export const ReportController = {
     try {
       const workbook = await ExportService.exportUser({
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         targetUserId: req.query.user_id,
         dateFrom: req.query.date_from,
         dateTo: req.query.date_to,

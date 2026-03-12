@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createAbsence,
@@ -32,7 +33,7 @@ describe('Absence module', () => {
 
     it('2. Админ может получить записи конкретного пользователя через фильтр user_id', async () => {
       const target = await createUserWithPassword({ email: 'absence-filter@test.local' });
-      const { agent } = await loginAs({ role: 'admin', email: 'absence-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'absence-admin@test.local' });
 
       await createAbsence({ user_id: target.id, date: dateStr('2025-02-01') });
       await createAbsence({ user_id: target.id, date: dateStr('2025-02-02') });
@@ -330,7 +331,7 @@ describe('Absence module', () => {
     it('22. Админ может редактировать чужую запись', async () => {
       const owner = await createUserWithPassword({ email: 'absence-owner2@test.local' });
       const absence = await createAbsence({ user_id: owner.id, date: '2025-01-06' });
-      const { agent } = await loginAs({ role: 'admin', email: 'absence-admin2@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'absence-admin2@test.local' });
 
       const res = await agent
         .patch(`/api/absences/${absence.id}`)
@@ -393,7 +394,7 @@ describe('Absence module', () => {
     it('27. Админ может удалить чужую запись', async () => {
       const owner = await createUserWithPassword({ email: 'absence-del-owner2@test.local' });
       const absence = await createAbsence({ user_id: owner.id, date: '2025-01-06' });
-      const { agent } = await loginAs({ role: 'admin', email: 'absence-del-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'absence-del-admin@test.local' });
 
       const res = await agent.delete(`/api/absences/${absence.id}`);
       expect(res.status).toBe(200);

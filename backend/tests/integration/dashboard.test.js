@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createAbsence,
@@ -17,7 +18,7 @@ const MONTH = 1;
 describe('Dashboard module', () => {
   describe('GET /api/dashboard', () => {
     it('1. Успешно возвращает сводку за месяц', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'dash-summary@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'dash-summary@test.local' });
       const project = await createProject();
       await createWorkLog({
         user_id: user.id,
@@ -36,7 +37,7 @@ describe('Dashboard module', () => {
     });
 
     it('2–4. charts.hours_by_project и users_by_project корректны', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'dash-charts@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'dash-charts@test.local' });
       const project1 = await createProject({ name: 'Project A' });
       const project2 = await createProject({ name: 'Project B' });
       await createProject({ name: 'No logs' });
@@ -77,7 +78,7 @@ describe('Dashboard module', () => {
     });
 
     it('5–7,10. cards содержит счётчики и пользователей без логов', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'dash-cards@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'dash-cards@test.local' });
       const normValue = 16;
       await createCalendarNorm({ year: YEAR, month: MONTH, norm_hours: normValue });
 
@@ -116,7 +117,7 @@ describe('Dashboard module', () => {
     });
 
     it('8–9. norm из calendar_settings или 168', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'dash-norm@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'dash-norm@test.local' });
 
       await createCalendarNorm({ year: YEAR, month: MONTH, norm_hours: 160 });
       let res = await agent.get(`/api/dashboard?year=${YEAR}&month=${MONTH}`);
@@ -143,7 +144,7 @@ describe('Dashboard module', () => {
 
   describe('GET /api/dashboard/users', () => {
     it('13–15. Фильтры type=undertime|overtime|unlogged', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'dash-users@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'dash-users@test.local' });
       await createCalendarNorm({ year: YEAR, month: MONTH, norm_hours: 8 });
       const project = await createProject();
 
@@ -186,7 +187,7 @@ describe('Dashboard module', () => {
     });
 
     it('16–18. Структура карточки и top2_projects/unlogged_dates', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'dash-struct@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'dash-struct@test.local' });
       await createCalendarNorm({ year: YEAR, month: MONTH, norm_hours: 160 });
       const project1 = await createProject({ name: 'P1' });
       const project2 = await createProject({ name: 'P2' });
@@ -229,7 +230,7 @@ describe('Dashboard module', () => {
     });
 
     it('19. Пустой список при отсутствии пользователей нужного типа', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'dash-empty@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'dash-empty@test.local' });
       await createCalendarNorm({ year: YEAR, month: MONTH, norm_hours: 0 });
 
       const res = await agent.get(`/api/dashboard/users?year=${YEAR}&month=${MONTH}&type=overtime`);

@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import { createCalendarNorm, createCalendarOverride } from '../helpers/factories.js';
 
@@ -100,7 +101,7 @@ describe('Calendar module', () => {
 
   describe('PATCH /api/calendar/days/:date', () => {
     it('12. Админ успешно меняет статус дня', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'calendar-day-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'calendar-day-admin@test.local' });
 
       const res = await agent
         .patch('/api/calendar/days/2025-01-06')
@@ -111,7 +112,7 @@ describe('Calendar module', () => {
     });
 
     it('13. Повторный PATCH обновляет существующий override (upsert)', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'calendar-day-upsert@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'calendar-day-upsert@test.local' });
 
       await agent
         .patch('/api/calendar/days/2025-01-07')
@@ -144,7 +145,7 @@ describe('Calendar module', () => {
     });
 
     it('16. Невалидный day_type не проходит валидацию', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'calendar-day-invalid@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'calendar-day-invalid@test.local' });
 
       const res = await agent
         .patch('/api/calendar/days/2025-01-06')
@@ -156,7 +157,7 @@ describe('Calendar module', () => {
 
   describe('PUT /api/calendar/norm/:year/:month', () => {
     it('17. Админ успешно устанавливает норму', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'calendar-put-norm@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'calendar-put-norm@test.local' });
 
       const res = await agent
         .put('/api/calendar/norm/2025/4')
@@ -167,7 +168,7 @@ describe('Calendar module', () => {
     });
 
     it('18. Повторный PUT обновляет существующую норму (upsert)', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'calendar-put-upsert@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'calendar-put-upsert@test.local' });
 
       await agent
         .put('/api/calendar/norm/2025/4')
@@ -200,7 +201,7 @@ describe('Calendar module', () => {
     });
 
     it('21. Некорректный месяц возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'calendar-put-bad-period@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'calendar-put-bad-period@test.local' });
 
       const res = await agent
         .put('/api/calendar/norm/2025/13')

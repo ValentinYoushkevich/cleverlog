@@ -2,6 +2,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createAbsence,
@@ -89,7 +90,7 @@ describe('Audit log side effects', () => {
 
   describe('Users', () => {
     it('8. Создание пользователя создаёт запись USER_CREATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-user-create-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-user-create-admin@test.local' });
 
       const res = await agent
         .post('/api/users')
@@ -97,7 +98,7 @@ describe('Audit log side effects', () => {
           email: 'audit-user-created@test.local',
           first_name: 'First',
           last_name: 'Last',
-          role: 'user',
+          role: ROLES.USER,
           department: 'IT',
           invite_mode: 'email',
         });
@@ -107,12 +108,12 @@ describe('Audit log side effects', () => {
       expect(audit.event_type).toBe('USER_CREATED');
       const after = audit.after;
       expect(after.email).toBe('audit-user-created@test.local');
-      expect(after.role).toBe('user');
+      expect(after.role).toBe(ROLES.USER);
     });
 
     it('9. Обновление пользователя создаёт запись USER_UPDATED с before/after', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-user-update-admin@test.local' });
-      const user = await createUserWithPassword({ email: 'audit-user-update@test.local', role: 'user' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-user-update-admin@test.local' });
+      const user = await createUserWithPassword({ email: 'audit-user-update@test.local', role: ROLES.USER });
 
       const res = await agent
         .patch(`/api/users/${user.id}`)
@@ -128,7 +129,7 @@ describe('Audit log side effects', () => {
     });
 
     it('10. Повторная отправка инвайта создаёт запись INVITE_RESENT', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-invite-resent-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-invite-resent-admin@test.local' });
       const invited = await createInvitedUser({
         email: 'audit-invite-resent@test.local',
         token: 'token',
@@ -144,7 +145,7 @@ describe('Audit log side effects', () => {
     });
 
     it('11. Регенерация ссылки создаёт запись INVITE_LINK_REGENERATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-link-reg-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-link-reg-admin@test.local' });
       const user = await createInvitedUser({
         email: 'audit-link-reg@test.local',
         invite_mode: 'link',
@@ -161,7 +162,7 @@ describe('Audit log side effects', () => {
     });
 
     it('12. Регенерация email-инвайта создаёт запись INVITE_EMAIL_REGENERATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-email-reg-admin@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-email-reg-admin@test.local' });
       const user = await createInvitedUser({
         email: 'audit-email-reg@test.local',
         invite_mode: 'email',
@@ -180,7 +181,7 @@ describe('Audit log side effects', () => {
 
   describe('Projects', () => {
     it('13. Создание проекта создаёт запись PROJECT_CREATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-project-create@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-project-create@test.local' });
 
       const res = await agent
         .post('/api/projects')
@@ -195,7 +196,7 @@ describe('Audit log side effects', () => {
     });
 
     it('14. Обновление проекта создаёт запись PROJECT_UPDATED с before/after', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-project-update@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-project-update@test.local' });
       const project = await createProject({ name: 'P-old', status: 'active' });
 
       const res = await agent
@@ -348,7 +349,7 @@ describe('Audit log side effects', () => {
 
   describe('Calendar', () => {
     it('21. Изменение статуса дня создаёт запись CALENDAR_DAY_UPDATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cal-day@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cal-day@test.local' });
 
       const res = await agent
         .patch('/api/calendar/days/2025-01-10')
@@ -363,7 +364,7 @@ describe('Audit log side effects', () => {
     });
 
     it('22. Изменение статуса существующего дня сохраняет before', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cal-day-before@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cal-day-before@test.local' });
 
       await agent
         .patch('/api/calendar/days/2025-01-11')
@@ -381,7 +382,7 @@ describe('Audit log side effects', () => {
     });
 
     it('23. Изменение нормы создаёт запись CALENDAR_NORM_UPDATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cal-norm@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cal-norm@test.local' });
 
       const res = await agent
         .put(`/api/calendar/norm/${YEAR}/${MONTH}`)
@@ -397,7 +398,7 @@ describe('Audit log side effects', () => {
 
   describe('Month Closures', () => {
     it('24. Закрытие месяца создаёт запись MONTH_CLOSED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-mc-close@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-mc-close@test.local' });
 
       const res = await agent
         .post('/api/month-closures')
@@ -412,7 +413,7 @@ describe('Audit log side effects', () => {
     });
 
     it('25. Открытие месяца создаёт запись MONTH_OPENED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-mc-open@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-mc-open@test.local' });
 
       await agent
         .post('/api/month-closures')
@@ -431,7 +432,7 @@ describe('Audit log side effects', () => {
 
   describe('Custom Fields', () => {
     it('26. Создание кастомного поля создаёт запись CUSTOM_FIELD_CREATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cf-create@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cf-create@test.local' });
 
       const res = await agent
         .post('/api/custom-fields')
@@ -446,7 +447,7 @@ describe('Audit log side effects', () => {
     });
 
     it('27. Обновление кастомного поля создаёт CUSTOM_FIELD_UPDATED с before/after', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cf-update@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cf-update@test.local' });
       const field = await createCustomField({ name: 'Old CF', type: 'text' });
 
       const res = await agent
@@ -463,7 +464,7 @@ describe('Audit log side effects', () => {
     });
 
     it('28. Soft delete создаёт запись CUSTOM_FIELD_DELETED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cf-delete@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cf-delete@test.local' });
       const field = await createCustomField({ name: 'To Delete' });
 
       const res = await agent.delete(`/api/custom-fields/${field.id}`);
@@ -475,7 +476,7 @@ describe('Audit log side effects', () => {
     });
 
     it('29. Restore создаёт запись CUSTOM_FIELD_RESTORED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cf-restore@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cf-restore@test.local' });
       const field = await createCustomField({ name: 'To Restore' });
 
       await agent.delete(`/api/custom-fields/${field.id}`);
@@ -489,7 +490,7 @@ describe('Audit log side effects', () => {
     });
 
     it('30. Добавление опции создаёт запись CUSTOM_FIELD_OPTION_ADDED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cf-option-add@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cf-option-add@test.local' });
       const field = await createCustomField({ name: 'With Option', type: 'dropdown' });
 
       const res = await agent
@@ -504,7 +505,7 @@ describe('Audit log side effects', () => {
     });
 
     it('31. Deprecate опции создаёт запись CUSTOM_FIELD_OPTION_DEPRECATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-cf-option-depr@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-cf-option-depr@test.local' });
       const field = await createCustomField({ name: 'With Option 2', type: 'dropdown' });
 
       const [option] = await db('custom_field_options')
@@ -523,7 +524,7 @@ describe('Audit log side effects', () => {
 
   describe('Project Custom Fields', () => {
     it('32. Привязка поля к проекту создаёт запись CUSTOM_FIELD_ATTACHED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-pcf-attach@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-pcf-attach@test.local' });
       const project = await createProject();
       const field = await createCustomField();
 
@@ -539,7 +540,7 @@ describe('Audit log side effects', () => {
     });
 
     it('33. Обновление привязки создаёт запись CUSTOM_FIELD_PROJECT_UPDATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-pcf-update@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-pcf-update@test.local' });
       const project = await createProject();
       const field = await createCustomField();
 
@@ -560,7 +561,7 @@ describe('Audit log side effects', () => {
     });
 
     it('34. Открепление поля создаёт запись CUSTOM_FIELD_DETACHED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-pcf-detach@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-pcf-detach@test.local' });
       const project = await createProject();
       const field = await createCustomField();
 
@@ -583,7 +584,7 @@ describe('Audit log side effects', () => {
 
   describe('Notifications', () => {
     it('35. Обновление глобальных настроек создаёт запись NOTIFICATIONS_GLOBAL_UPDATED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'audit-notif-global@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'audit-notif-global@test.local' });
 
       const res = await agent
         .patch('/api/notifications/settings')
@@ -597,7 +598,7 @@ describe('Audit log side effects', () => {
     });
 
     it('36. Обновление настроек пользователя создаёт запись NOTIFICATIONS_USER_UPDATED', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-notif-user@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-notif-user@test.local' });
 
       const res = await agent
         .patch(`/api/notifications/users/${user.id}`)
@@ -626,7 +627,7 @@ describe('Audit log side effects', () => {
     });
 
     it('38. actor_id корректно проставляется для всех операций', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-actor@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-actor@test.local' });
 
       await agent
         .post('/api/projects')

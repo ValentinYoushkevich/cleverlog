@@ -2,12 +2,13 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 
 describe('AuditLog module', () => {
   describe('GET /api/audit-logs', () => {
     it('1. Успешно возвращает список записей с пагинацией', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-list@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-list@test.local' });
 
       await db('audit_logs').insert({
         actor_id: user.id,
@@ -33,7 +34,7 @@ describe('AuditLog module', () => {
     });
 
     it('2. Каждая запись содержит event и entity в правильном формате', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-structure@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-structure@test.local' });
 
       await db('audit_logs').insert({
         actor_id: user.id,
@@ -60,8 +61,8 @@ describe('AuditLog module', () => {
     });
 
     it('3. Фильтр по actor_id', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-filter-actor@test.local' });
-      const { user: otherUser } = await loginAs({ role: 'admin', email: 'audit-filter-actor2@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-actor@test.local' });
+      const { user: otherUser } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-actor2@test.local' });
 
       await db('audit_logs').insert([
         {
@@ -97,7 +98,7 @@ describe('AuditLog module', () => {
     });
 
     it('4. Фильтр по event_type', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-filter-event@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-event@test.local' });
 
       await db('audit_logs').insert([
         {
@@ -133,7 +134,7 @@ describe('AuditLog module', () => {
     });
 
     it('5. Фильтр по entity_type', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-filter-entity@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-entity@test.local' });
 
       await db('audit_logs').insert({
         actor_id: user.id,
@@ -155,7 +156,7 @@ describe('AuditLog module', () => {
     });
 
     it('6. Фильтр по периоду', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-filter-period@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-period@test.local' });
 
       await db('audit_logs').insert([
         {
@@ -192,7 +193,7 @@ describe('AuditLog module', () => {
     });
 
     it('7. Фильтр по result', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-filter-result@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-result@test.local' });
 
       await db('audit_logs').insert([
         {
@@ -228,7 +229,7 @@ describe('AuditLog module', () => {
     });
 
     it('8. Поиск по entity_type через search', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-search@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-search@test.local' });
 
       await db('audit_logs').insert({
         actor_id: user.id,
@@ -249,7 +250,7 @@ describe('AuditLog module', () => {
     });
 
     it('9. Пагинация работает корректно', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-pagination@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-pagination@test.local' });
 
       const rows = [];
       for (let i = 0; i < 10; i += 1) {
@@ -288,7 +289,7 @@ describe('AuditLog module', () => {
 
   describe('GET /api/audit-logs/filter-options', () => {
     it('12. Возвращает список доступных event_types и entity_types', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-filter-options@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-filter-options@test.local' });
 
       await db('audit_logs').insert([
         {
@@ -327,7 +328,7 @@ describe('AuditLog module', () => {
 
   describe('GET /api/audit-logs/export', () => {
     it('15. Успешно возвращает Excel-файл', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-export@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-export@test.local' });
 
       await db('audit_logs').insert({
         actor_id: user.id,
@@ -350,8 +351,8 @@ describe('AuditLog module', () => {
     });
 
     it('16. Экспорт с фильтром actor_id применяет его корректно', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'audit-export-filter@test.local' });
-      const { user: otherUser } = await loginAs({ role: 'admin', email: 'audit-export-filter2@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'audit-export-filter@test.local' });
+      const { user: otherUser } = await loginAs({ role: ROLES.ADMIN, email: 'audit-export-filter2@test.local' });
 
       await db('audit_logs').insert([
         {

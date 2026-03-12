@@ -1,4 +1,5 @@
 import argon2 from 'argon2';
+import { ROLES } from '../../src/constants/roles.js';
 
 export async function seed(knex) {
   // Cleanup in FK-safe order
@@ -26,7 +27,7 @@ export async function seed(knex) {
       last_name: 'Супер',
       email: 'admin@cleverlog.local',
       password_hash: adminHash,
-      role: 'admin',
+      role: ROLES.ADMIN,
       position: 'System Administrator',
       status: 'active',
       hire_date: '2024-01-01',
@@ -40,7 +41,7 @@ export async function seed(knex) {
         last_name: 'Иванов',
         email: 'frontend@cleverlog.local',
         password_hash: userHash,
-        role: 'user',
+        role: ROLES.USER,
         position: 'Frontend Developer',
         status: 'active',
         hire_date: '2024-03-01',
@@ -50,7 +51,7 @@ export async function seed(knex) {
         last_name: 'Петрова',
         email: 'backend@cleverlog.local',
         password_hash: userHash,
-        role: 'user',
+        role: ROLES.USER,
         position: 'Backend Developer',
         status: 'active',
         hire_date: '2024-03-01',

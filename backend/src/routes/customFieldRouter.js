@@ -1,11 +1,12 @@
 import { Router } from 'express';
+import { ROLES } from '../constants/roles.js';
 import { CustomFieldController } from '../controllers/customField.controller.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('admin'));
+router.use(authenticate, authorize(ROLES.ADMIN));
 
 router.get('/', CustomFieldController.list);
 router.post('/', CustomFieldController.create);

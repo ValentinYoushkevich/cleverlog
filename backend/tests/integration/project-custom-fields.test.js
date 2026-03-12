@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
 import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createCustomField,
@@ -11,7 +12,7 @@ import {
 describe('ProjectCustomField module', () => {
   describe('GET /api/projects/:projectId/custom-fields', () => {
     it('1–3. Возвращает поля проекта, пустой список и не включает поля других проектов', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-get@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-get@test.local' });
       const project1 = await createProject({ name: 'PCF1' });
       const project2 = await createProject({ name: 'PCF2' });
 
@@ -52,7 +53,7 @@ describe('ProjectCustomField module', () => {
 
   describe('POST /api/projects/:projectId/custom-fields', () => {
     it('6. Успешная привязка поля к проекту', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-post@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-post@test.local' });
       const project = await createProject();
       const field = await createCustomField({ name: 'CF1' });
 
@@ -67,7 +68,7 @@ describe('ProjectCustomField module', () => {
     });
 
     it('7. Повторная привязка одного и того же поля возвращает 409', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-already@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-already@test.local' });
       const project = await createProject();
       const field = await createCustomField({ name: 'CF2' });
 
@@ -84,7 +85,7 @@ describe('ProjectCustomField module', () => {
     });
 
     it('8–9. Привязка soft-deleted или несуществующего поля возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-notfound@test.local' });
       const project = await createProject();
       const field = await createCustomField({ name: 'CF3' });
 
@@ -131,7 +132,7 @@ describe('ProjectCustomField module', () => {
 
   describe('PATCH /api/projects/:projectId/custom-fields/:fieldId', () => {
     it('12–13. Обновление is_required и is_enabled', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-patch-flags@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-patch-flags@test.local' });
       const project = await createProject();
       const field = await createCustomField();
 
@@ -156,7 +157,7 @@ describe('ProjectCustomField module', () => {
     });
 
     it('14. PATCH для не привязанного поля создаёт привязку (upsert)', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-upsert@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-upsert@test.local' });
       const project = await createProject();
       const field = await createCustomField();
 
@@ -170,7 +171,7 @@ describe('ProjectCustomField module', () => {
     });
 
     it('15. PATCH для soft-deleted поля без привязки возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-patch-deleted@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-patch-deleted@test.local' });
       const project = await createProject();
       const field = await createCustomField();
       await db('custom_fields').where({ id: field.id }).update({ deleted_at: new Date() });
@@ -207,7 +208,7 @@ describe('ProjectCustomField module', () => {
 
   describe('DELETE /api/projects/:projectId/custom-fields/:fieldId', () => {
     it('18–20. Открепление поля и влияние на другие проекты', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-delete@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-delete@test.local' });
       const project1 = await createProject({ name: 'PCF-Del-1' });
       const project2 = await createProject({ name: 'PCF-Del-2' });
       const field = await createCustomField();
@@ -229,7 +230,7 @@ describe('ProjectCustomField module', () => {
     });
 
     it('19. Открепление не привязанного поля возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'pcf-delete-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'pcf-delete-notfound@test.local' });
       const project = await createProject();
       const field = await createCustomField();
 
@@ -256,4 +257,3 @@ describe('ProjectCustomField module', () => {
     });
   });
 });
-

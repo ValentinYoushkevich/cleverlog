@@ -1,11 +1,12 @@
 import request from 'supertest';
 import app from '../../app.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { createUserWithPassword } from './factories.js';
 
 // Создаёт пользователя, логинит его и возвращает supertest agent с установленной cookie.
 
 export async function loginAs({
-  role = 'user',
+  role = ROLES.USER,
   status = 'active',
   email,
   password = 'Password123!',

@@ -1,3 +1,4 @@
+import { ROLES } from '../constants/roles.js';
 import { WorkLogService } from '../services/workLog.service.js';
 import {
   createWorkLogSchema,
@@ -12,7 +13,7 @@ export const WorkLogController = {
       const result = await WorkLogService.list({
         ...filters,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
       });
 
       return res.json(result);
@@ -29,7 +30,7 @@ export const WorkLogController = {
         custom_fields,
         targetUserId: user_id,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         ip: req.ip,
       });
 
@@ -47,7 +48,7 @@ export const WorkLogController = {
         ...data,
         custom_fields,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         ip: req.ip,
       });
 
@@ -62,7 +63,7 @@ export const WorkLogController = {
       const result = await WorkLogService.delete({
         id: req.params.id,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         ip: req.ip,
       });
 

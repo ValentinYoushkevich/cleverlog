@@ -2,6 +2,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createInvitedUser,
@@ -20,11 +21,11 @@ describe('User module', () => {
 
   describe('GET /api/users', () => {
     it('1–4. Список, фильтры и отсутствие чувствительных полей', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-list@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-list@test.local' });
 
-      const active = await createUser({ email: 'users-active@test.local', status: 'active', role: 'user' });
-      await createUser({ email: 'users-inactive@test.local', status: 'inactive', role: 'user' });
-      await createUser({ email: 'users-admin@test.local', status: 'active', role: 'admin' });
+      const active = await createUser({ email: 'users-active@test.local', status: 'active', role: ROLES.USER });
+      await createUser({ email: 'users-inactive@test.local', status: 'inactive', role: ROLES.USER });
+      await createUser({ email: 'users-admin@test.local', status: 'active', role: ROLES.ADMIN });
 
       let res = await agent.get('/api/users');
       expect(res.status).toBe(200);
@@ -34,9 +35,9 @@ describe('User module', () => {
       expect(res.status).toBe(200);
       expect(res.body.every((u) => u.status === 'inactive')).toBe(true);
 
-      res = await agent.get('/api/users?role=admin');
+      res = await agent.get(`/api/users?role=${ROLES.ADMIN}`);
       expect(res.status).toBe(200);
-      expect(res.body.every((u) => u.role === 'admin')).toBe(true);
+      expect(res.body.every((u) => u.role === ROLES.ADMIN)).toBe(true);
 
       res = await agent.get('/api/users');
       expect(res.status).toBe(200);
@@ -59,7 +60,7 @@ describe('User module', () => {
 
   describe('GET /api/users/:id', () => {
     it('7. Успешно возвращает пользователя по id', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-get@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-get@test.local' });
       const user = await createUser({ email: 'users-get-user@test.local' });
 
       const res = await agent.get(`/api/users/${user.id}`);
@@ -68,7 +69,7 @@ describe('User module', () => {
     });
 
     it('8–9. invite_link для link-инвайта и отсутствие для зарегистрированного', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-invite-link@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-invite-link@test.local' });
       const linkUser = await createUser({
         first_name: 'Link',
         last_name: 'User',
@@ -90,7 +91,7 @@ describe('User module', () => {
     });
 
     it('10. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-get-404@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-get-404@test.local' });
       const res = await agent.get('/api/users/00000000-0000-0000-0000-000000000000');
       expect(res.status).toBe(404);
       expect(res.body.code).toBe('NOT_FOUND');
@@ -99,7 +100,7 @@ describe('User module', () => {
 
   describe('POST /api/users', () => {
     it('11. Успешное создание пользователя с invite_mode: email', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-create-email@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-create-email@test.local' });
 
       const res = await agent
         .post('/api/users')
@@ -107,7 +108,7 @@ describe('User module', () => {
           email: 'create-email@test.local',
           first_name: 'First',
           last_name: 'Last',
-          role: 'user',
+          role: ROLES.USER,
           department: 'IT',
           invite_mode: 'email',
         });
@@ -117,14 +118,14 @@ describe('User module', () => {
     });
 
     it('12. Успешное создание пользователя с invite_mode: link', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-create-link@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-create-link@test.local' });
 
       const res = await agent
         .post('/api/users')
         .send({
           first_name: 'Link',
           last_name: 'User',
-          role: 'user',
+          role: ROLES.USER,
           department: 'IT',
           invite_mode: 'link',
         });
@@ -134,7 +135,7 @@ describe('User module', () => {
     });
 
     it('13. Email уже занят возвращает 409', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-create-exists@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-create-exists@test.local' });
       await createUser({ email: 'exists@test.local' });
 
       const res = await agent
@@ -143,7 +144,7 @@ describe('User module', () => {
           email: 'exists@test.local',
           first_name: 'Dup',
           last_name: 'User',
-          role: 'user',
+          role: ROLES.USER,
           department: 'IT',
           invite_mode: 'email',
         });
@@ -153,14 +154,14 @@ describe('User module', () => {
     });
 
     it('14. invite_mode: email без email возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-create-noemail@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-create-noemail@test.local' });
 
       const res = await agent
         .post('/api/users')
         .send({
           first_name: 'No',
           last_name: 'Email',
-          role: 'user',
+          role: ROLES.USER,
           department: 'IT',
           invite_mode: 'email',
         });
@@ -169,7 +170,7 @@ describe('User module', () => {
     });
 
     it('15. Невалидные данные не проходят Zod', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-create-invalid@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-create-invalid@test.local' });
 
       const res = await agent
         .post('/api/users')
@@ -181,8 +182,8 @@ describe('User module', () => {
 
   describe('PATCH /api/users/:id', () => {
     it('16–17. Обновление имени/позиции и смена роли', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-patch@test.local' });
-      const user = await createUser({ email: 'users-patch-user@test.local', role: 'user' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-patch@test.local' });
+      const user = await createUser({ email: 'users-patch-user@test.local', role: ROLES.USER });
 
       let res = await agent
         .patch(`/api/users/${user.id}`)
@@ -192,9 +193,9 @@ describe('User module', () => {
 
       res = await agent
         .patch(`/api/users/${user.id}`)
-        .send({ role: 'admin' });
+        .send({ role: ROLES.ADMIN });
       expect(res.status).toBe(200);
-      expect(res.body.role).toBe('admin');
+      expect(res.body.role).toBe(ROLES.ADMIN);
     });
 
     it('18–19. Деактивация инвалидирует сессии и реактивация', async () => {
@@ -204,7 +205,7 @@ describe('User module', () => {
         password,
       });
 
-      const { agent: adminAgent } = await loginAs({ role: 'admin', email: 'users-deactivate-admin@test.local' });
+      const { agent: adminAgent } = await loginAs({ role: ROLES.ADMIN, email: 'users-deactivate-admin@test.local' });
 
       const res1 = await adminAgent
         .patch(`/api/users/${user.id}`)
@@ -222,7 +223,7 @@ describe('User module', () => {
     });
 
     it('20. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-patch-404@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-patch-404@test.local' });
       const res = await agent
         .patch('/api/users/00000000-0000-0000-0000-000000000000')
         .send({ first_name: 'New' });
@@ -233,7 +234,7 @@ describe('User module', () => {
 
   describe('POST /api/users/:id/resend-invite', () => {
     it('21. Успешная повторная отправка инвайта', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-resend@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-resend@test.local' });
       const user = await createInvitedUser({
         email: 'resend@test.local',
         token: 'token-resend',
@@ -245,7 +246,7 @@ describe('User module', () => {
     });
 
     it('22. Уже зарегистрированному пользователю возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-resend-registered@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-resend-registered@test.local' });
       const user = await createUserWithPassword({ email: 'registered@test.local' });
 
       const res = await agent.post(`/api/users/${user.id}/resend-invite`);
@@ -254,7 +255,7 @@ describe('User module', () => {
     });
 
     it('23. Истёкший токен блокирует повторную отправку', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-resend-expired@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-resend-expired@test.local' });
       const user = await createUser({
         email: 'expired@test.local',
         invite_token_hash: 'old',
@@ -269,7 +270,7 @@ describe('User module', () => {
 
   describe('POST /api/users/:id/regenerate-link', () => {
     it('24. Успешная регенерация ссылки', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-reg-link@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-reg-link@test.local' });
       const user = await createUser({
         invite_mode: 'link',
         invite_token_hash: 'old',
@@ -282,7 +283,7 @@ describe('User module', () => {
     });
 
     it('25–27. Ошибки для неправильного режима/активного/зарегистрированного', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-reg-link-errors@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-reg-link-errors@test.local' });
       const emailMode = await createUser({ invite_mode: 'email' });
       const activeLink = await createUser({
         invite_mode: 'link',
@@ -307,7 +308,7 @@ describe('User module', () => {
 
   describe('POST /api/users/:id/regenerate-email-invite', () => {
     it('28. Успешная регенерация email-инвайта', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-reg-email@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-reg-email@test.local' });
       const user = await createUser({
         email: 'email-reg@test.local',
         invite_mode: 'email',
@@ -321,7 +322,7 @@ describe('User module', () => {
     });
 
     it('29–31. Ошибки WRONG_INVITE_MODE/INVITE_ACTIVE/EMAIL_REQUIRED', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'users-reg-email-errors@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'users-reg-email-errors@test.local' });
 
       const linkMode = await createUser({ invite_mode: 'link' });
       const active = await createUser({

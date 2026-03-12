@@ -1,5 +1,6 @@
 import argon2 from 'argon2';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 
 function uniqueEmail(prefix = 'user') {
   const rand = Math.random().toString(36).slice(2, 8);
@@ -11,7 +12,7 @@ export async function createUser(overrides = {}) {
     first_name: 'Test',
     last_name: 'User',
     email: uniqueEmail('user'),
-    role: 'user',
+    role: ROLES.USER,
     status: 'active',
     failed_attempts: 0,
     ...overrides,

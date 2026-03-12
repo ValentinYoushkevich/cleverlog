@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createAbsence,
@@ -38,7 +39,7 @@ describe('WorkLog module', () => {
       expect(resUser.status).toBe(200);
       expect(resUser.body.data.every((l) => l.user_id === user.id)).toBe(true);
 
-      const { agent: adminAgent } = await loginAs({ role: 'admin', email: 'wl-admin@test.local' });
+      const { agent: adminAgent } = await loginAs({ role: ROLES.ADMIN, email: 'wl-admin@test.local' });
       const resAdmin = await adminAgent.get(`/api/work-logs?user_id=${user2.id}`);
       expect(resAdmin.status).toBe(200);
       expect(resAdmin.body.data.every((l) => l.user_id === user2.id)).toBe(true);
@@ -320,7 +321,7 @@ describe('WorkLog module', () => {
     });
 
     it('18. Админ может создать лог от имени другого пользователя', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'wl-admin-create@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'wl-admin-create@test.local' });
       const target = await createUserWithPassword({ email: 'wl-target@test.local' });
       const project = await createProject();
 
@@ -459,7 +460,7 @@ describe('WorkLog module', () => {
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('FORBIDDEN');
 
-      const { agent: adminAgent } = await loginAs({ role: 'admin', email: 'wl-update-admin@test.local' });
+      const { agent: adminAgent } = await loginAs({ role: ROLES.ADMIN, email: 'wl-update-admin@test.local' });
       res = await adminAgent
         .patch(`/api/work-logs/${log.id}`)
         .send({ comment: 'Admin edit' });
@@ -524,7 +525,7 @@ describe('WorkLog module', () => {
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('FORBIDDEN');
 
-      const { agent: adminAgent } = await loginAs({ role: 'admin', email: 'wl-del-admin@test.local' });
+      const { agent: adminAgent } = await loginAs({ role: ROLES.ADMIN, email: 'wl-del-admin@test.local' });
       res = await adminAgent.delete(`/api/work-logs/${log.id}`);
       expect(res.status).toBe(200);
     });

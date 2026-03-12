@@ -2,6 +2,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
 import db from '../../src/config/knex.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createCustomField,
@@ -14,7 +15,7 @@ import {
 describe('CustomField module', () => {
   describe('GET /api/custom-fields', () => {
     it('1. Возвращает список активных полей (без удалённых)', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-list@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-list@test.local' });
 
       const active1 = await createCustomField({ name: 'Field 1', type: 'text' });
       const active2 = await createCustomField({ name: 'Field 2', type: 'number' });
@@ -30,7 +31,7 @@ describe('CustomField module', () => {
     });
 
     it('2. С параметром includeDeleted возвращает все поля', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-list-deleted@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-list-deleted@test.local' });
 
       const field = await createCustomField({ name: 'Field deleted 2', type: 'text' });
       await db('custom_fields').where({ id: field.id }).update({ deleted_at: new Date() });
@@ -55,7 +56,7 @@ describe('CustomField module', () => {
 
   describe('POST /api/custom-fields', () => {
     it('5. Успешное создание поля типа Text', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-create-text@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-create-text@test.local' });
 
       const res = await agent
         .post('/api/custom-fields')
@@ -67,7 +68,7 @@ describe('CustomField module', () => {
     });
 
     it('6. Успешное создание поля типа Dropdown с опциями', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-create-dd@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-create-dd@test.local' });
 
       const res = await agent
         .post('/api/custom-fields')
@@ -86,7 +87,7 @@ describe('CustomField module', () => {
     });
 
     it('7. Создание поля типа не-dropdown без опций — опции игнорируются', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-create-checkbox@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-create-checkbox@test.local' });
 
       const res = await agent
         .post('/api/custom-fields')
@@ -105,7 +106,7 @@ describe('CustomField module', () => {
     });
 
     it('8. Невалидные данные не проходят Zod', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-create-invalid@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-create-invalid@test.local' });
 
       const res = await agent
         .post('/api/custom-fields')
@@ -117,7 +118,7 @@ describe('CustomField module', () => {
 
   describe('PATCH /api/custom-fields/:id', () => {
     it('9. Успешное переименование поля', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-rename@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-rename@test.local' });
       const field = await createCustomField({ name: 'Old name', type: 'text' });
 
       const res = await agent
@@ -129,7 +130,7 @@ describe('CustomField module', () => {
     });
 
     it('10. Смена типа разрешена если поле не используется', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-change-type-ok@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-change-type-ok@test.local' });
       const field = await createCustomField({ name: 'Type change', type: 'text' });
 
       const res = await agent
@@ -141,7 +142,7 @@ describe('CustomField module', () => {
     });
 
     it('11. Смена типа запрещена если поле уже используется', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-change-type-used@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-change-type-used@test.local' });
       const field = await createCustomField({ name: 'Used field', type: 'text' });
 
       const user = await createUserWithPassword({ email: 'cf-used-user@test.local' });
@@ -167,7 +168,7 @@ describe('CustomField module', () => {
     });
 
     it('12. PATCH удалённого поля возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-patch-deleted@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-patch-deleted@test.local' });
       const field = await createCustomField({ name: 'To delete', type: 'text' });
 
       await db('custom_fields').where({ id: field.id }).update({ deleted_at: new Date() });
@@ -181,7 +182,7 @@ describe('CustomField module', () => {
     });
 
     it('13. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-patch-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-patch-notfound@test.local' });
 
       const res = await agent
         .patch('/api/custom-fields/00000000-0000-0000-0000-000000000000')
@@ -194,7 +195,7 @@ describe('CustomField module', () => {
 
   describe('DELETE /api/custom-fields/:id', () => {
     it('14. Успешный soft delete', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-soft-delete@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-soft-delete@test.local' });
       const field = await createCustomField({ name: 'Soft delete', type: 'text' });
 
       const res = await agent.delete(`/api/custom-fields/${field.id}`);
@@ -206,7 +207,7 @@ describe('CustomField module', () => {
     });
 
     it('15. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-del-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-del-notfound@test.local' });
 
       const res = await agent.delete('/api/custom-fields/00000000-0000-0000-0000-000000000000');
       expect(res.status).toBe(404);
@@ -216,7 +217,7 @@ describe('CustomField module', () => {
 
   describe('POST /api/custom-fields/:id/restore', () => {
     it('16. Успешное восстановление удалённого поля', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-restore@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-restore@test.local' });
       const field = await createCustomField({ name: 'To restore', type: 'text' });
       await db('custom_fields').where({ id: field.id }).update({ deleted_at: new Date() });
 
@@ -229,7 +230,7 @@ describe('CustomField module', () => {
     });
 
     it('17. Restore не удалённого поля возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-restore-notdeleted@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-restore-notdeleted@test.local' });
       const field = await createCustomField({ name: 'Active', type: 'text' });
 
       const res = await agent.post(`/api/custom-fields/${field.id}/restore`);
@@ -238,7 +239,7 @@ describe('CustomField module', () => {
     });
 
     it('18. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-restore-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-restore-notfound@test.local' });
 
       const res = await agent.post('/api/custom-fields/00000000-0000-0000-0000-000000000000/restore');
       expect(res.status).toBe(404);
@@ -248,7 +249,7 @@ describe('CustomField module', () => {
 
   describe('GET /api/custom-fields/:id/options', () => {
     it('19. Успешно возвращает опции dropdown поля', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-get-options@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-get-options@test.local' });
       const { field } = await createDropdownFieldWithOptions({
         name: 'Status',
         options: ['A', 'B'],
@@ -262,7 +263,7 @@ describe('CustomField module', () => {
     });
 
     it('20. Для не-dropdown поля возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-get-options-not-dd@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-get-options-not-dd@test.local' });
       const field = await createCustomField({ name: 'Text field', type: 'text' });
 
       const res = await agent.get(`/api/custom-fields/${field.id}/options`);
@@ -271,7 +272,7 @@ describe('CustomField module', () => {
     });
 
     it('21. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-get-options-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-get-options-notfound@test.local' });
 
       const res = await agent.get('/api/custom-fields/00000000-0000-0000-0000-000000000000/options');
       expect(res.status).toBe(404);
@@ -281,7 +282,7 @@ describe('CustomField module', () => {
 
   describe('POST /api/custom-fields/:id/options', () => {
     it('22. Успешное добавление опции к dropdown', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-add-option@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-add-option@test.local' });
       const { field } = await createDropdownFieldWithOptions({
         name: 'Priority',
         options: ['Low'],
@@ -300,7 +301,7 @@ describe('CustomField module', () => {
     });
 
     it('23. Добавление опции к не-dropdown возвращает 400', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-add-option-not-dd@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-add-option-not-dd@test.local' });
       const field = await createCustomField({ name: 'Text field 2', type: 'text' });
 
       const res = await agent
@@ -314,7 +315,7 @@ describe('CustomField module', () => {
 
   describe('DELETE /api/custom-fields/:id/options/:optionId', () => {
     it('24. Успешное устаревание опции (deprecate)', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-deprecate-option@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-deprecate-option@test.local' });
       const { field, options } = await createDropdownFieldWithOptions({
         name: 'Status 2',
         options: ['To deprecate'],
@@ -330,7 +331,7 @@ describe('CustomField module', () => {
     });
 
     it('25. Несуществующая опция возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-deprecate-notfound@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-deprecate-notfound@test.local' });
       const { field } = await createDropdownFieldWithOptions({
         name: 'Status 3',
         options: ['A'],
@@ -342,7 +343,7 @@ describe('CustomField module', () => {
     });
 
     it('26. Опция принадлежащая другому полю возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'cf-deprecate-other@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'cf-deprecate-other@test.local' });
       const { field: field1 } = await createDropdownFieldWithOptions({
         name: 'Field 1',
         options: ['A'],

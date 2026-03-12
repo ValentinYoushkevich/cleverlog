@@ -1,11 +1,12 @@
 import { Router } from 'express';
+import { ROLES } from '../constants/roles.js';
 import { UserController } from '../controllers/user.controller.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 
 const router = Router();
 
-router.use(authenticate, authorize('admin'));
+router.use(authenticate, authorize(ROLES.ADMIN));
 
 router.get('/', UserController.list);
 router.get('/:id', UserController.getById);

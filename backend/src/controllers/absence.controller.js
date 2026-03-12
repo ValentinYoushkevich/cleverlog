@@ -1,3 +1,4 @@
+import { ROLES } from '../constants/roles.js';
 import { AbsenceService } from '../services/absence.service.js';
 import {
   absenceFiltersSchema,
@@ -12,7 +13,7 @@ export const AbsenceController = {
       const result = await AbsenceService.list({
         ...filters,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
       });
 
       return res.json(result);
@@ -24,7 +25,7 @@ export const AbsenceController = {
   async create(req, res, next) {
     try {
       const data = createAbsenceSchema.parse(req.body);
-      const isAdmin = req.user.role === 'admin';
+      const isAdmin = req.user.role === ROLES.ADMIN;
       const targetUserId = isAdmin && data.user_id ? data.user_id : req.user.id;
       const result = await AbsenceService.create({
         ...data,
@@ -46,7 +47,7 @@ export const AbsenceController = {
         id: req.params.id,
         ...data,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         ip: req.ip,
       });
 
@@ -61,7 +62,7 @@ export const AbsenceController = {
       const result = await AbsenceService.delete({
         id: req.params.id,
         userId: req.user.id,
-        isAdmin: req.user.role === 'admin',
+        isAdmin: req.user.role === ROLES.ADMIN,
         ip: req.ip,
       });
 

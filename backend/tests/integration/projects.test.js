@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 import app from '../../app.js';
+import { ROLES } from '../../src/constants/roles.js';
 import { loginAs } from '../helpers/auth.js';
 import {
   createProject,
@@ -9,7 +10,7 @@ import {
 describe('Project module', () => {
   describe('GET /api/projects', () => {
     it('1–4. Список и фильтрация по статусу', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-list@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-list@test.local' });
       const active = await createProject({ name: 'Active', status: 'active' });
       const onHold = await createProject({ name: 'OnHold', status: 'on_hold' });
       const closed = await createProject({ name: 'Closed', status: 'closed' });
@@ -44,7 +45,7 @@ describe('Project module', () => {
 
   describe('GET /api/projects/:id', () => {
     it('7. Успешно возвращает проект по id', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-get@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-get@test.local' });
       const project = await createProject({ name: 'ProjGet', status: 'active' });
 
       const res = await agent.get(`/api/projects/${project.id}`);
@@ -54,7 +55,7 @@ describe('Project module', () => {
     });
 
     it('8. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-get-404@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-get-404@test.local' });
       const res = await agent.get('/api/projects/00000000-0000-0000-0000-000000000000');
       expect(res.status).toBe(404);
       expect(res.body.code).toBe('NOT_FOUND');
@@ -76,7 +77,7 @@ describe('Project module', () => {
 
   describe('POST /api/projects', () => {
     it('11. Успешное создание проекта', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-create@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-create@test.local' });
 
       const res = await agent
         .post('/api/projects')
@@ -89,7 +90,7 @@ describe('Project module', () => {
     });
 
     it('12. Невалидные данные не проходят Zod', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-create-invalid@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-create-invalid@test.local' });
 
       const res = await agent
         .post('/api/projects')
@@ -118,7 +119,7 @@ describe('Project module', () => {
 
   describe('PATCH /api/projects/:id', () => {
     it('15–18. Переименование и смена статусов', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-patch@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-patch@test.local' });
       const project = await createProject({ name: 'Old', status: 'active' });
 
       let res = await agent
@@ -147,7 +148,7 @@ describe('Project module', () => {
     });
 
     it('19. Закрытый проект нельзя использовать для нового work_log', async () => {
-      const { agent, user } = await loginAs({ role: 'admin', email: 'proj-closed-log@test.local' });
+      const { agent, user } = await loginAs({ role: ROLES.ADMIN, email: 'proj-closed-log@test.local' });
       const project = await createProject({ status: 'closed' });
 
       const res = await agent
@@ -166,7 +167,7 @@ describe('Project module', () => {
     });
 
     it('20. Несуществующий id возвращает 404', async () => {
-      const { agent } = await loginAs({ role: 'admin', email: 'proj-patch-404@test.local' });
+      const { agent } = await loginAs({ role: ROLES.ADMIN, email: 'proj-patch-404@test.local' });
 
       const res = await agent
         .patch('/api/projects/00000000-0000-0000-0000-000000000000')
@@ -198,4 +199,3 @@ describe('Project module', () => {
     });
   });
 });
-

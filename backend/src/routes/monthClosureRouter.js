@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ROLES } from '../constants/roles.js';
 import { MonthClosureController } from '../controllers/monthClosure.controller.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
@@ -7,7 +8,7 @@ const router = Router();
 
 router.get('/status/:year/:month', authenticate, MonthClosureController.status);
 
-router.use(authenticate, authorize('admin'));
+router.use(authenticate, authorize(ROLES.ADMIN));
 router.get('/', MonthClosureController.list);
 router.post('/', MonthClosureController.close);
 router.delete('/:year/:month', MonthClosureController.open);
