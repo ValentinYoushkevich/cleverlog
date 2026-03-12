@@ -1,37 +1,16 @@
 import db from '../config/knex.js';
 
-function applyFilters(query, {
-  actorId,
-  eventType,
-  entityType,
-  dateFrom,
-  dateTo,
-  ip,
-  result,
-  search,
-  searchEntityTypes,
-}) {
-  if (actorId) {
-    query.where('al.actor_id', actorId);
-  }
-  if (eventType) {
-    query.where('al.event_type', eventType);
-  }
-  if (entityType) {
-    query.where('al.entity_type', entityType);
-  }
-  if (dateFrom) {
-    query.where('al.timestamp', '>=', dateFrom);
-  }
-  if (dateTo) {
-    query.where('al.timestamp', '<=', `${dateTo} 23:59:59`);
-  }
-  if (ip) {
-    query.whereILike('al.ip', `%${ip}%`);
-  }
-  if (result) {
-    query.where('al.result', result);
-  }
+function applySimpleFilters(query, f) {
+  if (f.actorId) { query.where('al.actor_id', f.actorId); }
+  if (f.eventType) { query.where('al.event_type', f.eventType); }
+  if (f.entityType) { query.where('al.entity_type', f.entityType); }
+  if (f.dateFrom) { query.where('al.timestamp', '>=', f.dateFrom); }
+  if (f.dateTo) { query.where('al.timestamp', '<=', `${f.dateTo} 23:59:59`); }
+  if (f.ip) { query.whereILike('al.ip', `%${f.ip}%`); }
+  if (f.result) { query.where('al.result', f.result); }
+}
+
+function applySearchFilters(query, { search, searchEntityTypes }) {
   if (search) {
     query.where(function scopedSearch() {
       this.whereILike('al.event_type', `%${search}%`)
@@ -44,61 +23,26 @@ function applyFilters(query, {
   }
 }
 
-export const AuditLogRepository = {
-  async findAll({
-    actorId,
-    eventType,
-    entityType,
-    dateFrom,
-    dateTo,
-    ip,
-    result,
-    search,
-    searchEntityTypes,
-    page,
-    limit,
-  }) {
-    const baseQuery = db('audit_logs as al')
-      .leftJoin('users as u', 'u.id', 'al.actor_id');
+function applyFilters(query, filters) {
+  applySimpleFilters(query, filters);
+  applySearchFilters(query, filters);
+}
 
-    applyFilters(baseQuery, {
-      actorId,
-      eventType,
-      entityType,
-      dateFrom,
-      dateTo,
-      ip,
-      result,
-      search,
-      searchEntityTypes,
-    });
+export const AuditLogRepository = {
+  async findAll(filters) {
+    const { page, limit } = filters;
+    const baseQuery = db('audit_logs as al').leftJoin('users as u', 'u.id', 'al.actor_id');
+    applyFilters(baseQuery, filters);
 
     const countRow = await baseQuery.clone().countDistinct('al.id as total').first();
     const total = Number(countRow?.total || 0);
-
-    const data = await baseQuery
-      .clone()
+    const data = await baseQuery.clone()
       .select(
-        'al.id',
-        'al.timestamp',
-        'al.actor_id',
-        'al.actor_role',
-        'al.event_type',
-        'al.event_label',
-        'al.entity_type',
-        'al.entity_id',
-        'al.before',
-        'al.after',
-        'al.ip',
-        'al.result',
-        'u.first_name',
-        'u.last_name',
-        'u.email as actor_email',
+        'al.id', 'al.timestamp', 'al.actor_id', 'al.actor_role', 'al.event_type',
+        'al.event_label', 'al.entity_type', 'al.entity_id', 'al.before', 'al.after',
+        'al.ip', 'al.result', 'u.first_name', 'u.last_name', 'u.email as actor_email',
       )
-      .orderBy('al.timestamp', 'desc')
-      .offset((page - 1) * limit)
-      .limit(limit);
-
+      .orderBy('al.timestamp', 'desc').offset((page - 1) * limit).limit(limit);
     return { data, total };
   },
 

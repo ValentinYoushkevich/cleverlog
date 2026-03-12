@@ -5,52 +5,27 @@ function toDateKey(value) {
   return dayjs(value).format('YYYY-MM-DD');
 }
 
-export const AbsenceRepository = {
-  async findAll({
-    userId,
-    dateFrom,
-    dateTo,
-    type,
-    page,
-    limit,
-  }) {
-    const baseQuery = db('absences as a')
-      .join('users as u', 'u.id', 'a.user_id');
+function applyAbsenceFilters(query, { userId, dateFrom, dateTo, type }) {
+  if (userId) { query.where('a.user_id', userId); }
+  if (dateFrom) { query.where('a.date', '>=', dateFrom); }
+  if (dateTo) { query.where('a.date', '<=', dateTo); }
+  if (type) { query.where('a.type', type); }
+}
 
-    if (userId) {
-      baseQuery.where('a.user_id', userId);
-    }
-    if (dateFrom) {
-      baseQuery.where('a.date', '>=', dateFrom);
-    }
-    if (dateTo) {
-      baseQuery.where('a.date', '<=', dateTo);
-    }
-    if (type) {
-      baseQuery.where('a.type', type);
-    }
+const ABSENCE_LIST_COLUMNS = [
+  'a.id', 'a.user_id', 'a.type', 'a.date', 'a.duration_days',
+  'a.comment', 'a.created_at', 'a.updated_at', 'u.first_name', 'u.last_name',
+];
+
+export const AbsenceRepository = {
+  async findAll({ userId, dateFrom, dateTo, type, page, limit }) {
+    const baseQuery = db('absences as a').join('users as u', 'u.id', 'a.user_id');
+    applyAbsenceFilters(baseQuery, { userId, dateFrom, dateTo, type });
 
     const countRow = await baseQuery.clone().countDistinct('a.id as total').first();
     const total = Number(countRow?.total || 0);
-
-    const data = await baseQuery
-      .clone()
-      .select(
-        'a.id',
-        'a.user_id',
-        'a.type',
-        'a.date',
-        'a.duration_days',
-        'a.comment',
-        'a.created_at',
-        'a.updated_at',
-        'u.first_name',
-        'u.last_name',
-      )
-      .orderBy('a.date', 'desc')
-      .offset((page - 1) * limit)
-      .limit(limit);
-
+    const data = await baseQuery.clone().select(...ABSENCE_LIST_COLUMNS)
+      .orderBy('a.date', 'desc').offset((page - 1) * limit).limit(limit);
     return { data, total };
   },
 

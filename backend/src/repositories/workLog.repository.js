@@ -1,63 +1,31 @@
 import db from '../config/knex.js';
 
+function applyWorkLogFilters(query, { userId, projectId, dateFrom, dateTo, taskNumber, comment }) {
+  if (userId) { query.where('wl.user_id', userId); }
+  if (projectId) { query.where('wl.project_id', projectId); }
+  if (dateFrom) { query.where('wl.date', '>=', dateFrom); }
+  if (dateTo) { query.where('wl.date', '<=', dateTo); }
+  if (taskNumber) { query.whereILike('wl.task_number', `%${taskNumber}%`); }
+  if (comment) { query.whereILike('wl.comment', `%${comment}%`); }
+}
+
+const WORK_LOG_LIST_COLUMNS = [
+  'wl.id', 'wl.date', 'wl.duration_days', 'wl.comment', 'wl.task_number',
+  'wl.user_id', 'wl.project_id', 'wl.created_at', 'wl.updated_at',
+  'u.first_name', 'u.last_name', 'u.position', 'p.name as project_name',
+];
+
 export const WorkLogRepository = {
-  async findAll({
-    userId,
-    projectId,
-    dateFrom,
-    dateTo,
-    taskNumber,
-    comment,
-    page,
-    limit,
-  }) {
+  async findAll({ userId, projectId, dateFrom, dateTo, taskNumber, comment, page, limit }) {
     const baseQuery = db('work_logs as wl')
       .join('users as u', 'u.id', 'wl.user_id')
       .join('projects as p', 'p.id', 'wl.project_id');
-
-    if (userId) {
-      baseQuery.where('wl.user_id', userId);
-    }
-    if (projectId) {
-      baseQuery.where('wl.project_id', projectId);
-    }
-    if (dateFrom) {
-      baseQuery.where('wl.date', '>=', dateFrom);
-    }
-    if (dateTo) {
-      baseQuery.where('wl.date', '<=', dateTo);
-    }
-    if (taskNumber) {
-      baseQuery.whereILike('wl.task_number', `%${taskNumber}%`);
-    }
-    if (comment) {
-      baseQuery.whereILike('wl.comment', `%${comment}%`);
-    }
+    applyWorkLogFilters(baseQuery, { userId, projectId, dateFrom, dateTo, taskNumber, comment });
 
     const countRow = await baseQuery.clone().countDistinct('wl.id as total').first();
     const total = Number(countRow?.total || 0);
-
-    const data = await baseQuery
-      .clone()
-      .select(
-        'wl.id',
-        'wl.date',
-        'wl.duration_days',
-        'wl.comment',
-        'wl.task_number',
-        'wl.user_id',
-        'wl.project_id',
-        'wl.created_at',
-        'wl.updated_at',
-        'u.first_name',
-        'u.last_name',
-        'u.position',
-        'p.name as project_name',
-      )
-      .orderBy('wl.date', 'desc')
-      .offset((page - 1) * limit)
-      .limit(limit);
-
+    const data = await baseQuery.clone().select(...WORK_LOG_LIST_COLUMNS)
+      .orderBy('wl.date', 'desc').offset((page - 1) * limit).limit(limit);
     return { data, total };
   },
 

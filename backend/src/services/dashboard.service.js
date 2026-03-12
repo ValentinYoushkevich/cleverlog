@@ -46,84 +46,72 @@ function buildUserCard({ user, userLogs, userAbsences, year, month, norm, overri
   };
 }
 
+function buildHoursByProject(projects, workLogs) {
+  const hoursByProject = {};
+  for (const project of projects) {
+    const hours = daysToHours(
+      workLogs.filter((log) => log.project_id === project.id).reduce((sum, log) => sum + Number.parseFloat(log.duration_days), 0),
+    );
+    if (hours > 0) { hoursByProject[project.id] = { name: project.name, hours }; }
+  }
+  return hoursByProject;
+}
+
+function buildUsersByProject(projects, workLogs) {
+  const usersByProject = {};
+  for (const project of projects) {
+    const uniqueUsers = new Set(workLogs.filter((log) => log.project_id === project.id).map((log) => log.user_id));
+    if (uniqueUsers.size > 0) { usersByProject[project.id] = { name: project.name, user_count: uniqueUsers.size }; }
+  }
+  return usersByProject;
+}
+
+function countSummaryCards(opts) {
+  const { users, workLogs, absences, year, month, norm, overrides } = opts;
+  let undertimeCount = 0;
+  let overtimeCount = 0;
+  let unloggedCount = 0;
+  for (const user of users) {
+    const card = buildUserCard({
+      user,
+      userLogs: workLogs.filter((log) => log.user_id === user.id),
+      userAbsences: absences.filter((a) => a.user_id === user.id),
+      year, month, norm, overrides,
+    });
+    if (card.deviation < 0) {
+      undertimeCount += 1;
+    }
+    if (card.deviation > 0) {
+      overtimeCount += 1;
+    }
+    if (card.unlogged_count > 0) {
+      unloggedCount += 1;
+    }
+  }
+  return { undertimeCount, overtimeCount, unloggedCount };
+}
+
 export const DashboardService = {
   async getSummary({ year, month }) {
     const dateFrom = `${year}-${String(month).padStart(2, '0')}-01`;
     const dateTo = dayjs(dateFrom).endOf('month').format('YYYY-MM-DD');
-
-    const users = await ReportRepository.getActiveUsers();
-    const projects = await ReportRepository.getAllProjects();
-    const workLogs = await ReportRepository.getWorkLogs({ dateFrom, dateTo });
-    const absences = await ReportRepository.getAbsences({ dateFrom, dateTo });
-    const overrides = await CalendarRepository.getOverrides(year, month);
-    const normRow = await CalendarRepository.getNorm(year, month);
+    const [users, projects, workLogs, absences, overrides, normRow] = await Promise.all([
+      ReportRepository.getActiveUsers(),
+      ReportRepository.getAllProjects(),
+      ReportRepository.getWorkLogs({ dateFrom, dateTo }),
+      ReportRepository.getAbsences({ dateFrom, dateTo }),
+      CalendarRepository.getOverrides(year, month),
+      CalendarRepository.getNorm(year, month),
+    ]);
     const norm = normRow?.norm_hours ?? DEFAULT_NORM;
-
-    const hoursByProject = {};
-    for (const project of projects) {
-      const hours = daysToHours(
-        workLogs
-          .filter((log) => log.project_id === project.id)
-          .reduce((sum, log) => sum + Number.parseFloat(log.duration_days), 0),
-      );
-      if (hours > 0) {
-        hoursByProject[project.id] = { name: project.name, hours };
-      }
-    }
-
-    const usersByProject = {};
-    for (const project of projects) {
-      const uniqueUsers = new Set(
-        workLogs
-          .filter((log) => log.project_id === project.id)
-          .map((log) => log.user_id),
-      );
-      if (uniqueUsers.size > 0) {
-        usersByProject[project.id] = { name: project.name, user_count: uniqueUsers.size };
-      }
-    }
-
-    let undertimeCount = 0;
-    let overtimeCount = 0;
-    let unloggedCount = 0;
-
-    for (const user of users) {
-      const userLogs = workLogs.filter((log) => log.user_id === user.id);
-      const userAbsences = absences.filter((absence) => absence.user_id === user.id);
-      const card = buildUserCard({
-        user,
-        userLogs,
-        userAbsences,
-        year,
-        month,
-        norm,
-        overrides,
-      });
-
-      if (card.deviation < 0) {
-        undertimeCount += 1;
-      }
-      if (card.deviation > 0) {
-        overtimeCount += 1;
-      }
-      if (card.unlogged_count > 0) {
-        unloggedCount += 1;
-      }
-    }
-
+    const hoursByProject = buildHoursByProject(projects, workLogs);
+    const usersByProject = buildUsersByProject(projects, workLogs);
+    const { undertimeCount, overtimeCount, unloggedCount } =
+      countSummaryCards({ users, workLogs, absences, year, month, norm, overrides });
     return {
-      year,
-      month,
-      norm,
-      charts: {
-        hours_by_project: Object.values(hoursByProject),
-        users_by_project: Object.values(usersByProject),
-      },
-      cards: {
-        undertime_count: undertimeCount,
-        overtime_count: overtimeCount,
-        unlogged_count: unloggedCount,
-      },
+      year, month, norm,
+      charts: { hours_by_project: Object.values(hoursByProject), users_by_project: Object.values(usersByProject) },
+      cards: { undertime_count: undertimeCount, overtime_count: overtimeCount, unlogged_count: unloggedCount },
     };
   },
 

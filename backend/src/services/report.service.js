@@ -35,247 +35,123 @@ function sumDays(arr) {
 }
 
 function isFullMonth(dateFrom, dateTo) {
-  if (!dateFrom || !dateTo) {
-    return false;
-  }
-
+  if (!dateFrom || !dateTo) { return false; }
   const from = dayjs(dateFrom);
   const to = dayjs(dateTo);
-  return from.date() === 1
-    && to.date() === to.daysInMonth()
-    && from.month() === to.month()
-    && from.year() === to.year();
+  return from.date() === 1 && to.date() === to.daysInMonth() && from.month() === to.month() && from.year() === to.year();
+}
+
+function filterWorkLogsByTaskAndComment(workLogs, taskNumber, comment) {
+  return workLogs.filter((log) => {
+    if (taskNumber && !log.task_number.toLowerCase().includes(taskNumber.toLowerCase())) { return false; }
+    if (comment && !log.comment.toLowerCase().includes(comment.toLowerCase())) { return false; }
+    return true;
+  });
+}
+
+function buildUserReportRows(finalWork, filteredAbsences, customByLog) {
+  const workRows = finalWork.map((log) => ({
+    user_id: log.user_id, user_name: `${log.last_name} ${log.first_name}`, type: 'work',
+    date: toDateKey(log.date), project_id: log.project_id, project_name: log.project_name,
+    task_number: log.task_number, duration_hours: daysToHours(log.duration_days),
+    comment: log.comment, custom_fields: customByLog[log.id] || [],
+  }));
+  const absenceRows = filteredAbsences.map((absence) => ({
+    user_id: absence.user_id, user_name: `${absence.last_name} ${absence.first_name}`, type: absence.type,
+    date: toDateKey(absence.date), duration_hours: daysToHours(absence.duration_days), comment: absence.comment || '',
+    project_id: null, project_name: null, task_number: null, custom_fields: [],
+  }));
+  return [...workRows, ...absenceRows].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export const ReportService = {
-  async userReport({
-    userId,
-    isAdmin,
-    targetUserId,
-    dateFrom,
-    dateTo,
-    projectId,
-    type,
-    taskNumber,
-    comment,
-  }) {
-    // Для админа без фильтра по пользователю показываем отчёт по всем пользователям.
+  async userReport({ userId, isAdmin, targetUserId, dateFrom, dateTo, projectId, type, taskNumber, comment }) {
     const effectiveUserId = isAdmin ? targetUserId || null : userId;
-    const workLogs = await ReportRepository.getWorkLogs({
-      userId: effectiveUserId,
-      projectId,
-      dateFrom,
-      dateTo,
-    });
-    const absences = await ReportRepository.getAbsences({
-      userId: effectiveUserId,
-      dateFrom,
-      dateTo,
-    });
-
+    const [workLogs, absences] = await Promise.all([
+      ReportRepository.getWorkLogs({ userId: effectiveUserId, projectId, dateFrom, dateTo }),
+      ReportRepository.getAbsences({ userId: effectiveUserId, dateFrom, dateTo }),
+    ]);
     const includeWork = !type || type === 'work';
     const includeAbsences = (!type || type !== 'work') && !projectId;
-
-    let filteredAbsences = [];
-    if (includeAbsences) {
-      if (type && type !== 'work') {
-        filteredAbsences = absences.filter((absence) => absence.type === type);
-      } else {
-        filteredAbsences = absences;
-      }
-    }
+    const filteredAbsences = includeAbsences
+      ? (type && type !== 'work' ? absences.filter((a) => a.type === type) : absences)
+      : [];
     const filteredWork = includeWork ? workLogs : [];
-
-    const finalWork = filteredWork.filter((log) => {
-      if (taskNumber && !log.task_number.toLowerCase().includes(taskNumber.toLowerCase())) {
-        return false;
-      }
-      if (comment && !log.comment.toLowerCase().includes(comment.toLowerCase())) {
-        return false;
-      }
-      return true;
-    });
-
+    const finalWork = filterWorkLogsByTaskAndComment(filteredWork, taskNumber, comment);
     const customValues = await ReportRepository.getCustomValues(finalWork.map((log) => log.id));
     const customByLog = groupBy(customValues, 'work_log_id');
-
-    const rows = [
-      ...finalWork.map((log) => ({
-        user_id: log.user_id,
-        user_name: `${log.last_name} ${log.first_name}`,
-        type: 'work',
-        date: toDateKey(log.date),
-        project_id: log.project_id,
-        project_name: log.project_name,
-        task_number: log.task_number,
-        duration_hours: daysToHours(log.duration_days),
-        comment: log.comment,
-        custom_fields: customByLog[log.id] || [],
-      })),
-      ...filteredAbsences.map((absence) => ({
-        user_id: absence.user_id,
-        user_name: `${absence.last_name} ${absence.first_name}`,
-        type: absence.type,
-        date: toDateKey(absence.date),
-        duration_hours: daysToHours(absence.duration_days),
-        comment: absence.comment || '',
-        project_id: null,
-        project_name: null,
-        task_number: null,
-        custom_fields: [],
-      })),
-    ].sort((a, b) => a.date.localeCompare(b.date));
+    const rows = buildUserReportRows(finalWork, filteredAbsences, customByLog);
 
     const totalHours = rows.reduce((sum, row) => sum + row.duration_hours, 0);
     const byProject = groupAndSum(finalWork, 'project_name', 'duration_days');
     const byType = {
       work: sumDays(finalWork),
-      vacation: sumDays(filteredAbsences.filter((absence) => absence.type === 'vacation')),
-      sick_leave: sumDays(filteredAbsences.filter((absence) => absence.type === 'sick_leave')),
-      day_off: sumDays(filteredAbsences.filter((absence) => absence.type === 'day_off')),
+      vacation: sumDays(filteredAbsences.filter((a) => a.type === 'vacation')),
+      sick_leave: sumDays(filteredAbsences.filter((a) => a.type === 'sick_leave')),
+      day_off: sumDays(filteredAbsences.filter((a) => a.type === 'day_off')),
     };
-
     let normBlock = null;
     if (isFullMonth(dateFrom, dateTo)) {
       const [year, month] = dateFrom.split('-').map(Number);
       const normRow = await CalendarRepository.getNorm(year, month);
       const norm = normRow?.norm_hours ?? DEFAULT_NORM;
       const fact = calcFact(workLogs, absences);
-      normBlock = {
-        norm,
-        fact,
-        deviation: Math.round((fact - norm) * 100) / 100,
-      };
+      normBlock = { norm, fact, deviation: Math.round((fact - norm) * 100) / 100 };
     }
-
-    return {
-      rows,
-      totals: {
-        total_hours: totalHours,
-        by_project: byProject,
-        by_type: byType,
-      },
-      norm_block: normBlock,
-    };
+    return { rows, totals: { total_hours: totalHours, by_project: byProject, by_type: byType }, norm_block: normBlock };
   },
 
-  async projectReport({
-    projectId,
-    dateFrom,
-    dateTo,
-    userId,
-    taskNumber,
-    comment,
-  }) {
-    const workLogs = await ReportRepository.getWorkLogs({
-      projectId,
-      dateFrom,
-      dateTo,
-    });
-
+  async projectReport({ projectId, dateFrom, dateTo, userId, taskNumber, comment }) {
+    const workLogs = await ReportRepository.getWorkLogs({ projectId, dateFrom, dateTo });
     const filtered = workLogs.filter((log) => {
-      if (userId && log.user_id !== userId) {
-        return false;
-      }
-      if (taskNumber && !log.task_number.toLowerCase().includes(taskNumber.toLowerCase())) {
-        return false;
-      }
-      if (comment && !log.comment.toLowerCase().includes(comment.toLowerCase())) {
-        return false;
-      }
+      if (userId && log.user_id !== userId) { return false; }
+      if (taskNumber && !log.task_number.toLowerCase().includes(taskNumber.toLowerCase())) { return false; }
+      if (comment && !log.comment.toLowerCase().includes(comment.toLowerCase())) { return false; }
       return true;
     });
-
     const customValues = await ReportRepository.getCustomValues(filtered.map((log) => log.id));
     const customByLog = groupBy(customValues, 'work_log_id');
-
     const rows = filtered.map((log) => ({
-      user_id: log.user_id,
-      user: `${log.last_name} ${log.first_name}`,
-      position: log.position,
-      date: toDateKey(log.date),
-      project_name: log.project_name,
-      task_number: log.task_number,
-      duration_hours: daysToHours(log.duration_days),
-      comment: log.comment,
-      custom_fields: customByLog[log.id] || [],
+      user_id: log.user_id, user: `${log.last_name} ${log.first_name}`, position: log.position,
+      date: toDateKey(log.date), project_name: log.project_name, task_number: log.task_number,
+      duration_hours: daysToHours(log.duration_days), comment: log.comment, custom_fields: customByLog[log.id] || [],
     }));
-
     const totalHours = rows.reduce((sum, row) => sum + row.duration_hours, 0);
     const byUser = groupAndSum(filtered, (item) => `${item.last_name} ${item.first_name}`, 'duration_days');
-
-    return {
-      rows,
-      totals: {
-        total_hours: totalHours,
-        by_user: byUser,
-      },
-    };
+    return { rows, totals: { total_hours: totalHours, by_user: byUser } };
   },
 
   async monthlySummary({ year, month }) {
     const dateFrom = `${year}-${String(month).padStart(2, '0')}-01`;
     const dateTo = dayjs(dateFrom).endOf('month').format('YYYY-MM-DD');
-
-    const users = await ReportRepository.getActiveUsers();
-    const projects = await ReportRepository.getAllProjects();
-    const workLogs = await ReportRepository.getWorkLogs({ dateFrom, dateTo });
-    const absences = await ReportRepository.getAbsences({ dateFrom, dateTo });
-
-    const normRow = await CalendarRepository.getNorm(year, month);
+    const [users, projects, workLogs, absences, normRow] = await Promise.all([
+      ReportRepository.getActiveUsers(),
+      ReportRepository.getAllProjects(),
+      ReportRepository.getWorkLogs({ dateFrom, dateTo }),
+      ReportRepository.getAbsences({ dateFrom, dateTo }),
+      CalendarRepository.getNorm(year, month),
+    ]);
     const norm = normRow?.norm_hours ?? DEFAULT_NORM;
-
     const rows = users.map((user) => {
       const userLogs = workLogs.filter((log) => log.user_id === user.id);
-      const userAbsences = absences.filter((absence) => absence.user_id === user.id);
-
+      const userAbsences = absences.filter((a) => a.user_id === user.id);
       const byProject = {};
       for (const project of projects) {
-        const hours = daysToHours(
-          userLogs
-            .filter((log) => log.project_id === project.id)
-            .reduce((sum, log) => sum + Number.parseFloat(log.duration_days), 0),
+        byProject[project.id] = daysToHours(
+          userLogs.filter((log) => log.project_id === project.id).reduce((s, log) => s + Number.parseFloat(log.duration_days), 0),
         );
-        byProject[project.id] = hours;
       }
-
-      const absenceHours = daysToHours(
-        userAbsences.reduce((sum, absence) => sum + Number.parseFloat(absence.duration_days), 0),
-      );
+      const absenceHours = daysToHours(userAbsences.reduce((s, a) => s + Number.parseFloat(a.duration_days), 0));
       const fact = calcFact(userLogs, userAbsences);
-
-      return {
-        user_id: user.id,
-        user_name: `${user.last_name} ${user.first_name}`,
-        by_project: byProject,
-        absence_hours: absenceHours,
-        fact_hours: fact,
-        is_on_norm: Math.abs(fact - norm) < 0.01,
-      };
+      return { user_id: user.id, user_name: `${user.last_name} ${user.first_name}`, by_project: byProject, absence_hours: absenceHours, fact_hours: fact, is_on_norm: Math.abs(fact - norm) < 0.01 };
     });
-
-    const totals = {
-      by_project: {},
-      absence_hours: 0,
-      fact_hours: 0,
-    };
-
+    const totals = { by_project: {}, absence_hours: 0, fact_hours: 0 };
     for (const row of rows) {
-      for (const [projectId, hours] of Object.entries(row.by_project)) {
-        totals.by_project[projectId] = (totals.by_project[projectId] || 0) + hours;
-      }
+      for (const [projectId, hours] of Object.entries(row.by_project)) { totals.by_project[projectId] = (totals.by_project[projectId] || 0) + hours; }
       totals.absence_hours += row.absence_hours;
       totals.fact_hours += row.fact_hours;
     }
-
-    return {
-      year,
-      month,
-      norm,
-      projects,
-      rows,
-      totals,
-    };
+    return { year, month, norm, projects, rows, totals };
   },
 
   async unlogged({ year, month }) {

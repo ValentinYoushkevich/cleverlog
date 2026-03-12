@@ -12,6 +12,17 @@ function appError(status, code, message) {
   return error;
 }
 
+function normalizeEmailForCreate(rawEmail) {
+  const v = rawEmail ?? null;
+  return typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
+}
+
+async function ensureEmailNotTaken(normalizedEmail) {
+  if (!normalizedEmail) { return; }
+  const existing = await UserRepository.findByEmail(normalizedEmail);
+  if (existing) { throw appError(409, 'EMAIL_EXISTS', 'Email уже занят'); }
+}
+
 export const UserService = {
   async list(filters) {
     const users = await UserRepository.findAll(filters);
@@ -42,61 +53,26 @@ export const UserService = {
 
   async create({ actorId, actorRole, ip, invite_mode = 'email', ...data }) {
     const mode = invite_mode === 'link' ? 'link' : 'email';
-
-    // Нормализуем email: пустые строки превращаем в null
-    const rawEmail = data.email ?? null;
-    const normalizedEmail =
-      typeof rawEmail === 'string' && rawEmail.trim().length > 0 ? rawEmail.trim() : null;
-
-    if (mode === 'email' && normalizedEmail) {
-      const existing = await UserRepository.findByEmail(normalizedEmail);
-      if (existing) {
-        throw appError(409, 'EMAIL_EXISTS', 'Email уже занят');
-      }
-    }
+    const normalizedEmail = normalizeEmailForCreate(data.email);
+    if (mode === 'email') { await ensureEmailNotTaken(normalizedEmail); }
 
     const inviteToken = generateInviteToken();
     const inviteExpiresAt = new Date(Date.now() + INVITE_TTL_MS);
-
     const user = await UserRepository.create({
-      ...data,
-      email: normalizedEmail,
-      invite_mode: mode,
-      invite_token_hash: inviteToken,
-      invite_expires_at: inviteExpiresAt,
-      status: data.status || 'active',
+      ...data, email: normalizedEmail, invite_mode: mode,
+      invite_token_hash: inviteToken, invite_expires_at: inviteExpiresAt, status: data.status || 'active',
     });
-
     const inviteLink = `${process.env.CLIENT_URL}/register/${inviteToken}`;
 
     if (invite_mode === 'email') {
-      if (!user.email) {
-        throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для отправки инвайта');
-      }
-
-      await sendInviteEmail({
-        to: user.email,
-        inviteToken,
-        firstName: user.first_name,
-      });
+      if (!user.email) { throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для отправки инвайта'); }
+      await sendInviteEmail({ to: user.email, inviteToken, firstName: user.first_name });
     }
-
     await AuditService.log({
-      actorId,
-      actorRole,
-      eventType: 'USER_CREATED',
-      entityType: 'user',
-      entityId: user.id,
-      after: { email: user.email, role: user.role },
-      ip,
-      result: 'success',
+      actorId, actorRole, eventType: 'USER_CREATED', entityType: 'user', entityId: user.id,
+      after: { email: user.email, role: user.role }, ip, result: 'success',
     });
-
-    if (invite_mode === 'link') {
-      return { user, invite_link: inviteLink };
-    }
-
-    return user;
+    return invite_mode === 'link' ? { user, invite_link: inviteLink } : user;
   },
 
   async update({ id, actorId, actorRole, ip, ...data }) {

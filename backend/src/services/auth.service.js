@@ -11,151 +11,89 @@ function appError(status, code, message) {
   return error;
 }
 
+async function validateRegisterInput(token, email) {
+  const user = await UserRepository.findByInviteToken(token);
+  if (!user) { throw appError(400, 'INVALID_TOKEN', 'Инвайт недействителен'); }
+  if (user.invite_expires_at && new Date(user.invite_expires_at) < new Date()) {
+    throw appError(400, 'TOKEN_EXPIRED', 'Инвайт истёк');
+  }
+  const normalizedEmail = email?.trim();
+  if (!normalizedEmail) { throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для регистрации'); }
+  if (user.email && user.email !== normalizedEmail) {
+    throw appError(400, 'EMAIL_MISMATCH', 'Email не совпадает с указанным администратором');
+  }
+  const existing = await UserRepository.findByEmail(normalizedEmail);
+  if (existing && existing.id !== user.id) {
+    throw appError(409, 'EMAIL_EXISTS', 'Пользователь с таким email уже существует');
+  }
+  return { user, finalEmail: user.email ?? normalizedEmail };
+}
+
+function signUserToken(user) {
+  return jwt.sign(
+    { userId: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+  );
+}
+
+async function handleLoginLocked(user, ip) {
+  await AuditService.log({
+    actorId: user.id, actorRole: user.role, eventType: 'LOGIN_FAILED',
+    entityType: 'user', entityId: user.id, after: { reason: 'ACCOUNT_LOCKED' }, ip, result: 'failure',
+  });
+  throw appError(429, 'ACCOUNT_LOCKED', 'Аккаунт временно заблокирован');
+}
+
+async function handleLoginFailedPassword(user, ip) {
+  const attempts = (user.failed_attempts || 0) + 1;
+  const lockedUntil = attempts >= MAX_LOGIN_ATTEMPTS ? new Date(Date.now() + LOCK_DURATION_MS) : null;
+  await UserRepository.updateById(user.id, { failed_attempts: attempts, locked_until: lockedUntil });
+  await AuditService.log({
+    actorId: user.id, actorRole: user.role, eventType: 'LOGIN_FAILED',
+    entityType: 'user', entityId: user.id, ip, result: 'failure',
+  });
+  throw appError(401, 'INVALID_CREDENTIALS', 'Неверные учётные данные');
+}
+
 export const AuthService = {
   async register({ token, email, password, ip }) {
-    const user = await UserRepository.findByInviteToken(token);
-    if (!user) {
-      throw appError(400, 'INVALID_TOKEN', 'Инвайт недействителен');
-    }
-
-    if (user.invite_expires_at && new Date(user.invite_expires_at) < new Date()) {
-      throw appError(400, 'TOKEN_EXPIRED', 'Инвайт истёк');
-    }
-
-    const normalizedEmail = email?.trim();
-    if (!normalizedEmail) {
-      throw appError(400, 'EMAIL_REQUIRED', 'Email обязателен для регистрации');
-    }
-
-    // Если email уже задан администратором, не даём указать другой
-    if (user.email && user.email !== normalizedEmail) {
-      throw appError(400, 'EMAIL_MISMATCH', 'Email не совпадает с указанным администратором');
-    }
-
-    const existing = await UserRepository.findByEmail(normalizedEmail);
-    if (existing && existing.id !== user.id) {
-      throw appError(409, 'EMAIL_EXISTS', 'Пользователь с таким email уже существует');
-    }
-
+    const { user, finalEmail } = await validateRegisterInput(token, email);
     const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
-
-    const finalEmail = user.email ?? normalizedEmail;
-
     await UserRepository.updateById(user.id, {
-      email: finalEmail,
-      password_hash: passwordHash,
-      invite_token_hash: null,
-      invite_expires_at: null,
-      failed_attempts: 0,
-      locked_until: null,
+      email: finalEmail, password_hash: passwordHash,
+      invite_token_hash: null, invite_expires_at: null, failed_attempts: 0, locked_until: null,
     });
-
     await AuditService.log({
-      actorId: user.id,
-      actorRole: user.role,
-      eventType: 'REGISTER',
-      entityType: 'user',
-      entityId: user.id,
-      ip,
-      result: 'success',
+      actorId: user.id, actorRole: user.role, eventType: 'REGISTER',
+      entityType: 'user', entityId: user.id, ip, result: 'success',
     });
-    const tokenJwt = jwt.sign(
-      { userId: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
-    );
-
+    const tokenJwt = signUserToken(user);
     return {
       message: 'Регистрация успешна',
       token: tokenJwt,
-      user: {
-        id: user.id,
-        email: finalEmail,
-        role: user.role,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
+      user: { id: user.id, email: finalEmail, role: user.role, first_name: user.first_name, last_name: user.last_name },
     };
   },
 
   async login({ email, password, ip }) {
     const user = await UserRepository.findByEmail(email);
-    if (!user?.password_hash) {
-      throw appError(401, 'INVALID_CREDENTIALS', 'Неверные учётные данные');
-    }
-
-    if (user.status === 'inactive') {
-      throw appError(403, 'ACCOUNT_INACTIVE', 'Аккаунт деактивирован');
-    }
-
-    if (user.locked_until && new Date(user.locked_until) > new Date()) {
-      await AuditService.log({
-        actorId: user.id,
-        actorRole: user.role,
-        eventType: 'LOGIN_FAILED',
-        entityType: 'user',
-        entityId: user.id,
-        after: { reason: 'ACCOUNT_LOCKED' },
-        ip,
-        result: 'failure',
-      });
-
-      throw appError(429, 'ACCOUNT_LOCKED', 'Аккаунт временно заблокирован');
-    }
+    if (!user?.password_hash) { throw appError(401, 'INVALID_CREDENTIALS', 'Неверные учётные данные'); }
+    if (user.status === 'inactive') { throw appError(403, 'ACCOUNT_INACTIVE', 'Аккаунт деактивирован'); }
+    if (user.locked_until && new Date(user.locked_until) > new Date()) { await handleLoginLocked(user, ip); }
 
     const isValid = await argon2.verify(user.password_hash, password);
-    if (!isValid) {
-      const attempts = (user.failed_attempts || 0) + 1;
-      const lockedUntil = attempts >= MAX_LOGIN_ATTEMPTS ? new Date(Date.now() + LOCK_DURATION_MS) : null;
+    if (!isValid) { await handleLoginFailedPassword(user, ip); }
 
-      await UserRepository.updateById(user.id, {
-        failed_attempts: attempts,
-        locked_until: lockedUntil,
-      });
-
-      await AuditService.log({
-        actorId: user.id,
-        actorRole: user.role,
-        eventType: 'LOGIN_FAILED',
-        entityType: 'user',
-        entityId: user.id,
-        ip,
-        result: 'failure',
-      });
-
-      throw appError(401, 'INVALID_CREDENTIALS', 'Неверные учётные данные');
-    }
-
-    await UserRepository.updateById(user.id, {
-      failed_attempts: 0,
-      locked_until: null,
-    });
-
-    const token = jwt.sign(
-      { userId: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
+    await UserRepository.updateById(user.id, { failed_attempts: 0, locked_until: null });
+    const token = signUserToken(user);
     await AuditService.log({
-      actorId: user.id,
-      actorRole: user.role,
-      eventType: 'LOGIN',
-      entityType: 'user',
-      entityId: user.id,
-      ip,
-      result: 'success',
+      actorId: user.id, actorRole: user.role, eventType: 'LOGIN',
+      entityType: 'user', entityId: user.id, ip, result: 'success',
     });
-
     return {
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
+      user: { id: user.id, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name },
     };
   },
 
