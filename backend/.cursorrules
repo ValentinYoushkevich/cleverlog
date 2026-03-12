@@ -52,6 +52,7 @@ backend/
     services/      — вся бизнес-логика
     repositories/  — все запросы к БД (только Knex, без логики)
     middlewares/   — auth, authorize, checkMonthClosed, errorHandler, validate
+    validators/    — Zod-схемы, файл по сущности: workLog.validator.js
     utils/         — вспомогательные функции (конвертация времени, форматирование)
     constants/     — статусы, роли, типы событий аудита, коды ошибок
     config/        — knex, nodemailer, winston, env
@@ -61,6 +62,7 @@ backend/
       seeds/       — сиды для разработки
   documentation/
     modules/       — модульная документация (MODULE_0.md ... MODULE_15.md)
+  __tests__/       — тесты (структура зеркалит src/)
   .cursorrules
   .env
   .env.example
@@ -73,29 +75,73 @@ backend/
 - Роут → Контроллер → Сервис → Репозиторий. Строго в одну сторону.
 - Бизнес-логика — только в `services/`. Никакой логики в роутах и контроллерах.
 - Запросы к БД — только в `repositories/`. Никаких Knex-запросов в сервисах.
-- Валидация входящих данных — Zod-схемы, до контроллера (в middleware или начале контроллера).
+- Валидация входящих данных — Zod-схемы из `validators/`, до контроллера (в middleware `validate`).
 - Всё асинхронное — `async/await`. Промисы `.then()` не использовать.
 - Контроллер не знает о Knex, репозиторий не знает о бизнес-правилах.
 - Если сервис использует > 1 репозитория — это нормально. Если репозиторий использует сервис — это ошибка архитектуры.
+- Zod-схема не содержит бизнес-логику (проверки на пересечения дат — в сервисе, не в Zod).
+
+---
+
+## Лимиты размера кода
+
+- Файл сервиса или репозитория — не более 250 строк. Если больше — декомпозировать по смысловым группам.
+- Функция — не более 40 строк. Длиннее = кандидат на выделение во вспомогательную функцию.
+- Не более 4 параметров у функции. Если больше — принимать объектом `({ param1, param2, ... })`.
+- Контроллер — не более 15 строк на метод (разбор req + вызов сервиса + формирование res).
 
 ---
 
 ## Именование
 
-- Файлы: `camelCase.js` (например `workLog.service.js`, `auth.middleware.js`).
-- Переменные и функции: `camelCase`.
-- Константы: `UPPER_SNAKE_CASE`.
-- Классы: `PascalCase`.
-- Таблицы БД: `snake_case` (например `work_logs`, `custom_fields`).
-- Колонки БД: `snake_case`.
-- Поля в ответах API: `snake_case` — не преобразовывать на бэке, фронт работает со `snake_case`.
-- Неиспользуемые аргументы: префикс `_`.
+**Файлы:** `camelCase.js` (например `workLog.service.js`, `auth.middleware.js`, `workLog.validator.js`).
+
+**Переменные и функции:** `camelCase`.
+
+**Константы:** `UPPER_SNAKE_CASE`.
+
+**Классы:** `PascalCase`.
+
+**Таблицы БД:** `snake_case` (например `work_logs`, `custom_fields`).
+
+**Колонки БД:** `snake_case`.
+
+**Поля в ответах API:** `snake_case` — не преобразовывать на бэке, фронт работает со `snake_case`.
+
+**Неиспользуемые аргументы:** префикс `_`.
+
+**Глаголы методов по слоям:**
+- Репозиторий: `findById`, `findAll`, `findBy*`, `create`, `update`, `deleteById`, `existsBy*`
+- Сервис: `get*`, `create*`, `update*`, `delete*`, `validate*`, `check*`, `calculate*`
+- Middleware: глагол действия без префикса: `authenticate`, `authorize`, `validate`
+
+---
+
+## Порядок импортов
+
+```js
+// 1. Node.js built-ins
+import path from 'path'
+
+// 2. Внешние пакеты
+import express from 'express'
+import { z } from 'zod'
+
+// 3. Внутренние алиасы @/
+import { db } from '@/config/knex.js'
+import { ROLES } from '@/constants/roles.js'
+
+// 4. Относительные ./
+import { someHelper } from './utils.js'
+```
+
+Между группами — одна пустая строка. ESLint-правило `import/order` поддерживает это автоматически (если подключён плагин).
 
 ---
 
 ## Стиль кода
 
-- ESLint + Node.js ruleset.
+- ESLint + Node.js ruleset (см. `eslint.config.js`).
 - Импорты: абсолютные пути через алиас `@/` (`module-alias`).
 - Сравнения: только `===` и `!==`. Фигурные скобки всегда (в т.ч. однострочный `if/else`).
 - Отступ 2 пробела. Строка ≤ 200 символов. Не более 1 пустой строки подряд, 0 в конце файла.
@@ -106,11 +152,55 @@ backend/
 
 ---
 
+### Функции
+- Функции должны быть **логически плоскими**: минимум вложенных `if`/`else`/`try`/`catch`. Использовать ранние `return` вместо лесенки вложенных условий.
+- При появлении нескольких веток (валидация, разный режим работы, разный UX) — выносить каждую ветку в отдельный helper (`validateX`, `handleXSuccess`, `handleXError`), а основную функцию оставлять как «оркестратор» из 3–7 понятных шагов.
+- Один уровень ответственности на функцию: либо «собрать и валидировать входные данные», либо «сходить в API», либо «обновить стор/стейт и показать тост», но не всё сразу.
+- Если функция > ~30 строк или начинает обрастать комментариями — разбивать на более мелкие функции до устранения предупреждений о Cognitive Complexity в линтере.
+
+## Структура constants/
+
+```
+src/constants/
+  roles.js         — ROLES = { USER: 'user', ADMIN: 'admin' }
+  statuses.js      — PROJECT_STATUS, ABSENCE_TYPE, CALENDAR_DAY_TYPE, CUSTOM_FIELD_TYPE
+  auditEvents.js   — все типы событий аудита (EVENT_TYPE = { LOGIN: 'login', ... })
+  errorCodes.js    — все коды ошибок (ERROR_CODE = { MONTH_CLOSED: 'MONTH_CLOSED', ... })
+  time.js          — DAY_IN_HOURS = 8, MINUTES_IN_HOUR = 60, MINUTES_IN_DAY = 480
+```
+
+Никогда не хардкодить строки типа `'admin'`, `'vacation'`, `'MONTH_CLOSED'` — только через импорт константы.
+
+---
+
+## Работа с репозиториями
+
+- Если запись не найдена — репозиторий возвращает `null`, не бросает ошибку.
+- 404 бросает сервис после проверки: `if (!record) { throw { status: 404, code: ERROR_CODE.NOT_FOUND, message: '...' } }`.
+- `create` и `update` возвращают созданную/обновлённую запись через `.returning('*')`.
+- Soft delete: во всех `find*` методах по умолчанию `.whereNull('deleted_at')`.
+
+**Транзакции:**
+- Транзакция открывается в сервисе, не в репозитории.
+- `trx` передаётся последним необязательным аргументом: `findById(id, trx = db)`.
+- Пример сигнатуры: `create(data, trx = db)`, `update(id, data, trx = db)`.
+
+---
+
+## Zod-схемы (validators/)
+
+- Файл: `src/validators/workLog.validator.js`, экспорт именованный: `export const createWorkLogSchema = z.object({...})`.
+- Схема покрывает только формат и тип данных — не бизнес-правила.
+- Подключается через middleware `validate(schema)` до контроллера в роуте.
+- `validate` middleware пробрасывает `ZodError` дальше — `errorHandler` парсит его в 400.
+
+---
+
 ## Домен и бизнес-правила (обязательно знать)
 
 **Время:**
 - Хранение в БД — всегда в днях (дробное число, например `0.5`).
-- 1d = 8h = 480m — глобальная константа `DAY_IN_HOURS = 8`.
+- 1d = 8h = 480m — константа `DAY_IN_HOURS = 8` из `constants/time.js`.
 - Ввод от клиента: парсить строки `1h 30m`, `2d`, `45m` → конвертировать в дни в `utils/timeParser.js`.
 - Ответ клиенту: всегда в часах (`duration_days * DAY_IN_HOURS`).
 
@@ -163,11 +253,12 @@ backend/
 ## Обработка ошибок
 
 - Глобальный `errorHandler` в `middlewares/errorHandler.js` — последний middleware в `app.js`.
-- В сервисах бросать: `throw { status: 403, code: 'MONTH_CLOSED', message: '...' }`.
+- В сервисах бросать: `throw { status: 403, code: ERROR_CODE.MONTH_CLOSED, message: '...' }`.
 - В `errorHandler` логировать через Winston (только уровень `error` для 5xx, `warn` для 4xx).
 - В репозиториях — не перехватывать ошибки БД, пробрасывать наверх.
 - Никогда не возвращать стек-трейс клиенту (ни в dev, ни в production — стек только в логах).
 - Zod-ошибки парсить в errorHandler: `ZodError` → `400` с читаемым списком полей.
+- Пустые `catch {}` — запрещены. Всегда либо обрабатываем, либо пробрасываем.
 
 ---
 
@@ -185,55 +276,21 @@ backend/
 - Все изменения схемы — только через миграции Knex. Никаких ручных ALTER TABLE.
 - Soft delete: поле `deleted_at` (timestamp, nullable). Во всех SELECT по умолчанию: `.whereNull('deleted_at')`.
 - `created_at`, `updated_at` — во всех таблицах, проставлять через `table.timestamps(true, true)`.
-- Транзакции — при операциях затрагивающих > 1 таблицы (например создание Absence диапазоном, создание Work Log с кастомными полями).
+- Транзакции — при операциях затрагивающих > 1 таблицы.
 - Индексы: на все FK-поля, на `date` в `work_logs` и `absences`, на `email` в `users`.
 - UUID (`uuid_generate_v4()`) — первичный ключ везде. Расширение `pgcrypto` или `uuid-ossp` в первой миграции.
 - Не использовать `knex.raw()` без крайней необходимости. Если используется — комментарий почему.
 
 ---
 
-## Таблицы БД (краткая схема)
+## Тесты
 
-Краткий список таблиц:
-users, projects, custom_fields, custom_field_options, project_custom_fields,
-work_logs, work_log_custom_values, absences, calendar_days, calendar_settings,
-month_closures, audit_logs, notification_settings
-
-полная схема смотри в documentation/modules/DATABASE_SCHEMA.md
-
----
-
-## Переменные окружения (обязательные)
-
-```env
-NODE_ENV=development
-PORT=3000
-CLIENT_URL=http://localhost:5173
-
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=cleverlog
-DB_USER=postgres
-DB_PASSWORD=postgres
-
-JWT_SECRET=<минимум 32 символа>
-JWT_EXPIRES_IN=7d
-COOKIE_SECRET=<минимум 32 символа>
-
-SMTP_HOST=smtp.mailtrap.io
-SMTP_PORT=2525
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM="CleverLog <noreply@cleverlog.local>"
-```
-
----
-
-## Комментарии
-
-- На русском языке. Только сложная бизнес-логика или неочевидные решения.
-- JSDoc для публичных функций сервисов и утилит если они > 20 строк.
-- Не комментировать очевидное (`// получаем пользователя` над `getUser()`).
+- Расположение: `src/__tests__/`, структура зеркалит `src/` (например `__tests__/services/workLog.service.test.js`).
+- Покрывать обязательно: сервисы (unit, с моком репозиториев через `vi.mock()`), middleware.
+- Репозитории и контроллеры — опционально, по необходимости.
+- Нейминг: `describe('WorkLogService')` → `it('should throw FUTURE_DATE when date is in the future')`.
+- Моки через `vi.mock()` — реальная БД в unit-тестах не используется.
+- Тест покрывает: happy path + граничные случаи + ожидаемые ошибки.
 
 ---
 
@@ -247,6 +304,14 @@ SMTP_FROM="CleverLog <noreply@cleverlog.local>"
 
 ---
 
+## Комментарии
+
+- На русском языке. Только сложная бизнес-логика или неочевидные решения.
+- JSDoc для публичных функций сервисов и утилит если они > 20 строк.
+- Не комментировать очевидное (`// получаем пользователя` над `getUser()`).
+
+---
+
 ## Быстрые команды
 
 - **ГИТРЕВЬЮ** — сравнение текущей ветки с main, подробное ревью правок. Логические ошибки, нарушения архитектуры, конфликты бизнес-правил. **НЕ предлагать варианты исправления** — только список проблем.
@@ -254,6 +319,7 @@ SMTP_FROM="CleverLog <noreply@cleverlog.local>"
 
 **Общие критерии ревью:**
 - Соответствие правилам этого файла: именование, стиль, структура.
+- Лимиты: файл ≤ 250 строк, функция ≤ 40 строк, параметры ≤ 4.
 - Логика в правильном слое (роут/контроллер/сервис/репозиторий).
 - Транзакции там где нужны. Soft delete соблюдён. Аудит вызван.
 - Валидация входных данных через Zod до контроллера.
@@ -262,5 +328,7 @@ SMTP_FROM="CleverLog <noreply@cleverlog.local>"
 - Нет утечек токенов, паролей, стек-трейсов в ответах клиенту.
 - ESM: только `import/export`, нет `require()`.
 - Нет Knex-запросов вне репозиториев. Нет бизнес-логики вне сервисов.
+- Константы использованы вместо магических строк.
+- Порядок импортов соблюдён.
 - Не пиши что сделано хорошо и статистику изменений.
 - Пиши только: замечания, риски, рекомендации.
